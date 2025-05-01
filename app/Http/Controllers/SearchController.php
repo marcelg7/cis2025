@@ -13,7 +13,15 @@ use Illuminate\View\View;
 class SearchController extends Controller {
     public function search(Request $request): View {
         $query = $request->input('query');
-        $results = [];
+		// Initialize all result categories to empty collections
+		$results = [
+			'customers' => collect(),
+			'devices' => collect(),
+			'plans' => collect(),
+			'activity_types' => collect(),
+			'commitment_periods' => collect(),
+			'contracts' => collect()
+		];
 
         if ($query) {
             // Search Customers

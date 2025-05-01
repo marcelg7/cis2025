@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite';
 import laravel from 'laravel-vite-plugin';
+import path from 'path';
 
 export default defineConfig({
     plugins: [
@@ -8,4 +9,18 @@ export default defineConfig({
             refresh: true,
         }),
     ],
+    publicDir: false, // Disable default public dir copying
+    resolve: {
+        alias: {
+            'tinymce': path.resolve(__dirname, 'node_modules/tinymce'),
+        },
+    },
+    build: {
+        rollupOptions: {
+            external: [],
+            output: {
+                assetFileNames: 'assets/[name].[ext]',
+            },
+        },
+    },
 });

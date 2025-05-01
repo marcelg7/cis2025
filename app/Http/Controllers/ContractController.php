@@ -26,6 +26,17 @@ class ContractController extends Controller {
         $defaultFirstBillDate = now()->day >= 11 ? now()->addMonth()->startOfMonth()->addDays(10) : now()->startOfMonth()->addDays(10);
         return view('contracts.create', compact('subscriber', 'devices', 'plans', 'activityTypes', 'commitmentPeriods', 'defaultFirstBillDate'));
     }
+	
+public function ftp($id)
+{
+    $contract = Contract::findOrFail($id);
+    
+    // This is a placeholder for future implementation
+    // In the future, you'll add code here to send the contract to your storage vault via FTP
+    
+    // For now, just redirect back with a message
+    return redirect()->back()->with('info', 'FTP to storage vault functionality will be implemented soon.');
+}
 
 public function store(Request $request, $subscriberId) {
     $request->validate([

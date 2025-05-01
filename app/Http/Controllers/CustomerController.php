@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
+use App\Models\Contract;
 use App\Models\IvueAccount;
 use App\Models\MobilityAccount;
 use App\Models\Subscriber;
@@ -11,17 +12,44 @@ use GuzzleHttp\Exception\RequestException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
+use Illuminate\Support\Facades\DB;
+use App\Models\User;
 
 class CustomerController extends Controller
 {
-    public function index(): View {
-        return view('customers.index');
-    }
+	public function index(): View {
+		
+
+		
+		
+		$latestContracts = Contract::with(['subscriber.mobilityAccount.ivueAccount.customer', 'plan', 'device', 'activityType'])
+			->latest()
+			->take(12)
+			->get();
+
+		// Get active users from session table
+		$activeSessions = DB::table('sessions')
+			->where('user_id', '!=', auth()->id())
+			->where('last_activity', '>=', now()->subMinutes(5)->getTimestamp())
+			->get();
+			
+		$activeUsers = User::whereIn('id', $activeSessions->pluck('user_id'))->get();
+
+
+		// Get latest fetched customers
+		$recentCustomers = Customer::whereNotNull('last_fetched_at')
+			->latest('last_fetched_at')
+			->take(6)
+			->get();
+			
+		return view('customers.index', compact('latestContracts', 'activeUsers', 'recentCustomers'));
+	}
 
     public function fetch(Request $request): View {
         try {
             $customerNumber = $request->input('customer_number');
             Log::info('Fetching customer: ' . $customerNumber);
+
 
             $client = new Client();
             $response = $client->get('https://hay.cloud.coop/services/secured/customer/summary/' . $customerNumber, [
@@ -69,8 +97,13 @@ class CustomerController extends Controller
             ['ivue_account'],
             ['status']
         );
+		
+        // Update the last_fetched_at timestamp
+        $customer->update(['last_fetched_at' => now()]);
+        		
 
         return view('customers.show', compact('customer'));
+		
     } catch (RequestException $e) {
         Log::error('API fetch error: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
         return view('customers.index')->withErrors(['customer_number' => 'Failed to fetch customer: ' . $e->getMessage()]);
@@ -82,6 +115,18 @@ class CustomerController extends Controller
 
     public function addMobilityForm($customerId): View {
         $customer = Customer::with('ivueAccounts')->findOrFail($customerId);
+
+		// Check if there are any IVUE accounts without mobility accounts
+		$hasAvailableIvueAccounts = $customer->ivueAccounts->filter(function($ivueAccount) {
+			return $ivueAccount->mobilityAccount === null;
+		})->isNotEmpty();
+		
+		if (!$hasAvailableIvueAccounts) {
+			return redirect()->route('customers.show', $customer->id)
+				->with('error', 'No available IVUE accounts to attach a mobility account to.');
+		}
+				
+		
         return view('customers.add-mobility', compact('customer'));
     }
 

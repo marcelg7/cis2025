@@ -17,10 +17,14 @@ class RegisteredUserController extends Controller
     /**
      * Display the registration view.
      */
-    public function create(): View
-    {
-        return view('auth.register');
-    }
+	public function create(): View
+	{
+		if (!auth()->user()->isAdmin()) {
+			abort(403, 'Unauthorized');
+		}
+		
+		return view('auth.register');
+	}
 
     /**
      * Handle an incoming registration request.
@@ -29,6 +33,12 @@ class RegisteredUserController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+	
+		if (!auth()->user()->isAdmin()) {
+			abort(403, 'Unauthorized');
+		}
+    
+	
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],

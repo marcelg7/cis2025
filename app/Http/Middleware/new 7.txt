@@ -1,0 +1,5 @@
+Password Change
+- getting error when saving changed password:      Method Not Allowed  The PUT method is not supported for route reset-password. Supported methods: POST. 
+
+Active Users
+- no records are showing up in active_users table
