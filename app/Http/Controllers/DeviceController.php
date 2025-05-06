@@ -14,6 +14,17 @@ class DeviceController extends Controller {
         return view('devices.index', compact('devices'));
     }
 
+	public function devices()
+    {
+        // Fetch Mobile Devices (pages with post_type = 'page' or custom post type)
+        $devices = Post::post_parent('23960')
+            ->where('post_status', 'like', '%publish%') // Adjust based on naming
+            ->published()
+            ->get();
+
+         return view('devices.test', compact('devices'));
+    }
+
 	public function create(): View {
 		// Default pricing with keys if no old input exists
 		$defaultPricing = [['type' => 'smartpay', 'price' => '', 'term' => 24]];

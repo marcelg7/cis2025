@@ -57,12 +57,12 @@
             <div>
                 <h2 class="text-lg font-medium text-gray-900">Device Details</h2>
                 <div class="mt-4 grid grid-cols-1 gap-y-6 sm:grid-cols-2 sm:gap-x-4">
-                    <div>
+                    <div> 
                         <label for="device_id" class="block text-sm font-medium text-gray-700">Device</label>
                         <select name="device_id" id="device_id" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
                             <option value="">None</option>
                             @foreach ($devices as $device)
-                                <option value="{{ $device->id }}" {{ old('device_id') == $device->id ? 'selected' : '' }}>{{ $device->manufacturer }} {{ $device->model }}</option>
+                                <option value="{{ $device['id'] }}" {{ old('device_id') == $device['id'] ? 'selected' : '' }}>{{ $device['parsed']['manufacturer'] }} {{ $device['parsed']['model'] }} {{ $device['parsed']['version'] }} {{ $device['parsed']['deviceStorage'] }} {{ $device['parsed']['extraInfo'] }} Price: {{ $device['data']}} </option>
                             @endforeach
                         </select>
                         @error('device_id')

@@ -2,6 +2,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Subscriber;
+use App\Models\Shortcode;
 use App\Models\Device;
 use App\Models\Plan;
 use App\Models\ActivityType;
@@ -19,7 +20,31 @@ use Illuminate\View\View;
 class ContractController extends Controller {
     public function create($subscriberId): View {
         $subscriber = Subscriber::findOrFail($subscriberId);
-        $devices = Device::where('is_active', true)->get();
+        //$devices = Device::where('is_active', true)->get();
+		
+		// Build $devices from the auto-synced shortcodes from hay.net WP database
+		$devices = Shortcode::where('disabled', false)->where('slug', 'LIKE', 'cis-%')->get()->map(function($shortcode) {
+			// Split the slug by the hyphen
+			$parts = explode('-', $shortcode->slug);
+
+			// Remove first part which will be 'cis'
+			array_shift($parts); // This removes the first element ('cis')
+			
+			// Create an array with all the original shortcode attributes
+			$deviceData = $shortcode->toArray();
+			
+			// Add the parsed slug information as additional properties
+			$deviceData['parsed'] = [
+				'manufacturer' => $parts[0] ?? 'unknown',
+				'model' => $parts[1] ?? 'unknown',
+				'version' => $parts[2] ?? 'unknown',
+				'deviceStorage' => $parts[3] ?? 'unknown',
+				'extraInfo' => $parts[4] ?? '',
+			];
+			
+			return $deviceData;
+		});	
+		
         $plans = Plan::where('is_active', true)->get();
         $activityTypes = ActivityType::where('is_active', true)->get();
         $commitmentPeriods = CommitmentPeriod::where('is_active', true)->get();

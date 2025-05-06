@@ -61,6 +61,17 @@ return [
                 PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
             ]) : [],
         ],
+		
+		'wordpress' => [ // hay.net WordPress database
+			'driver' => 'mysql',
+			'host' => env('WP_DB_HOST', 'hay.net'),
+			'port' => env('WP_DB_PORT', '3306'),
+			'prefix' => 'IQVC2uaK_',
+			'database' => env('WP_DB_DATABASE', 'hayweb_wp_qkgvh'),
+			'username' => env('WP_DB_USERNAME', 'hayweb_cis'),
+			'password' => env('WP_DB_PASSWORD', 'w^d?s0ZI3-{='),
+	
+		],		
 
         'mariadb' => [
             'driver' => 'mariadb',

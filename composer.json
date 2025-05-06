@@ -9,6 +9,7 @@
         "php": "^8.2",
         "barryvdh/laravel-dompdf": "^2.0|^3.0",
         "guzzlehttp/guzzle": "^7.2",
+        "jgrossi/corcel": "*",
         "laravel/framework": "^12.0",
         "laravel/tinker": "^2.10.1"
     },

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\MobileController;
 use App\Http\Controllers\UserSettingsController;
 use App\Http\Controllers\DeviceController;
 use App\Http\Controllers\PlanController;
@@ -27,7 +28,12 @@ Route::middleware(['auth'])->group(function () {
     })->name('password.change');
 	Route::get('/settings', [UserSettingsController::class, 'edit'])->name('users.settings.edit');
     Route::patch('/settings', [UserSettingsController::class, 'update'])->name('users.settings.update');
-    
+
+Route::get('/mobile/devices', [MobileController::class, 'devices'])->name('mobile.devices')->middleware('auth');
+    Route::get('/test-wp', [MobileController::class, 'testWordpress'])->name('test.wordpress');
+
+	
+	
 	// Search Route
     Route::get('/search', [SearchController::class, 'search'])->name('search');
 
