@@ -144,7 +144,7 @@ public function store(Request $request, $subscriberId) {
     }
 
     public function view($id): View {
-        $contract = Contract::with('subscriber', 'activityType', 'device', 'plan', 'commitmentPeriod', 'addOns', 'oneTimeFees')->findOrFail($id);
+        $contract = Contract::with('subscriber', 'activityType', 'device', 'plan', 'commitmentPeriod', 'addOns', 'oneTimeFees', 'subscriber.mobilityAccount.ivueAccount.customer')->findOrFail($id);
         return view('contracts.view', compact('contract'));
     }
 

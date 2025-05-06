@@ -5,12 +5,31 @@ import 'tinymce/themes/silver';
 import 'tinymce/icons/default';
 import 'tinymce/skins/ui/oxide/skin.css';
 
-// Initialize Alpine
-window.Alpine = Alpine;
-Alpine.start();
+// Initialize Alpine with delay
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(() => {
+        window.Alpine = Alpine;
+        Alpine.start();
+        console.log('Alpine.js initialized');
+        // Log all x-data elements
+        document.querySelectorAll('[x-data]').forEach(el => {
+            console.log('Found x-data:', el, el.__x ? 'Bound' : 'Not bound');
+        });
+        // Force re-scan
+        Alpine.initTree(document.body);
+    }, 100);
+});
 
+// Remove x-cloak after Alpine initializes
+document.addEventListener('alpine:init', () => {
+    console.log('Alpine:init fired');
+    document.querySelectorAll('[x-cloak]').forEach(el => {
+        el.removeAttribute('x-cloak');
+    });
+});
+
+// TinyMCE and other scripts
 document.addEventListener('DOMContentLoaded', function () {
-    // TinyMCE initialization
     tinymce.init({
         selector: 'textarea:not(.no-rich-text)',
         plugins: 'link image table lists',
@@ -36,7 +55,6 @@ document.addEventListener('DOMContentLoaded', function () {
         userMenuButton.addEventListener('click', function () {
             userMenu.classList.toggle('hidden');
         });
-        // Close dropdown when clicking outside
         document.addEventListener('click', function (event) {
             if (!userMenuButton.contains(event.target) && !userMenu.contains(event.target)) {
                 userMenu.classList.add('hidden');
@@ -60,7 +78,6 @@ document.addEventListener('DOMContentLoaded', function () {
         toggle.addEventListener('click', function() {
             const menu = this.nextElementSibling;
             const arrow = this.querySelector('.settings-arrow');
-            
             menu.classList.toggle('hidden');
             arrow.classList.toggle('transform');
             arrow.classList.toggle('rotate-180');

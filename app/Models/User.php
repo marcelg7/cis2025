@@ -13,6 +13,7 @@ class User extends Authenticatable {
 		'password',
 		'role',
 		'session_lifetime',
+        'component_styles',		
 	];	
 
     protected $guarded = [];
@@ -24,6 +25,7 @@ class User extends Authenticatable {
 
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'component_styles',
         'role' => 'string',
     ];
 

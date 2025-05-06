@@ -5,7 +5,15 @@
     <div class="px-4 py-5 sm:p-6">
         <div class="flex items-center justify-between">
             <h3 class="text-lg leading-6 font-medium text-gray-900">
-                {{ $contract->subscriber->first_name }} {{ $contract->subscriber->last_name }}
+                @if($contract->subscriber && $contract->subscriber->mobilityAccount && $contract->subscriber->mobilityAccount->ivueAccount && $contract->subscriber->mobilityAccount->ivueAccount->customer)
+                    <x-info-link href="{{ route('customers.show', $contract->subscriber->mobilityAccount->ivueAccount->customer->id) }}" class="hover:text-indigo-600 hover:underline">
+                        {{ $contract->subscriber->first_name }} {{ $contract->subscriber->last_name }}
+						<x-icon-open />
+                    </x-info-link>
+					
+                @else
+                    {{ $contract->subscriber ? ($contract->subscriber->first_name . ' ' . $contract->subscriber->last_name) : 'N/A' }}
+                @endif
             </h3>
             <span class="px-2 py-1 text-xs rounded-full {{ $contract->end_date->isPast() ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800' }}">
                 {{ $contract->end_date->isPast() ? 'Expired' : 'Active' }}

@@ -1,3 +1,10 @@
-<a {{ $attributes->merge(['class' => 'inline-flex items-center px-3 py-1 bg-red-100 border border-transparent rounded-md font-medium text-xs text-red-700 uppercase tracking-wider hover:bg-red-900 focus:outline-none focus:ring-1 focus:ring-offset-1 focus:ring-red-500 transition-colors duration-150']) }}>
+<a {{ $attributes->merge([
+    'class' => 'inline-flex items-center px-3 py-1 border border-transparent rounded-md font-medium uppercase tracking-wider transition-colors duration-150 ' . 
+        'bg-[' . get_user_component_style('danger-link', 'background', '#fee2e2') . '] ' .
+        'hover:bg-[' . get_user_component_style('danger-link', 'hover', '#991b1b') . '] ' .
+        'text-[' . get_user_component_style('danger-link', 'text', '#b91c1c') . '] ' .
+        'text-' . get_user_component_style('danger-link', 'text_size', 'xs') . ' ' .
+        'focus:outline-none focus:ring-1 focus:ring-offset-1 focus:ring-red-500'
+]) }}>
     {{ $slot }}
 </a>

@@ -56,5 +56,8 @@ Route::get('/mobile/devices', [MobileController::class, 'devices'])->name('mobil
 	
 });
 
+Route::get('/test-alpine', fn() => view('test-alpine'))->name('test.alpine');
+
+
 // Ensure auth routes are included
 require base_path('routes/auth.php');
