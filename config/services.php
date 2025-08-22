@@ -34,5 +34,10 @@ return [
             'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
         ],
     ],
+	
+	'customer_api' => [
+        'url' => env('https://hay.cloud.coop/services/secured/customer/summary/'),
+        'token' => env('TWFyY2VsOkNBVDlvbDhpaztOSVNDMQ=='),
+    ],
 
 ];

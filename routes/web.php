@@ -12,7 +12,6 @@ use App\Http\Controllers\SearchController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
-
 // Protected Routes (Require Authentication)
 Route::middleware(['auth'])->group(function () {
     // Customer Routes
@@ -23,41 +22,46 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/customers/{customer}/add-mobility', [CustomerController::class, 'storeMobility'])->name('customers.store-mobility');
     Route::get('/customers/{customer}/add-subscriber', [CustomerController::class, 'addSubscriberForm'])->name('customers.add-subscriber');
     Route::post('/customers/{customer}/add-subscriber', [CustomerController::class, 'storeSubscriber'])->name('customers.store-subscriber');
-	Route::get('/change-password', function () {
+    Route::get('/change-password', function () {
         return view('auth.change-password');
     })->name('password.change');
-	Route::get('/settings', [UserSettingsController::class, 'edit'])->name('users.settings.edit');
+    
+    // Settings Routes
+    Route::get('/settings', [UserSettingsController::class, 'edit'])->name('users.settings.edit');
     Route::patch('/settings', [UserSettingsController::class, 'update'])->name('users.settings.update');
 
-Route::get('/mobile/devices', [MobileController::class, 'devices'])->name('mobile.devices')->middleware('auth');
+    Route::get('/mobile/devices', [MobileController::class, 'devices'])->name('mobile.devices');
     Route::get('/test-wp', [MobileController::class, 'testWordpress'])->name('test.wordpress');
-
-	
-	
-	// Search Route
+    
+    // Search Route
     Route::get('/search', [SearchController::class, 'search'])->name('search');
 
     // Contract Routes
+    Route::get('/contracts', [ContractController::class, 'index'])->name('contracts.index');
     Route::get('/contracts/{subscriber}/create', [ContractController::class, 'create'])->name('contracts.create');
     Route::post('/contracts/{subscriber}', [ContractController::class, 'store'])->name('contracts.store');
-    Route::get('/contracts/{contract}/download', [ContractController::class, 'download'])->name('contracts.download');
     Route::get('/contracts/{contract}/view', [ContractController::class, 'view'])->name('contracts.view');
-    Route::post('/contracts/{contract}/email', [ContractController::class, 'email'])->name('contracts.email');
-	Route::post('/contracts/{contract}/ftp', [ContractController::class, 'ftp'])->name('contracts.ftp');
-
-	// Admin-Only Routes
-	Route::middleware([\App\Http\Middleware\Admin::class])->group(function () {
-		Route::resource('devices', DeviceController::class);
-		Route::resource('plans', PlanController::class);
-		Route::resource('activity-types', ActivityTypeController::class);
-		Route::resource('commitment-periods', CommitmentPeriodController::class);
-		Route::resource('users', UserController::class);
-	});
+    Route::get('/contracts/{contract}/edit', [ContractController::class, 'edit'])->name('contracts.edit');
+    Route::put('/contracts/{contract}', [ContractController::class, 'update'])->name('contracts.update');
+    Route::get('/contracts/{contract}/sign', [ContractController::class, 'sign'])->name('contracts.sign');
+    Route::post('/contracts/{contract}/sign', [ContractController::class, 'storeSignature'])->name('contracts.storeSignature');
+    Route::post('/contracts/{contract}/finalize', [ContractController::class, 'finalize'])->name('contracts.finalize');
+    Route::post('/contracts/{contract}/revision', [ContractController::class, 'createRevision'])->name('contracts.revision');
+    Route::get('/contracts/{contract}/download', [ContractController::class, 'download'])->name('contracts.download');
+    Route::get('/contracts/{contract}/email', [ContractController::class, 'email'])->name('contracts.email');
+    Route::get('/contracts/{contract}/ftp', [ContractController::class, 'ftp'])->name('contracts.ftp');
 	
+    // Admin-Only Routes
+    Route::middleware([\App\Http\Middleware\Admin::class])->group(function () {
+        Route::resource('devices', DeviceController::class);
+        Route::resource('plans', PlanController::class);
+        Route::resource('activity-types', ActivityTypeController::class);
+        Route::resource('commitment-periods', CommitmentPeriodController::class);
+        Route::resource('users', UserController::class);
+    });
 });
 
 Route::get('/test-alpine', fn() => view('test-alpine'))->name('test.alpine');
-
 
 // Ensure auth routes are included
 require base_path('routes/auth.php');

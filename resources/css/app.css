@@ -1,9 +1,48 @@
+/* resources/css/app.css */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-[x-cloak] { display: none !important; }
+/* Force button styles to override conflicts */
+button, a.btn, .btn {
+    background-color: inherit !important;
+    color: inherit !important;
+}
 
-.secondary-button {
-    color: var(--text-color, #374151) !important;
+/* Ensure Tailwind button classes take precedence */
+.bg-blue-600 {
+    background-color: #2563eb !important;
+}
+.bg-green-600 {
+    background-color: #16a34a !important;
+}
+.bg-yellow-600 {
+    background-color: #ca8a04 !important;
+}
+.bg-red-600 {
+    background-color: #dc2626 !important;
+}
+.bg-white {
+    background-color: #ffffff !important;
+}
+.text-white {
+    color: #ffffff !important;
+}
+.text-gray-700 {
+    color: #374151 !important;
+}
+.hover\:bg-blue-700:hover {
+    background-color: #1d4ed8 !important;
+}
+.hover\:bg-green-700:hover {
+    background-color: #15803d !important;
+}
+.hover\:bg-yellow-700:hover {
+    background-color: #a16207 !important;
+}
+.hover\:bg-red-700:hover {
+    background-color: #b91c1c !important;
+}
+.hover\:bg-gray-50:hover {
+    background-color: #f9fafb !important;
 }

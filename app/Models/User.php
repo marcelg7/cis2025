@@ -25,7 +25,7 @@ class User extends Authenticatable {
 
     protected $casts = [
         'email_verified_at' => 'datetime',
-        'component_styles',
+        'component_styles' => 'array',
         'role' => 'string',
     ];
 

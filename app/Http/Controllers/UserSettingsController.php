@@ -19,8 +19,85 @@ class UserSettingsController extends Controller
     {
         $user = Auth::user();
         
+        if ($request->input('action') === 'reset') {
+            // Define default styles
+            $defaultStyles = [
+                'primary-button' => [
+                    'background' => '#4f46e5',
+                    'hover' => '#4338ca',
+                    'text' => '#ffffff',
+                    'text_size' => 'xs',
+                ],
+                'secondary-button' => [
+                    'background' => '#ffffff',
+                    'hover' => '#f9fafb',
+                    'text' => '#374151',
+                    'text_size' => 'xs',
+                ],
+                'primary-link' => [
+                    'background' => '#4f46e5',
+                    'hover' => '#4338ca',
+                    'text' => '#ffffff',
+                    'text_size' => 'xs',
+                ],
+                'secondary-link' => [
+                    'background' => '#ffffff',
+                    'hover' => '#f9fafb',
+                    'text' => '#374151',
+                    'text_size' => 'xs',
+                ],
+                'warning-button' => [
+                    'background' => '#fef3c7',
+                    'hover' => '#fde68a',
+                    'text' => '#b45309',
+                    'text_size' => 'xs',
+                ],
+                'warning-link' => [
+                    'background' => '#fef3c7',
+                    'hover' => '#fde68a',
+                    'text' => '#b45309',
+                    'text_size' => 'xs',
+                ],
+                'danger-button' => [
+                    'background' => '#fee2e2',
+                    'hover' => '#dc2626',
+                    'text' => '#b91c1c',
+                    'text_size' => 'xs',
+                ],
+                'danger-button-submit' => [
+                    'background' => '#fee2e2',
+                    'hover' => '#dc2626',
+                    'text' => '#b91c1c',
+                    'text_size' => 'xs',
+                ],
+                'danger-link' => [
+                    'background' => '#fee2e2',
+                    'hover' => '#991b1b',
+                    'text' => '#b91c1c',
+                    'text_size' => 'xs',
+                ],
+                'info-button' => [
+                    'background' => '#dbeafe',
+                    'hover' => '#bfdbfe',
+                    'text' => '#1e40af',
+                    'text_size' => 'xs',
+                ],
+                'info-link' => [
+                    'background' => '#dbeafe',
+                    'hover' => '#bfdbfe',
+                    'text' => '#1e40af',
+                    'text_size' => 'xs',
+                ],
+            ];
+
+            $user->component_styles = $defaultStyles;
+            $user->save();
+
+            return redirect()->route('users.settings.edit')->with('success', 'Styles reset to defaults successfully!');
+        }
+        
         $validated = $request->validate([
-            'session_lifetime' => 'required|integer|min:5|max:1440', // Between 5 minutes and 24 hours
+            'session_lifetime' => 'required|integer|min:5|max:1440',
             // Primary Button
             'component_styles.primary-button.background' => 'nullable|regex:/^#[0-9A-Fa-f]{6}$/',
             'component_styles.primary-button.hover' => 'nullable|regex:/^#[0-9A-Fa-f]{6}$/',
@@ -65,18 +142,24 @@ class UserSettingsController extends Controller
             'component_styles.danger-link.background' => 'nullable|regex:/^#[0-9A-Fa-f]{6}$/',
             'component_styles.danger-link.hover' => 'nullable|regex:/^#[0-9A-Fa-f]{6}$/',
             'component_styles.danger-link.text' => 'nullable|regex:/^#[0-9A-Fa-f]{6}$/',
-            'component_styles.danger-link.text_size' => 'nullable|in:xs,sm,base,lg,xl',			
+            'component_styles.danger-link.text_size' => 'nullable|in:xs,sm,base,lg,xl',
+            // Info Button
+            'component_styles.info-button.background' => 'nullable|regex:/^#[0-9A-Fa-f]{6}$/',
+            'component_styles.info-button.hover' => 'nullable|regex:/^#[0-9A-Fa-f]{6}$/',
+            'component_styles.info-button.text' => 'nullable|regex:/^#[0-9A-Fa-f]{6}$/',
+            'component_styles.info-button.text_size' => 'nullable|in:xs,sm,base,lg,xl',
+            // Info Link
+            'component_styles.info-link.background' => 'nullable|regex:/^#[0-9A-Fa-f]{6}$/',
+            'component_styles.info-link.hover' => 'nullable|regex:/^#[0-9A-Fa-f]{6}$/',
+            'component_styles.info-link.text' => 'nullable|regex:/^#[0-9A-Fa-f]{6}$/',
+            'component_styles.info-link.text_size' => 'nullable|in:xs,sm,base,lg,xl',
         ]);
         
-        // Update session lifetime separately
         $user->session_lifetime = $validated['session_lifetime'];
         unset($validated['session_lifetime']);
-
-        // Update component styles
         $user->component_styles = $validated['component_styles'];
         $user->save();
 
-        // Regenerate session if lifetime changed
         if ($request->has('session_lifetime')) {
             $request->session()->regenerate();
         }

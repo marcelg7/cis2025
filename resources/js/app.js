@@ -5,22 +5,24 @@ import 'tinymce/themes/silver';
 import 'tinymce/icons/default';
 import 'tinymce/skins/ui/oxide/skin.css';
 
-// Initialize Alpine with delay
+// Initialize Alpine
 document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => {
         window.Alpine = Alpine;
         Alpine.start();
         console.log('Alpine.js initialized');
-        // Log all x-data elements
         document.querySelectorAll('[x-data]').forEach(el => {
-            console.log('Found x-data:', el, el.__x ? 'Bound' : 'Not bound');
+            console.log('Found x-data:', el.outerHTML, el.__x ? 'Bound' : 'Not bound');
+            if (!el.__x) {
+                console.log('Attempting to bind:', el);
+                Alpine.bind(el, { 'x-data': el.getAttribute('x-data') });
+                console.log('After bind:', el.__x ? 'Bound' : 'Still not bound');
+            }
         });
-        // Force re-scan
         Alpine.initTree(document.body);
     }, 100);
 });
 
-// Remove x-cloak after Alpine initializes
 document.addEventListener('alpine:init', () => {
     console.log('Alpine:init fired');
     document.querySelectorAll('[x-cloak]').forEach(el => {
