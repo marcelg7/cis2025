@@ -20,18 +20,18 @@
                                 <span class="text-lg font-bold">Hay CIS</span>
                             </a>
                         </div>
-                        <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                            <x-info-link href="{{ route('customers.index') }}" class="{{ Route::is('customers.*') ? 'border-indigo-400' : 'border-transparent' }} text-sm font-medium leading-5 text-gray-900 hover:text-gray-700 hover:border-gray-300 focus:outline-none focus:text-gray-700 focus:border-gray-300 transition duration-150 ease-in-out">
-                                Customers
-                            </x-info-link>
-                            <x-info-link href="{{ route('contracts.index') }}" class="{{ Route::is('contracts.*') ? 'border-indigo-400' : 'border-transparent' }} text-sm font-medium leading-5 text-gray-900 hover:text-gray-700 hover:border-gray-300 focus:outline-none focus:text-gray-700 focus:border-gray-300 transition duration-150 ease-in-out">
-                                Contracts
-                            </x-info-link>
-                            <x-info-link href="https://hay.net" target="_blank" class="border-transparent text-sm font-medium leading-5 text-gray-900 hover:text-gray-700 hover:border-gray-300 focus:outline-none focus:text-gray-700 focus:border-gray-300 transition duration-150 ease-in-out">
-                                Hay Website
-                                <x-icon-open />
-                            </x-info-link>
-                        </div>
+						<div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
+							<x-nav-link :href="route('customers.index')" :active="Route::is('customers.*')">
+								Customers
+							</x-nav-link>
+							<x-nav-link :href="route('contracts.index')" :active="Route::is('contracts.*')">
+								Contracts
+							</x-nav-link>
+							<x-nav-link href="https://hay.net" target="_blank" :active="false">
+								Hay Website
+								<x-icon-open />
+							</x-nav-link>
+						</div>
                     </div>
                     <div class="flex items-center sm:hidden">
                         <button id="mobile-menu-button" type="button" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 focus:text-gray-500 transition duration-150 ease-in-out" aria-label="Main menu" aria-expanded="false">
@@ -123,16 +123,16 @@
             </nav>
             <div id="mobile-menu" class="hidden sm:hidden">
                 <div class="pt-2 pb-3 space-y-1">
-                    <x-info-link href="{{ route('customers.index') }}" class="block pl-3 pr-4 py-2 border-l-4 {{ Route::is('customers.*') ? 'border-indigo-400 text-indigo-700 bg-indigo-50' : 'border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300' }} text-base font-medium">
-                        Customers
-                    </x-info-link>
-                    <x-info-link href="{{ route('contracts.index') }}" class="block pl-3 pr-4 py-2 border-l-4 {{ Route::is('contracts.*') ? 'border-indigo-400 text-indigo-700 bg-indigo-50' : 'border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300' }} text-base font-medium">
-                        Contracts
-                    </x-info-link>
-                    <x-info-link href="https://hay.net" target="_blank" class="block pl-3 pr-4 py-2 border-l-4 border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 text-base font-medium flex items-center">
-                        Hay Website
-                        <x-icon-open />
-                    </x-info-link>
+					<x-responsive-nav-link :href="route('customers.index')" :active="Route::is('customers.*')">
+							Customers
+					</x-responsive-nav-link>
+					<x-responsive-nav-link :href="route('contracts.index')" :active="Route::is('contracts.*')">
+							Contracts
+					</x-responsive-nav-link>
+					<x-responsive-nav-link href="https://hay.net" target="_blank" :active="false" class="flex items-center">
+							Hay Website
+						<x-icon-open />
+					</x-responsive-nav-link>
                     @auth
                         @if (auth()->user()->isAdmin())
                             <div class="settings-dropdown">

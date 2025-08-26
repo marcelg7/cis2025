@@ -54,7 +54,7 @@
 		<!-- Recent Customers Section -->
 		@if($recentCustomers->count() > 0)
 			<div class="mt-6">
-				<h2 class="text-xl font-semibold text-gray-800 mb-4">Recently Viewed Customers</h2>
+				<h2 class="text-xl font-semibold text-gray-800 mb-4">Recently Imported Customers</h2>
 				
 				<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
 					@foreach($recentCustomers as $customer)

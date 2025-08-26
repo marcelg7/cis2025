@@ -38,11 +38,21 @@ class CustomerController extends Controller
         try {
             $customerNumber = $request->input('customer_number');
             Log::info('Fetching customer: ' . $customerNumber);
-            $client = new Client();
-            $response = $client->get(config('services.customer_api.url') . $customerNumber, [
+			$client = new Client([
+						'timeout' => 120, // Total request timeout
+						'connect_timeout' => 10, // Connection timeout
+						'debug' => false, // Verbose logging
+						'verify' => true, // Enforce SSL verification
+						'http_errors' => true, // Throw exceptions for 4xx/5xx responses
+						'force_ip_resolve' => 'v4', // Force IPv4 to avoid DNS issues
+					]);
+            
+
+			$response = $client->get(config('services.customer_api.url') . $customerNumber, [
                 'headers' => ['Authorization' => 'Basic ' . config('services.customer_api.token')]
             ]);
-            $data = json_decode($response->getBody(), true);
+            
+			$data = json_decode($response->getBody(), true);
             Log::info('API response: ' . json_encode($data));
             if (empty($data) || !isset($data['customer'])) {
                 Log::warning('Empty or invalid API response for customer: ' . $customerNumber);

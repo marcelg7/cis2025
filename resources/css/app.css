@@ -3,13 +3,12 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Force button styles to override conflicts */
-button, a.btn, .btn {
-    background-color: inherit !important;
-    color: inherit !important;
+.no-padding {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
 }
 
-/* Ensure Tailwind button classes take precedence */
+/* Tailwind overrides for specific button classes */
 .bg-blue-600 {
     background-color: #2563eb !important;
 }
@@ -45,4 +44,15 @@ button, a.btn, .btn {
 }
 .hover\:bg-gray-50:hover {
     background-color: #f9fafb !important;
+}
+
+/* Custom class for contract card buttons to override inheritance */
+.contract-card-button {
+    background-color: unset !important; /* Reset inheritance */
+}
+.contract-card-button.bg-blue-100 {
+    background-color: #dbeafe !important;
+}
+.contract-card-button.bg-purple-100 {
+    background-color: #ede9fe !important;
 }

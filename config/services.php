@@ -36,8 +36,8 @@ return [
     ],
 	
 	'customer_api' => [
-        'url' => env('https://hay.cloud.coop/services/secured/customer/summary/'),
-        'token' => env('TWFyY2VsOkNBVDlvbDhpaztOSVNDMQ=='),
+        'url' => env('CUSTOMER_API_URL'),
+        'token' => env('CUSTOMER_API_TOKEN'),
     ],
 
 ];

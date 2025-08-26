@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Customer extends Model
@@ -12,6 +13,23 @@ class Customer extends Model
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'last_fetched_at' => 'datetime',
+    ];	
+
+    use HasFactory;
+	
+    protected $fillable = [
+        'ivue_customer_number',
+        'first_name',
+        'last_name',
+        'email',
+        'address',
+        'city',
+        'state',
+        'zip_code',
+        'display_name',
+        'is_individual',
+        'customer_json',
+        'last_fetched_at',
     ];	
 
     public function ivueAccounts() {
