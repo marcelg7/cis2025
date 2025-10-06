@@ -1,5 +1,4 @@
 <?php
-
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\MobileController;
 use App\Http\Controllers\UserSettingsController;
@@ -11,6 +10,7 @@ use App\Http\Controllers\ContractController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AdminController;
 
 // Protected Routes (Require Authentication)
 Route::middleware(['auth'])->group(function () {
@@ -24,15 +24,19 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/customers/{customer}/add-subscriber', [CustomerController::class, 'storeSubscriber'])->name('customers.store-subscriber');
     Route::get('/change-password', function () {
         return view('auth.change-password');
-    })->name('password.change');
-    
+    })->name('password.custom_change');
+
+    // Admin Routes
+    Route::get('/admin', [AdminController::class, 'index'])->name('admin.index');
+    Route::post('/admin/clear-test-data', [AdminController::class, 'clearTestData'])->name('admin.clear-test-data');
+    Route::post('/admin/seed-test-data', [AdminController::class, 'seedTestData'])->name('admin.seed-test-data'); 
+
     // Settings Routes
     Route::get('/settings', [UserSettingsController::class, 'edit'])->name('users.settings.edit');
     Route::patch('/settings', [UserSettingsController::class, 'update'])->name('users.settings.update');
-
     Route::get('/mobile/devices', [MobileController::class, 'devices'])->name('mobile.devices');
     Route::get('/test-wp', [MobileController::class, 'testWordpress'])->name('test.wordpress');
-    
+
     // Search Route
     Route::get('/search', [SearchController::class, 'search'])->name('search');
 
@@ -50,7 +54,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/contracts/{contract}/download', [ContractController::class, 'download'])->name('contracts.download');
     Route::get('/contracts/{contract}/email', [ContractController::class, 'email'])->name('contracts.email');
     Route::get('/contracts/{contract}/ftp', [ContractController::class, 'ftp'])->name('contracts.ftp');
-	
+
     // Admin-Only Routes
     Route::middleware([\App\Http\Middleware\Admin::class])->group(function () {
         Route::resource('devices', DeviceController::class);

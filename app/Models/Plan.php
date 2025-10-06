@@ -12,6 +12,11 @@ class Plan extends Model {
 
     protected $fillable = [
         'name',
+		'is_test',
     ];
+	
+	protected $casts = [
+        'is_test' => 'boolean', // Add this
+    ];	
 	
 }

@@ -39,6 +39,7 @@ class Contract extends Model {
 			'pdf_path',
 			'signature_path',
 			'status',
+			'is_test',
 		];
 
     // Add date casting
@@ -47,6 +48,7 @@ class Contract extends Model {
         'end_date' => 'date',
         'contract_date' => 'date',
         'first_bill_date' => 'date',
+		'is_test' => 'boolean',
     ];
 
 

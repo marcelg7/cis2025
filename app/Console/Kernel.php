@@ -6,6 +6,7 @@ class Kernel extends ConsoleKernel
 {
     protected $commands = [
         \App\Console\Commands\SyncShortcodes::class,
+		Commands\ClearTestData::class,
     ];
     
     // No schedule method needed in Laravel 12.x

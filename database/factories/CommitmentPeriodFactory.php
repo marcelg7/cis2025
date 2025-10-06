@@ -14,10 +14,10 @@ class CommitmentPeriodFactory extends Factory
      *
      * @return array<string, mixed>
      */
-    public function definition(): array
-    {
-        return [
-            //
-        ];
-    }
+	public function definition(): array
+	{
+		return [
+			'name' => $this->faker->unique()->word,
+		];
+	}
 }

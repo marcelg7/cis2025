@@ -16,7 +16,12 @@ class Subscriber extends Model {
         'last_name',
         'status',
         'mobility_account_id',
+		'is_test',
     ];
+	
+	protected $casts = [
+		'is_test' => 'boolean', 
+	];	
 
     public function mobilityAccount() {
         return $this->belongsTo(MobilityAccount::class);
