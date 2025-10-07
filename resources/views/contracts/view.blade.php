@@ -7,7 +7,7 @@
     $deviceAmount = ($contract->device_price ?? 0) - ($contract->agreement_credit_amount ?? 0);
     $totalFinancedAmount = $deviceAmount - ($contract->required_upfront_payment ?? 0) - ($contract->optional_down_payment ?? 0);
     $monthlyDevicePayment = ($totalFinancedAmount - ($contract->deferred_payment_amount ?? 0)) / 24;
-    $earlyCancellationFee = $totalFinancedAmount + ($contract->dro_amount ?? 0);
+    $earlyCancellationFee = $totalFinancedAmount + ($contract->device_return_amount ?? 0);
     $monthlyReduction = $monthlyDevicePayment;
 @endphp
 @extends($layout)
@@ -152,8 +152,6 @@
                                     $contract->device_storage ? str_replace('gb', 'GB', $contract->device_storage) : null,
                                     $contract->extra_info ? ucfirst($contract->extra_info) : null,
                                 ])->filter()->implode(' ') }}</p>
-                                <p><strong>SIM #:</strong> {{ $contract->sim_number ?? 'N/A' }}</p>
-                                <p><strong>IMEI/ESN/MEID:</strong> {{ $contract->imei_number ?? 'N/A' }}</p>
                                 <p style="font-style: italic; font-size: 8pt;">All amounts are before taxes.</p>
                                 <p><strong>Device Retail Price:</strong> ${{ number_format($contract->device_price ?? 0, 2) }}</p>
                                 <p><strong>Agreement Credit:</strong> ${{ number_format($contract->agreement_credit_amount ?? 0, 2) }}</p>
@@ -167,13 +165,12 @@
                             <td width="50%" style="padding-left: 0.5rem;">
                                 <h4 style="font-size: 12pt; font-weight: bold; margin-bottom: 0.25rem;">Monthly Device Payment: ${{ number_format($monthlyDevicePayment, 2) }}</h4>
                                 <p><strong>Commitment Period:</strong> {{ $contract->commitmentPeriod->name ?? '2 Year Term Smart Pay' }}</p>
-                                <p><strong>Device Charge:</strong> ${{ number_format($contract->amount_paid_for_device ?? 0, 2) }}</p>
                                 <p><strong>Remaining Device Balance:</strong> ${{ number_format($totalFinancedAmount - ($contract->deferred_payment_amount ?? 0), 2) }}</p>
                                 <p><strong>Start Date:</strong> {{ $contract->start_date->format('M d, Y') }}</p>
                                 <p><strong>End Date:</strong> {{ $contract->end_date->format('M d, Y') }}</p>
                                 <p>Your service will continue month-to-month after this end date.</p>
                                 <p style="font-size: 8pt; margin-top: 0.5rem;">
-                                    Early Cancellation Fee is the remaining balance of your device plus the full Deferred Return Option amount. In this case, your Buyout Cost would be ${{ number_format($monthlyDevicePayment, 2) }} per month left on the term plus the Device Return Option of ${{ number_format($contract->dro_amount ?? 0, 2) }}.<br>
+                                    Early Cancellation Fee is the remaining balance of your device plus the full Deferred Return Option amount. In this case, your Buyout Cost would be ${{ number_format($monthlyDevicePayment, 2) }} per month left on the term plus the Device Return Option of ${{ number_format($contract->deferred_payment_amount ?? 0, 2) }}.<br>
                                     Fee will be $0 on {{ $contract->end_date->format('M d, Y') }} and will decrease each month by: ${{ number_format($monthlyReduction, 2) }}
                                 </p>
                             </td>
@@ -190,8 +187,6 @@
                                     $contract->device_storage ? str_replace('gb', 'GB', $contract->device_storage) : null,
                                     $contract->extra_info ? ucfirst($contract->extra_info) : null,
                                 ])->filter()->implode(' ') }}</p>
-                                <p><strong>SIM #:</strong> {{ $contract->sim_number ?? 'N/A' }}</p>
-                                <p><strong>IMEI/ESN/MEID:</strong> {{ $contract->imei_number ?? 'N/A' }}</p>
                                 <p class="mt-2 italic">All amounts are before taxes.</p>
                                 <p><strong>Device Retail Price:</strong> ${{ number_format($contract->device_price ?? 0, 2) }}</p>
                                 <p><strong>Agreement Credit:</strong> ${{ number_format($contract->agreement_credit_amount ?? 0, 2) }}</p>
@@ -207,13 +202,12 @@
                             <h4 class="text-lg font-medium text-gray-900">Monthly Device Payment: ${{ number_format($monthlyDevicePayment, 2) }}</h4>
                             <div class="mt-2 text-sm text-gray-600">
                                 <p><strong>Commitment Period:</strong> {{ $contract->commitmentPeriod->name ?? '2 Year Term Smart Pay' }}</p>
-                                <p><strong>Device Charge:</strong> ${{ number_format($contract->amount_paid_for_device ?? 0, 2) }}</p>
                                 <p class="mt-2"><strong>Remaining Device Balance:</strong> ${{ number_format($totalFinancedAmount - ($contract->deferred_payment_amount ?? 0), 2) }}</p>
                                 <p><strong>Start Date:</strong> {{ $contract->start_date->format('M d, Y') }}</p>
                                 <p><strong>End Date:</strong> {{ $contract->end_date->format('M d, Y') }}</p>
                                 <p>Your service will continue month-to-month after this end date.</p>
                                 <p class="mt-2 text-xs">
-                                    Early Cancellation Fee is the remaining balance of your device plus the full Deferred Return Option amount. In this case, your Buyout Cost would be ${{ number_format($monthlyDevicePayment, 2) }} per month left on the term plus the Device Return Option of ${{ number_format($contract->dro_amount ?? 0, 2) }}.<br>
+                                    Early Cancellation Fee is the remaining balance of your device plus the full Deferred Return Option amount. In this case, your Buyout Cost would be ${{ number_format($monthlyDevicePayment, 2) }} per month left on the term plus the Device Return Option of ${{ number_format($contract->device_return_amount ?? 0, 2) }}.<br>
                                     Fee will be $0 on {{ $contract->end_date->format('M d, Y') }} and will decrease each month by: ${{ number_format($monthlyReduction, 2) }}
                                 </p>
                             </div>
@@ -261,7 +255,6 @@
                 @else
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <h4 class="text-lg font-medium text-gray-900">Your Rate Plan Details</h4>
                             <div class="mt-2 text-sm text-gray-600">
                                 <p><strong>Plan:</strong> {{ $contract->plan->name }}</p>
                             </div>
@@ -364,7 +357,7 @@
                     <table width="100%" style="table-layout: fixed; font-size: 9pt; color: #333;">
                         <tr>
                             <td width="50%" style="padding-right: 0.5rem;">
-                                <p><strong>Device Charge:</strong> ${{ number_format($contract->amount_paid_for_device ?? 0, 2) }}</p>
+                                <p><strong>Device Charge:</strong> ${{ number_format($deviceAmount, 2) }}</p>
                                 <p><strong>Up-front Payment Requirement:</strong> ${{ number_format($contract->required_upfront_payment ?? 0, 2) }}</p>
                                 <p><strong>Optional Up-front Payment:</strong> ${{ number_format($contract->optional_down_payment ?? 0, 2) }}</p>
                             </td>
@@ -389,7 +382,7 @@
                 @else
                     <div class="mt-2 grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div class="text-sm text-gray-600">
-                            <p><strong>Device Charge:</strong> ${{ number_format($contract->amount_paid_for_device ?? 0, 2) }}</p>
+                            <p><strong>Device Charge:</strong> ${{ number_format($deviceAmount, 2) }}</p>
                             <p><strong>Up-front Payment Requirement:</strong> ${{ number_format($contract->required_upfront_payment ?? 0, 2) }}</p>
                             <p><strong>Optional Up-front Payment:</strong> ${{ number_format($contract->optional_down_payment ?? 0, 2) }}</p>
                         </div>

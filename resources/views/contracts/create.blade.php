@@ -70,27 +70,6 @@
                         @enderror
                     </div>
                     <div>
-                        <label for="sim_number" class="block text-sm font-medium text-gray-700">SIM #</label>
-                        <input type="text" name="sim_number" id="sim_number" value="{{ old('sim_number') }}" maxlength="50" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                        @error('sim_number')
-                            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
-                    <div>
-                        <label for="imei_number" class="block text-sm font-medium text-gray-700">IMEI #</label>
-                        <input type="text" name="imei_number" id="imei_number" value="{{ old('imei_number') }}" maxlength="50" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                        @error('imei_number')
-                            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
-                    <div>
-                        <label for="amount_paid_for_device" class="block text-sm font-medium text-gray-700">Amount Paid for Device ($)</label>
-                        <input type="number" name="amount_paid_for_device" id="amount_paid_for_device" step="0.01" value="{{ old('amount_paid_for_device', 0) }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required>
-                        @error('amount_paid_for_device')
-                            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
-                    <div>
                         <label for="agreement_credit_amount" class="block text-sm font-medium text-gray-700">Agreement Credit Amount ($)</label>
                         <input type="number" name="agreement_credit_amount" id="agreement_credit_amount" step="0.01" value="{{ old('agreement_credit_amount', 0) }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required>
                         @error('agreement_credit_amount')
@@ -110,7 +89,7 @@
                         @enderror
                     </div>
                     <div>
-                        <label for="optional_down_payment" class="block text-sm font-medium text-gray-700">Optional Down Payment ($)</label>
+                        <label for="optional_down_payment" class="block text-sm font-medium text-gray-700">Optional Up-front Payment ($)</label>
                         <input type="number" name="optional_down_payment" id="optional_down_payment" step="0.01" value="{{ old('optional_down_payment') }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
                         @error('optional_down_payment')
                             <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
@@ -120,13 +99,6 @@
                         <label for="deferred_payment_amount" class="block text-sm font-medium text-gray-700">Deferred Payment Amount ($)</label>
                         <input type="number" name="deferred_payment_amount" id="deferred_payment_amount" step="0.01" value="{{ old('deferred_payment_amount') }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
                         @error('deferred_payment_amount')
-                            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
-                    <div>
-                        <label for="dro_amount" class="block text-sm font-medium text-gray-700">DRO Amount ($)</label>
-                        <input type="number" name="dro_amount" id="dro_amount" step="0.01" value="{{ old('dro_amount') }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                        @error('dro_amount')
                             <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
                         @enderror
                     </div>

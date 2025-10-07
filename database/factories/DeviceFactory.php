@@ -8,13 +8,12 @@ class DeviceFactory extends Factory
 {
     protected $model = \App\Models\Device::class;
 
-    public function definition()
-    {
-        return [
-            'name' => $this->faker->randomElement(['iPhone 15', 'Galaxy S23', 'Pixel 7']),
-            'manufacturer' => $this->faker->randomElement(['Apple', 'Samsung', 'Google']),
-            'created_at' => now(),
-            'updated_at' => now(),
-        ];
-    }
+	public function definition()
+	{
+		return [
+			'manufacturer' => $this->faker->randomElement(['Apple', 'Samsung', 'Google']),
+			'model' => $this->faker->randomElement(['iPhone 15', 'Galaxy S23', 'Pixel 7']),
+			'srp' => $this->faker->randomFloat(2, 100, 2000),
+		];
+	}
 }

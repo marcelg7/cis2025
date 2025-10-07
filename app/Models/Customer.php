@@ -13,6 +13,7 @@ class Customer extends Model
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'last_fetched_at' => 'datetime',
+		'is_test' => 'boolean',
     ];	
 
     use HasFactory;
@@ -30,6 +31,7 @@ class Customer extends Model
         'is_individual',
         'customer_json',
         'last_fetched_at',
+		'is_test',
     ];	
 
     public function ivueAccounts() {

@@ -65,5 +65,15 @@ class Kernel extends HttpKernel
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
         'admin' => \App\Http\Middleware\Admin::class,
+		'role' => \App\Http\Middleware\CheckRole::class,
     ];
+	
+	/**
+     * Bootstrap the application for HTTP requests.
+     */
+    public function boot(): void
+    {
+        \Log::debug('Middleware Aliases', ['aliases' => $this->middlewareAliases]);
+        parent::boot();
+    }
 }

@@ -91,14 +91,10 @@ class ContractController extends Controller
             'contract_date' => 'required|date',
             'location' => 'required|in:zurich,exeter,grand_bend',
             'shortcode_id' => 'nullable|exists:shortcodes,id',
-            'sim_number' => 'nullable|string|max:50',
-            'imei_number' => 'nullable|string|max:50',
-            'amount_paid_for_device' => 'required|numeric|min:0',
             'agreement_credit_amount' => 'required|numeric|min:0',
             'required_upfront_payment' => 'required|numeric|min:0',
             'optional_down_payment' => 'nullable|numeric|min:0',
             'deferred_payment_amount' => 'nullable|numeric|min:0',
-            'dro_amount' => 'nullable|numeric|min:0',
             'plan_id' => 'required|exists:plans,id',
             'commitment_period_id' => 'required|exists:commitment_periods,id',
             'first_bill_date' => 'required|date',
@@ -111,38 +107,62 @@ class ContractController extends Controller
             'one_time_fees.*.cost' => 'required_with:one_time_fees.*.name|numeric|min:0',
         ]);
 
-        $subscriber = Subscriber::with('mobilityAccount.ivueAccount.customer')->findOrFail($subscriberId);
-        $shortcode = $request->shortcode_id ? Shortcode::find($request->shortcode_id) : null;
-        $deviceData = $shortcode ? collect(explode('-', $shortcode->slug))->slice(1)->toArray() : [];
+        
+		$subscriber = Subscriber::with('mobilityAccount.ivueAccount.customer')->findOrFail($subscriberId);
+        
+		$shortcode = $request->shortcode_id ? Shortcode::find($request->shortcode_id) : null;
+		Log::debug('Shortcode selection in store', [
+				'shortcode_id' => $request->shortcode_id,
+				'shortcode_found' => $shortcode ? true : false,
+				'slug' => $shortcode ? $shortcode->slug : 'none',
+				'data' => $shortcode ? $shortcode->data : 'none',
+		]);		
+		
+		$deviceData = [];
+			$price = 0;
+			if ($shortcode) {
+				$parts = explode('-', $shortcode->slug);
+				$deviceData = array_slice($parts, 1); // Slice after 'cis-'
 
-        $contract = Contract::create([
-            'subscriber_id' => $subscriberId,
-            'start_date' => $request->start_date,
-            'end_date' => $request->end_date,
-            'activity_type_id' => $request->activity_type_id,
-            'contract_date' => $request->contract_date,
-            'location' => $request->location,
-            'device_id' => null,
-            'shortcode_id' => $request->shortcode_id,
-            'manufacturer' => $deviceData[0] ?? null,
-            'model' => $deviceData[1] ?? null,
-            'version' => $deviceData[2] ?? null,
-            'device_storage' => isset($deviceData[3]) && !str_contains($deviceData[3], 'retail') ? $deviceData[3] : null,
-            'extra_info' => isset($deviceData[4]) ? $deviceData[4] : (isset($deviceData[3]) && str_contains($deviceData[3], 'retail') ? $deviceData[3] : null),
-            'device_price' => $shortcode ? (is_numeric($cleanPrice = preg_replace('/[^0-9.]/', '', $shortcode->data ?? '0')) ? (float) $cleanPrice : 0) : 0,
-            'sim_number' => $request->sim_number,
-            'imei_number' => $request->imei_number,
-            'amount_paid_for_device' => $request->amount_paid_for_device,
-            'agreement_credit_amount' => $request->agreement_credit_amount,
-            'required_upfront_payment' => $request->required_upfront_payment,
-            'optional_down_payment' => $request->optional_down_payment,
-            'deferred_payment_amount' => $request->deferred_payment_amount,
-            'dro_amount' => $request->dro_amount,
-            'plan_id' => $request->plan_id,
-            'commitment_period_id' => $request->commitment_period_id,
-            'first_bill_date' => $request->first_bill_date,
-            'status' => 'draft',
-        ]);
+				Log::debug('Parsed deviceData array', ['deviceData' => $deviceData]);
+
+				$cleanPrice = preg_replace('/[^0-9.]/', '', $shortcode->data ?? '0');
+				$price = is_numeric($cleanPrice) ? (float) $cleanPrice : 0;
+		}
+
+		$contract = Contract::create([
+				'subscriber_id' => $subscriberId,
+				'start_date' => $request->start_date,
+				'end_date' => $request->end_date,
+				'activity_type_id' => $request->activity_type_id,
+				'contract_date' => $request->contract_date,
+				'location' => $request->location,
+				'shortcode_id' => $request->shortcode_id,
+				'manufacturer' => $deviceData[0] ?? null,
+				'model' => $deviceData[1] ?? null,
+				'version' => $deviceData[2] ?? null,
+				'device_storage' => isset($deviceData[3]) && !str_contains($deviceData[3], 'retail') ? $deviceData[3] : null,
+				'extra_info' => isset($deviceData[4]) ? $deviceData[4] : (isset($deviceData[3]) && str_contains($deviceData[3], 'retail') ? $deviceData[3] : null),
+				'device_price' => $price,
+				'agreement_credit_amount' => $request->agreement_credit_amount,
+				'required_upfront_payment' => $request->required_upfront_payment,
+				'optional_down_payment' => $request->optional_down_payment,
+				'deferred_payment_amount' => $request->deferred_payment_amount,
+				'plan_id' => $request->plan_id,
+				'commitment_period_id' => $request->commitment_period_id,
+				'first_bill_date' => $request->first_bill_date,
+				'status' => 'draft',
+		]);
+		
+		Log::debug('Created contract with parsed device fields', [
+				'contract_id' => $contract->id,
+				'manufacturer' => $contract->manufacturer,
+				'model' => $contract->model,
+				'version' => $contract->version,
+				'device_storage' => $contract->device_storage,
+				'extra_info' => $contract->extra_info,
+				'device_price' => $contract->device_price,
+		]);		
 
         if ($request->has('add_ons')) {
             foreach ($request->add_ons as $addOn) {
@@ -242,14 +262,10 @@ public function update(Request $request, Contract $contract)
             'contract_date' => 'required|date',
             'location' => 'required|in:zurich,exeter,grand_bend',
             'shortcode_id' => 'nullable|exists:shortcodes,id',
-            'sim_number' => 'nullable|string|max:255',
-            'imei_number' => 'nullable|string|max:255',
-            'amount_paid_for_device' => 'nullable|numeric|min:0',
             'agreement_credit_amount' => 'nullable|numeric|min:0',
             'required_upfront_payment' => 'nullable|numeric|min:0',
             'optional_down_payment' => 'nullable|numeric|min:0',
             'deferred_payment_amount' => 'nullable|numeric|min:0',
-            'dro_amount' => 'nullable|numeric|min:0',
             'plan_id' => 'required|exists:plans,id',
             'commitment_period_id' => 'required|exists:commitment_periods,id',
             'first_bill_date' => 'required|date|after_or_equal:start_date',
@@ -263,31 +279,57 @@ public function update(Request $request, Contract $contract)
         ]);
 
         $shortcode = $request->shortcode_id ? Shortcode::find($request->shortcode_id) : null;
-        $deviceData = $shortcode ? collect(explode('-', $shortcode->slug))->slice(1)->toArray() : [];
+		Log::debug('Shortcode selection in update', [
+				'shortcode_id' => $request->shortcode_id,
+				'shortcode_found' => $shortcode ? true : false,
+				'slug' => $shortcode ? $shortcode->slug : 'none',
+				'data' => $shortcode ? $shortcode->data : 'none',
+				'old_shortcode_id' => $contract->shortcode_id,
+		]);
 
-        $contract->update([
-            'start_date' => $request->start_date,
-            'end_date' => $request->end_date,
-            'activity_type_id' => $request->activity_type_id,
-            'contract_date' => $request->contract_date,
-            'location' => $request->location,
-            'manufacturer' => $deviceData[0] ?? null,
-            'model' => $deviceData[1] ?? null,
-            'version' => $deviceData[2] ?? null,
-            'device_storage' => isset($deviceData[3]) && !str_contains($deviceData[3], 'retail') ? $deviceData[3] : null,
-            'extra_info' => isset($deviceData[4]) ? $deviceData[4] : (isset($deviceData[3]) && str_contains($deviceData[3], 'retail') ? $deviceData[3] : null),
-            'sim_number' => $request->sim_number,
-            'imei_number' => $request->imei_number,
-            'amount_paid_for_device' => $request->amount_paid_for_device,
-            'agreement_credit_amount' => $request->agreement_credit_amount,
-            'required_upfront_payment' => $request->required_upfront_payment,
-            'optional_down_payment' => $request->optional_down_payment,
-            'deferred_payment_amount' => $request->deferred_payment_amount,
-            'dro_amount' => $request->dro_amount,
-            'plan_id' => $request->plan_id,
-            'commitment_period_id' => $request->commitment_period_id,
-            'first_bill_date' => $request->first_bill_date,
-        ]);
+		$deviceData = [];
+			$price = 0;
+			if ($shortcode) {
+				$parts = explode('-', $shortcode->slug);
+				$deviceData = array_slice($parts, 1);
+
+				Log::debug('Parsed deviceData array in update', ['deviceData' => $deviceData]);
+
+				$cleanPrice = preg_replace('/[^0-9.]/', '', $shortcode->data ?? '0');
+				$price = is_numeric($cleanPrice) ? (float) $cleanPrice : 0;
+		}
+		
+		$contract->update([
+				'start_date' => $request->start_date,
+				'end_date' => $request->end_date,
+				'activity_type_id' => $request->activity_type_id,
+				'contract_date' => $request->contract_date,
+				'location' => $request->location,
+				'shortcode_id' => $request->shortcode_id,
+				'manufacturer' => $deviceData[0] ?? null,
+				'model' => $deviceData[1] ?? null,
+				'version' => $deviceData[2] ?? null,
+				'device_storage' => isset($deviceData[3]) && !str_contains($deviceData[3], 'retail') ? $deviceData[3] : null,
+				'extra_info' => isset($deviceData[4]) ? $deviceData[4] : (isset($deviceData[3]) && str_contains($deviceData[3], 'retail') ? $deviceData[3] : null),
+				'device_price' => $price,
+				'agreement_credit_amount' => $request->agreement_credit_amount,
+				'required_upfront_payment' => $request->required_upfront_payment,
+				'optional_down_payment' => $request->optional_down_payment,
+				'deferred_payment_amount' => $request->deferred_payment_amount,
+				'plan_id' => $request->plan_id,
+				'commitment_period_id' => $request->commitment_period_id,
+				'first_bill_date' => $request->first_bill_date,
+		]);
+		
+		Log::debug('Updated contract with parsed device fields', [
+				'contract_id' => $contract->id,
+				'manufacturer' => $contract->manufacturer,
+				'model' => $contract->model,
+				'version' => $contract->version,
+				'device_storage' => $contract->device_storage,
+				'extra_info' => $contract->extra_info,
+				'device_price' => $contract->device_price,
+		]);		
 
         // Update add-ons
         $contract->addOns()->delete();

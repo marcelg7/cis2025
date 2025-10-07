@@ -17,36 +17,32 @@ class Contract extends Model {
 			'activity_type_id',
 			'contract_date',
 			'location',
-			'device_id',
 			'shortcode_id',
-			'sim_number',
-			'imei_number',
+			'agreement_credit_amount',
+			'required_upfront_payment',
+			'optional_down_payment',
+			'deferred_payment_amount',
+			'plan_id',
+			'commitment_period_id',
+			'first_bill_date',
+			'status',
 			'manufacturer',
 			'model',
 			'version',
 			'device_storage',
 			'extra_info',
 			'device_price',
-			'amount_paid_for_device',
-			'agreement_credit_amount',
-			'required_upfront_payment',
-			'optional_down_payment',
-			'deferred_payment_amount',
-			'dro_amount',
-			'plan_id',
-			'commitment_period_id',
-			'first_bill_date',
 			'pdf_path',
 			'signature_path',
-			'status',
-		];
-
+    ];
+	
     // Add date casting
     protected $casts = [
         'start_date' => 'date',
         'end_date' => 'date',
         'contract_date' => 'date',
         'first_bill_date' => 'date',
+		'is_test' => 'boolean',
     ];
 
 
