@@ -399,27 +399,6 @@ public function update(Request $request, Contract $contract)
                 Log::error('Failed to store signature file', ['contract_id' => $id, 'path' => $signaturePath]);
                 return redirect()->back()->with('error', 'Failed to save signature file.');
             }
-			
-			//convert to JPEG to fix distortion issues in PDF.			
-			if ($stored) {
-				$jpgPath = str_replace('.png', '.jpg', $signaturePath);
-				$img = imagecreatefrompng(storage_path('app/public/' . $signaturePath));
-				if ($img) {
-					imagejpeg($img, storage_path('app/public/' . $jpgPath), 95); // 95% quality
-					imagedestroy($img);
-					// Delete original PNG to save space (optional)
-					Storage::disk('public')->delete($signaturePath);
-					$signaturePath = $jpgPath; // Update to JPG
-				} else {
-					Log::warning('Failed to convert PNG to JPG', ['contract_id' => $id]);
-				}
-			}
-			$contract->update([
-				'signature_path' => 'storage/' . $signaturePath,
-				'status' => 'signed',
-			]);			
-			
-			
             Log::info('Signature file stored', ['contract_id' => $id, 'path' => $signaturePath]);
             $contract->update([
                 'signature_path' => 'storage/' . $signaturePath,
@@ -533,6 +512,7 @@ public function update(Request $request, Contract $contract)
     }
 
 
+
 public function download($id)
 {
     $contract = Contract::with('addOns', 'oneTimeFees', 'subscriber.mobilityAccount.ivueAccount.customer', 'plan', 'activityType', 'commitmentPeriod')->findOrFail($id);
@@ -543,110 +523,94 @@ public function download($id)
     $totalOneTimeFeeCost = $contract->oneTimeFees->sum('cost');
     $totalFinancingCost = ($contract->required_upfront_payment ?? 0) + ($contract->optional_down_payment ?? 0) + ($contract->deferred_payment_amount ?? 0);
     $totalCost = ($contract->device_price ?? 0) + $totalAddOnCost + $totalOneTimeFeeCost + $totalFinancingCost;
-    
-    // Prepare signature base64 explicitly
-    $signatureBase64 = null;
+
+    // Prepare signature path (file:// for mPDF reliability)
     $signaturePath = $contract->signature_path ? public_path('storage/' . str_replace('storage/', '', trim($contract->signature_path))) : null;
     if ($signaturePath && file_exists($signaturePath)) {
-        try {
-            $signatureBase64 = 'data:image/png;base64,' . base64_encode(file_get_contents($signaturePath));
-        } catch (\Exception $e) {
-            Log::error('Failed to encode signature for PDF', [
-                'contract_id' => $id,
-                'signature_path' => $signaturePath,
-                'error' => $e->getMessage(),
-            ]);
-        }
+        Log::debug('Signature path for mPDF', ['path' => $signaturePath]);
     }
-        
-        // Log image file checks with permissions and dimensions
-Log::debug('Checking image paths for PDF', [
-        'contract_id' => $id,
-        'logo_path' => public_path('images/hayLogo.png'),
-        'logo_exists' => file_exists(public_path('images/hayLogo.png')),
-        'signature_path' => $signaturePath,
-        'signature_exists' => $signaturePath && file_exists($signaturePath),
-        'signature_base64_available' => !empty($signatureBase64),
-    ]);
-        
-Log::debug('Generating PDF for contract', ['contract_id' => $id, 'sections' => ['Header', 'Your Information', 'Device Details', 'Return Policy', 'Rate Plan Details', 'Minimum Monthly Charge', 'Total Monthly Charges', 'Add-ons', 'One-Time Fees', 'One-Time Charges', 'Total Cost', 'Signature']]);        
-try {
-		$pdf = Pdf::loadView('contracts.view', compact('contract', 'totalAddOnCost', 'totalOneTimeFeeCost', 'totalFinancingCost', 'totalCost', 'signatureBase64'))
-			->setPaper('a4', 'portrait')
-			->setOptions([
-				'isHtml5ParserEnabled' => true,
-				'isRemoteEnabled' => true,
-				'dpi' => 150, // Lower for enlarged images
-				'defaultFont' => 'sans-serif',
-				'memory_limit' => '512M',
-				'chroot' => base_path(),
-				'isPhpEnabled' => true,
-				'enable_html5_parser' => true, // Redundant but ensures
-				'margin_top' => 10,
-				'margin_bottom' => 10,
-				'margin_left' => 10,
-				'margin_right' => 10,
-		]);
-					
-            // Save temp file
-            $tempDir = storage_path('app/temp');
-            if (!Storage::exists('temp')) {
-                Storage::makeDirectory('temp');
-            }
-            $tempFile = storage_path('app/temp/contract_' . $id . '.pdf');
-            $pdf->save($tempFile);
-            
-            // Use FPDI to merge
-            $fpdi = new Fpdi();
-            $pageCount = $fpdi->setSourceFile($tempFile);
-            for ($i = 1; $i <= $pageCount; $i++) {
-                $fpdi->AddPage();
-                $tplIdx = $fpdi->importPage($i);
-                $fpdi->useTemplate($tplIdx);
-            }
-            
-            // Merge terms of service PDFs
-            $termsFiles = [
-                public_path('pdfs/OURAGREEMENTpage.pdf'),
-                public_path('pdfs/HayCommTermsOfServicerev2020.pdf'),
-            ];
-            foreach ($termsFiles as $file) {
-                if (file_exists($file)) {
-                    Log::debug('Merging terms file', ['file' => $file, 'exists' => file_exists($file)]);
-                    $pageCount = $fpdi->setSourceFile($file);
-                    for ($i = 1; $i <= $pageCount; $i++) {
-                        $fpdi->AddPage();
-                        $tplIdx = $fpdi->importPage($i);
-                        $fpdi->useTemplate($tplIdx);
-                    }
-                } else {
-                    Log::warning('Terms file not found', ['file' => $file]);
+
+    Log::debug('Generating PDF for contract', ['contract_id' => $id, 'sections' => ['Header', 'Your Information', 'Device Details', 'Return Policy', 'Rate Plan Details', 'Minimum Monthly Charge', 'Total Monthly Charges', 'Add-ons', 'One-Time Fees', 'One-Time Charges', 'Total Cost', 'Signature']]);
+
+    try {
+        // Render Blade to HTML
+        $html = view('contracts.view', compact('contract', 'totalAddOnCost', 'totalOneTimeFeeCost', 'totalFinancingCost', 'totalCost'))->render();
+
+        // Create mPDF instance
+        $mpdf = new \Mpdf\Mpdf([
+            'mode' => 'utf-8',
+            'format' => 'A4',
+            'margin_top' => 10,
+            'margin_bottom' => 10,
+            'margin_left' => 10,
+            'margin_right' => 10,
+            'dpi' => 96, // Match browser for sizing
+            'img_dpi' => 96, // Explicit for images
+            'default_font' => 'sans-serif',
+            'tempDir' => storage_path('app/temp'), // Ensure writable
+        ]);
+
+        $mpdf->WriteHTML($html);
+
+        // Save temp mPDF output
+        $tempDir = storage_path('app/temp');
+        if (!file_exists($tempDir)) {
+            mkdir($tempDir, 0755, true);
+        }
+        $tempFile = $tempDir . '/contract_' . $id . '.pdf';
+        $mpdf->Output($tempFile, \Mpdf\Output\Destination::FILE);
+
+        // Use FPDI to merge
+        $fpdi = new \setasign\Fpdi\Fpdi();
+        $pageCount = $fpdi->setSourceFile($tempFile);
+        for ($i = 1; $i <= $pageCount; $i++) {
+            $fpdi->AddPage();
+            $tplIdx = $fpdi->importPage($i);
+            $fpdi->useTemplate($tplIdx);
+        }
+
+        // Merge terms of service PDFs
+        $termsFiles = [
+            public_path('pdfs/OURAGREEMENTpage.pdf'),
+            public_path('pdfs/HayCommTermsOfServicerev2020.pdf'),
+        ];
+        foreach ($termsFiles as $file) {
+            if (file_exists($file)) {
+                Log::debug('Merging terms file', ['file' => $file]);
+                $pageCount = $fpdi->setSourceFile($file);
+                for ($i = 1; $i <= $pageCount; $i++) {
+                    $fpdi->AddPage();
+                    $tplIdx = $fpdi->importPage($i);
+                    $fpdi->useTemplate($tplIdx);
                 }
+            } else {
+                Log::warning('Terms file not found', ['file' => $file]);
             }
-            
-            // Clean up temp
-            Storage::delete('temp/contract_' . $id . '.pdf');
-            
-            // Get merged PDF content and save it
-            $mergedPdfContent = $fpdi->Output('S');
-            $pdfPath = "contracts/contract_{$contract->id}.pdf";
-            Storage::disk('public')->put($pdfPath, $mergedPdfContent);
-            $contract->update(['pdf_path' => $pdfPath]);
-            
-            // Stream download
-            $pdfFileName = ($contract->subscriber->first_name . '_' . $contract->subscriber->last_name . '_' . $contract->id . '.pdf');
-            return response()->streamDownload(function () use ($mergedPdfContent) {
-                echo $mergedPdfContent;
-            }, $pdfFileName, ['Content-Type' => 'application/pdf']);
-        } catch (\Exception $e) {
-            Log::error('PDF generation failed', [
-                'contract_id' => $id,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-            return redirect()->back()->with('error', 'Failed to generate PDF: ' . $e->getMessage());
         }
+
+        // Clean up temp
+        unlink($tempFile);
+
+        // Get merged PDF content
+        $mergedPdfContent = $fpdi->Output('S');
+        $pdfPath = "contracts/contract_{$contract->id}.pdf";
+        Storage::disk('public')->put($pdfPath, $mergedPdfContent);
+        $contract->update(['pdf_path' => $pdfPath]);
+
+        // Stream download
+        $pdfFileName = ($contract->subscriber->first_name . '_' . $contract->subscriber->last_name . '_' . $contract->id . '.pdf');
+        return response()->streamDownload(function () use ($mergedPdfContent) {
+            echo $mergedPdfContent;
+        }, $pdfFileName, ['Content-Type' => 'application/pdf']);
+    } catch (\Exception $e) {
+        Log::error('PDF generation failed', [
+            'contract_id' => $id,
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString(),
+        ]);
+        return redirect()->back()->with('error', 'Failed to generate PDF: ' . $e->getMessage());
     }
+}
 
 
     public function view($id): View
