@@ -19,6 +19,9 @@ class ContractFactory extends Factory
             'start_date' => $startDate,
             'contract_date' => $startDate,
             'first_bill_date' => $firstBillDate,
+			'activity_type_id' => $this->faker->randomElement(['1', '2', '3', '4']),
+			'shortcode_id' => $this->faker->randomElement(['11', '22', '33', '44', '55', '66']),
+			'commitment_period_id' => $this->faker->randomElement(['1', '2']),
             'end_date' => $endDate,
             'location' => $this->faker->randomElement(['zurich', 'exeter', 'grand_bend']),
             'agreement_credit_amount' => $this->faker->randomFloat(2, 0, 200), // e.g., 0.00 to 200.00
@@ -30,7 +33,6 @@ class ContractFactory extends Factory
             'version' => $this->faker->randomElement(['15', 'S23', '7']),
             'device_storage' => $this->faker->randomElement(['128GB', '256GB', '512GB']),
             'extra_info' => $this->faker->randomElement(['Retail', 'Refurbished', null]),
-            'imei_number' => $this->faker->optional()->numerify('###############'),
             'device_price' => $this->faker->randomFloat(2, 200, 1000), // e.g., 200.00 to 1000.00
             'required_upfront_payment' => $this->faker->optional()->randomFloat(2, 0, 300),
             'optional_down_payment' => $this->faker->optional()->randomFloat(2, 0, 200),

@@ -109,8 +109,9 @@ class ContractController extends Controller
 
         
 		$subscriber = Subscriber::with('mobilityAccount.ivueAccount.customer')->findOrFail($subscriberId);
-        
+       
 		$shortcode = $request->shortcode_id ? Shortcode::find($request->shortcode_id) : null;
+		
 		Log::debug('Shortcode selection in store', [
 				'shortcode_id' => $request->shortcode_id,
 				'shortcode_found' => $shortcode ? true : false,
@@ -118,18 +119,20 @@ class ContractController extends Controller
 				'data' => $shortcode ? $shortcode->data : 'none',
 		]);		
 		
+
 		$deviceData = [];
-			$price = 0;
-			if ($shortcode) {
-				$parts = explode('-', $shortcode->slug);
-				$deviceData = array_slice($parts, 1); // Slice after 'cis-'
+		$price = 0;
+		if ($shortcode) {
+			$parts = explode('-', $shortcode->slug);
+			$deviceData = array_slice($parts, 1); // Slice after 'cis-'
 
-				Log::debug('Parsed deviceData array', ['deviceData' => $deviceData]);
+			Log::debug('Parsed deviceData array', ['deviceData' => $deviceData]);
 
-				$cleanPrice = preg_replace('/[^0-9.]/', '', $shortcode->data ?? '0');
-				$price = is_numeric($cleanPrice) ? (float) $cleanPrice : 0;
+			$cleanPrice = preg_replace('/[^0-9.]/', '', $shortcode->data ?? '0');
+			$price = is_numeric($cleanPrice) ? (float) $cleanPrice : 0;
 		}
-
+		
+		
 		$contract = Contract::create([
 				'subscriber_id' => $subscriberId,
 				'start_date' => $request->start_date,
@@ -288,16 +291,18 @@ public function update(Request $request, Contract $contract)
 		]);
 
 		$deviceData = [];
-			$price = 0;
-			if ($shortcode) {
-				$parts = explode('-', $shortcode->slug);
-				$deviceData = array_slice($parts, 1);
 
-				Log::debug('Parsed deviceData array in update', ['deviceData' => $deviceData]);
+		$price = 0;
+		if ($shortcode) {
+			$parts = explode('-', $shortcode->slug);
+			$deviceData = array_slice($parts, 1);
 
-				$cleanPrice = preg_replace('/[^0-9.]/', '', $shortcode->data ?? '0');
-				$price = is_numeric($cleanPrice) ? (float) $cleanPrice : 0;
+			Log::debug('Parsed deviceData array in update', ['deviceData' => $deviceData]);
+
+			$cleanPrice = preg_replace('/[^0-9.]/', '', $shortcode->data ?? '0');
+			$price = is_numeric($cleanPrice) ? (float) $cleanPrice : 0;
 		}
+		
 		
 		$contract->update([
 				'start_date' => $request->start_date,

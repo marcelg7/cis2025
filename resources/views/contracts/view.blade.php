@@ -260,7 +260,6 @@
                             </div>
                         </div>
                         <div>
-                            <h4 class="text-lg font-medium text-gray-900">&nbsp;</h4>
                             <div class="mt-2 text-sm text-gray-600">
                                 <p><strong>Monthly Rate Plan Charge:</strong> ${{ number_format($contract->plan->price, 2) }}</p>
                             </div>
@@ -357,7 +356,6 @@
                     <table width="100%" style="table-layout: fixed; font-size: 9pt; color: #333;">
                         <tr>
                             <td width="50%" style="padding-right: 0.5rem;">
-                                <p><strong>Device Charge:</strong> ${{ number_format($deviceAmount, 2) }}</p>
                                 <p><strong>Up-front Payment Requirement:</strong> ${{ number_format($contract->required_upfront_payment ?? 0, 2) }}</p>
                                 <p><strong>Optional Up-front Payment:</strong> ${{ number_format($contract->optional_down_payment ?? 0, 2) }}</p>
                             </td>
@@ -382,7 +380,6 @@
                 @else
                     <div class="mt-2 grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div class="text-sm text-gray-600">
-                            <p><strong>Device Charge:</strong> ${{ number_format($deviceAmount, 2) }}</p>
                             <p><strong>Up-front Payment Requirement:</strong> ${{ number_format($contract->required_upfront_payment ?? 0, 2) }}</p>
                             <p><strong>Optional Up-front Payment:</strong> ${{ number_format($contract->optional_down_payment ?? 0, 2) }}</p>
                         </div>
