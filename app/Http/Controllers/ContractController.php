@@ -399,6 +399,27 @@ public function update(Request $request, Contract $contract)
                 Log::error('Failed to store signature file', ['contract_id' => $id, 'path' => $signaturePath]);
                 return redirect()->back()->with('error', 'Failed to save signature file.');
             }
+			
+			//convert to JPEG to fix distortion issues in PDF.			
+			if ($stored) {
+				$jpgPath = str_replace('.png', '.jpg', $signaturePath);
+				$img = imagecreatefrompng(storage_path('app/public/' . $signaturePath));
+				if ($img) {
+					imagejpeg($img, storage_path('app/public/' . $jpgPath), 95); // 95% quality
+					imagedestroy($img);
+					// Delete original PNG to save space (optional)
+					Storage::disk('public')->delete($signaturePath);
+					$signaturePath = $jpgPath; // Update to JPG
+				} else {
+					Log::warning('Failed to convert PNG to JPG', ['contract_id' => $id]);
+				}
+			}
+			$contract->update([
+				'signature_path' => 'storage/' . $signaturePath,
+				'status' => 'signed',
+			]);			
+			
+			
             Log::info('Signature file stored', ['contract_id' => $id, 'path' => $signaturePath]);
             $contract->update([
                 'signature_path' => 'storage/' . $signaturePath,
@@ -512,76 +533,61 @@ public function update(Request $request, Contract $contract)
     }
 
 
-     public function download($id)
-    {
-        $contract = Contract::with('addOns', 'oneTimeFees', 'subscriber.mobilityAccount.ivueAccount.customer', 'plan', 'activityType', 'commitmentPeriod')->findOrFail($id);
-        if ($contract->status !== 'finalized') {
-            return redirect()->back()->with('error', 'Contract must be finalized to download.');
+public function download($id)
+{
+    $contract = Contract::with('addOns', 'oneTimeFees', 'subscriber.mobilityAccount.ivueAccount.customer', 'plan', 'activityType', 'commitmentPeriod')->findOrFail($id);
+    if ($contract->status !== 'finalized') {
+        return redirect()->back()->with('error', 'Contract must be finalized to download.');
+    }
+    $totalAddOnCost = $contract->addOns->sum('cost');
+    $totalOneTimeFeeCost = $contract->oneTimeFees->sum('cost');
+    $totalFinancingCost = ($contract->required_upfront_payment ?? 0) + ($contract->optional_down_payment ?? 0) + ($contract->deferred_payment_amount ?? 0);
+    $totalCost = ($contract->device_price ?? 0) + $totalAddOnCost + $totalOneTimeFeeCost + $totalFinancingCost;
+    
+    // Prepare signature base64 explicitly
+    $signatureBase64 = null;
+    $signaturePath = $contract->signature_path ? public_path('storage/' . str_replace('storage/', '', trim($contract->signature_path))) : null;
+    if ($signaturePath && file_exists($signaturePath)) {
+        try {
+            $signatureBase64 = 'data:image/png;base64,' . base64_encode(file_get_contents($signaturePath));
+        } catch (\Exception $e) {
+            Log::error('Failed to encode signature for PDF', [
+                'contract_id' => $id,
+                'signature_path' => $signaturePath,
+                'error' => $e->getMessage(),
+            ]);
         }
-        $totalAddOnCost = $contract->addOns->sum('cost');
-        $totalOneTimeFeeCost = $contract->oneTimeFees->sum('cost');
-        $totalFinancingCost = ($contract->required_upfront_payment ?? 0) + ($contract->optional_down_payment ?? 0) + ($contract->deferred_payment_amount ?? 0);
-        $totalCost = ($contract->device_price ?? 0) + $totalAddOnCost + $totalOneTimeFeeCost + $totalFinancingCost;
-        
-        // Prepare signature as base64 for fallback
-        $signaturePath = $contract->signature_path ? public_path('storage/' . str_replace('storage/', '', trim($contract->signature_path))) : null;
-        $signatureBase64 = null;
-        $signatureDimensions = null;
-        if ($signaturePath && file_exists($signaturePath)) {
-            try {
-                $signatureBase64 = 'data:image/png;base64,' . base64_encode(file_get_contents($signaturePath));
-                // Get native dimensions
-                list($nativeWidth, $nativeHeight) = getimagesize($signaturePath);
-                $signatureDimensions = ['width' => $nativeWidth, 'height' => $nativeHeight];
-            } catch (\Exception $e) {
-                Log::error('Failed to encode signature or get dimensions', [
-                    'contract_id' => $id,
-                    'signature_path' => $signaturePath,
-                    'error' => $e->getMessage(),
-                ]);
-            }
-        }
+    }
         
         // Log image file checks with permissions and dimensions
-        $logoPath = public_path('images/hayLogo.png');
-        Log::debug('Checking image paths for PDF', [
-            'contract_id' => $id,
-            'logo_path' => $logoPath,
-            'logo_exists' => file_exists($logoPath),
-            'logo_readable' => file_exists($logoPath) ? is_readable($logoPath) : false,
-            'logo_permissions' => file_exists($logoPath) ? substr(sprintf('%o', fileperms($logoPath)), -4) : null,
-            'logo_file_size' => file_exists($logoPath) ? filesize($logoPath) : null,
-            'signature_db_path' => $contract->signature_path,
-            'signature_path' => $signaturePath,
-            'signature_exists' => $signaturePath && file_exists($signaturePath),
-            'signature_readable' => $signaturePath && file_exists($signaturePath) ? is_readable($signaturePath) : false,
-            'signature_permissions' => $signaturePath && file_exists($signaturePath) ? substr(sprintf('%o', fileperms($signaturePath)), -4) : null,
-            'signature_file_size' => $signaturePath && file_exists($signaturePath) ? filesize($signaturePath) : null,
-            'signature_dimensions' => $signatureDimensions,
-            'signature_base64_available' => !empty($signatureBase64),
-        ]);
+Log::debug('Checking image paths for PDF', [
+        'contract_id' => $id,
+        'logo_path' => public_path('images/hayLogo.png'),
+        'logo_exists' => file_exists(public_path('images/hayLogo.png')),
+        'signature_path' => $signaturePath,
+        'signature_exists' => $signaturePath && file_exists($signaturePath),
+        'signature_base64_available' => !empty($signatureBase64),
+    ]);
         
-        Log::debug('Generating PDF for contract', ['contract_id' => $id, 'sections' => ['Header', 'Your Information', 'Device Details', 'Return Policy', 'Rate Plan Details', 'Minimum Monthly Charge', 'Total Monthly Charges', 'Add-ons', 'One-Time Fees', 'One-Time Charges', 'Total Cost', 'Signature']]);
-        
-        try {
-            // Generate the main PDF with minimal margins
-            $pdf = Pdf::loadView('contracts.view', compact('contract', 'totalAddOnCost', 'totalOneTimeFeeCost', 'totalFinancingCost', 'totalCost', 'signatureBase64'))
-                ->setPaper('a4', 'portrait')
-                ->setOptions([
-                    'isHtml5ParserEnabled' => true,
-                    'isRemoteEnabled' => false,
-                    'dpi' => 300, // Increased DPI for better image quality
-                    'defaultFont' => 'helvetica',
-                    'memory_limit' => '512M',
-                    'chroot' => public_path(),
-                    'isPhpEnabled' => true,
-                    'margin_top' => 2,
-                    'margin_bottom' => 2,
-                    'margin_left' => 2,
-                    'margin_right' => 2,
-                    'debug' => true,
-                ]);
-            
+Log::debug('Generating PDF for contract', ['contract_id' => $id, 'sections' => ['Header', 'Your Information', 'Device Details', 'Return Policy', 'Rate Plan Details', 'Minimum Monthly Charge', 'Total Monthly Charges', 'Add-ons', 'One-Time Fees', 'One-Time Charges', 'Total Cost', 'Signature']]);        
+try {
+		$pdf = Pdf::loadView('contracts.view', compact('contract', 'totalAddOnCost', 'totalOneTimeFeeCost', 'totalFinancingCost', 'totalCost', 'signatureBase64'))
+			->setPaper('a4', 'portrait')
+			->setOptions([
+				'isHtml5ParserEnabled' => true,
+				'isRemoteEnabled' => true,
+				'dpi' => 150, // Lower for enlarged images
+				'defaultFont' => 'sans-serif',
+				'memory_limit' => '512M',
+				'chroot' => base_path(),
+				'isPhpEnabled' => true,
+				'enable_html5_parser' => true, // Redundant but ensures
+				'margin_top' => 10,
+				'margin_bottom' => 10,
+				'margin_left' => 10,
+				'margin_right' => 10,
+		]);
+					
             // Save temp file
             $tempDir = storage_path('app/temp');
             if (!Storage::exists('temp')) {

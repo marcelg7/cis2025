@@ -52,7 +52,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/contracts/{contract}/finalize', [ContractController::class, 'finalize'])->name('contracts.finalize');
     Route::post('/contracts/{contract}/revision', [ContractController::class, 'createRevision'])->name('contracts.revision');
     Route::get('/contracts/{contract}/download', [ContractController::class, 'download'])->name('contracts.download');
-    Route::get('/contracts/{contract}/email', [ContractController::class, 'email'])->name('contracts.email');
+    Route::post('/contracts/{contract}/email', [ContractController::class, 'email'])->name('contracts.email');
     Route::get('/contracts/{contract}/ftp', [ContractController::class, 'ftp'])->name('contracts.ftp');
 
     // Admin-Only Routes
