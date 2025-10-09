@@ -2,7 +2,6 @@
     $isPdf = request()->is('contracts/*/download') || request()->is('contracts/*/download/*');
     $layout = $isPdf ? 'layouts.pdf' : 'layouts.app';
     \Illuminate\Support\Facades\Log::debug('View layout selection', ['isPdf' => $isPdf, 'layout' => $layout, 'path' => request()->path()]);
-
     // Calculate financial variables at the top to ensure availability
     $deviceAmount = ($contract->device_price ?? 0) - ($contract->agreement_credit_amount ?? 0);
     $totalFinancedAmount = $deviceAmount - ($contract->required_upfront_payment ?? 0) - ($contract->optional_down_payment ?? 0);
@@ -12,6 +11,22 @@
 @endphp
 @extends($layout)
 @section('content')
+	@if ($isPdf)
+		<style>
+			.signature-wrapper { 
+				width: 150mm; 
+				height: auto; 
+			}
+			.signature-wrapper img { 
+				width: 100%; 
+				height: auto;  /* Remove !important */
+				max-width: none; 
+				image-rendering: optimizeQuality; 
+				object-fit: contain;
+				display: block;
+			}
+		</style>
+	@endif
     @if (!$isPdf)
         <style>
             @media print {
@@ -411,57 +426,52 @@
             </div>
             <hr class="border-gray-200" style="{{ $isPdf ? 'margin: 0.5rem 0;' : '' }}">
             <!-- Signature -->
-            @if ($contract->signature_path)
-                @php
-                    $signaturePath = trim($contract->signature_path);
-                    $checkPath = str_replace('storage/', '', $signaturePath);
-                    $signatureFullPath = $isPdf ? public_path('storage/' . $checkPath) : '/storage/' . $checkPath;
-                    $signatureExists = $isPdf ? file_exists($signatureFullPath) : Storage::disk('public')->exists($checkPath);
-                    $signatureBase64Used = $isPdf && isset($signatureBase64) && !empty($signatureBase64);
-                    $signatureStyle = $isPdf ? 'min-width: 300px; max-width: 500px; min-height: 100px; height: auto; margin-top: 0.25rem; object-fit: contain; image-rendering: optimizeQuality;' : '';
-                    if ($signatureExists && $isPdf) {
-                        try {
-                            list($nativeWidth, $nativeHeight) = getimagesize($signatureFullPath);
-                            if ($nativeWidth > 0 && $nativeHeight > 0) {
-                                $targetWidth = 500;
-                                $targetHeight = ($nativeHeight / $nativeWidth) * $targetWidth;
-                                $signatureStyle = "width: {$targetWidth}px; height: {$targetHeight}px; margin-top: 0.25rem; object-fit: contain; image-rendering: optimizeQuality;";
-                            }
-                        } catch (\Exception $e) {
-                            \Illuminate\Support\Facades\Log::error('Failed to get signature dimensions', [
-                                'contract_id' => $contract->id,
-                                'signature_path' => $signatureFullPath,
-                                'error' => $e->getMessage(),
-                            ]);
-                        }
-                    }
-                    \Illuminate\Support\Facades\Log::debug('Signature path check in view', [
-                        'contract_id' => $contract->id,
-                        'signature_path' => $signaturePath,
-                        'check_path' => $checkPath,
-                        'signature_full_path' => $signatureFullPath,
-                        'signature_exists' => $signatureExists,
-                        'signature_readable' => $isPdf && $signatureExists ? is_readable($signatureFullPath) : true,
-                        'signature_permissions' => $isPdf && $signatureExists ? substr(sprintf('%o', fileperms($signatureFullPath)), -4) : null,
-                        'signature_file_size' => $isPdf && $signatureExists ? filesize($signatureFullPath) : null,
-                        'signature_base64_available' => $signatureBase64Used,
-                        'signature_style' => $signatureStyle,
-                    ]);
-                @endphp
-                <div class="px-4 py-3 sm:px-4" style="{{ $isPdf ? 'padding: 0.5rem;' : '' }}">
-                    <h4 class="text-md font-medium text-gray-900" style="{{ $isPdf ? 'font-size: 12pt; margin-bottom: 0.25rem;' : '' }}">Signature</h4>
-                    @if ($signatureExists)
-                        @if ($isPdf && $signatureBase64Used)
-                            <img src="{{ $signatureBase64 }}" alt="Signature" class="mt-2" style="{{ $signatureStyle }}">
-                        @else
-                            <img src="{{ $signatureFullPath }}" alt="Signature" class="mt-2" style="{{ $signatureStyle }}">
-                        @endif
-                    @else
-                        <p class="text-sm text-red-600">Signature file not found at {{ $checkPath }}</p>
-                    @endif
-                </div>
-                <hr class="border-gray-200" style="{{ $isPdf ? 'margin: 0.5rem 0;' : '' }}">
-            @endif
+@if ($contract->signature_path)
+    @php
+        $signaturePath = trim($contract->signature_path);
+        $checkPath = str_replace('storage/', '', $signaturePath);
+        $signatureFullPath = storage_path('app/public/' . $checkPath);
+        $signatureExists = file_exists($signatureFullPath);
+        $signatureBase64 = null;
+        $signatureSrc = null;
+        
+        if ($signatureExists) {
+            try {
+                $signatureData = file_get_contents($signatureFullPath);
+                $signatureBase64 = 'data:image/png;base64,' . base64_encode($signatureData);
+                
+                // Use base64 for BOTH PDF and HTML for consistency
+                $signatureSrc = $signatureBase64;
+                
+            } catch (\Exception $e) {
+                Log::error('Failed to process signature', [
+                    'contract_id' => $contract->id, 
+                    'error' => $e->getMessage()
+                ]);
+            }
+        }
+        
+        Log::debug('Signature path check in view', [
+            'contract_id' => $contract->id,
+            'signature_exists' => $signatureExists,
+            'signature_base64_available' => !empty($signatureBase64),
+        ]);
+    @endphp
+    
+    <div class="px-4 py-3 sm:px-4" style="{{ $isPdf ? 'padding: 0.5rem;' : '' }}">
+        <h4 class="text-md font-medium text-gray-900" style="{{ $isPdf ? 'font-size: 12pt; margin-bottom: 0.25rem;' : '' }}">Signature</h4>
+        @if ($signatureExists && !empty($signatureSrc))
+            <div class="signature-wrapper">
+                <img src="{{ $signatureSrc }}" alt="Signature" style="{{ $isPdf ? 'max-height: 60mm;' : '' }}">
+            </div>
+        @elseif (!$isPdf)
+            <p class="text-sm text-red-600">Signature file not found at {{ $checkPath }}</p>
+        @else
+            <p style="font-size: 9pt; color: #ff0000;">Signature not available</p>
+        @endif
+    </div>
+    <hr class="border-gray-200" style="{{ $isPdf ? 'margin: 0.5rem 0;' : '' }}">
+@endif
             <!-- Buttons -->
             @if (!$isPdf)
                 <div class="px-4 py-5 sm:px-6 flex items-center space-x-4 no-print">

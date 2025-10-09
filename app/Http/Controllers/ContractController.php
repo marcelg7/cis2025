@@ -1,7 +1,5 @@
 <?php
-
 namespace App\Http\Controllers;
-
 use App\Models\Subscriber;
 use App\Models\Shortcode;
 use App\Models\Plan;
@@ -48,7 +46,6 @@ class ContractController extends Controller
         $contracts = $query->latest()->paginate(10)->appends($request->query());
         return view('contracts.index', compact('contracts'));
     }
-
     public function create($subscriberId): View
     {
         $subscriber = Subscriber::with('mobilityAccount.ivueAccount.customer')->findOrFail($subscriberId);
@@ -81,7 +78,6 @@ class ContractController extends Controller
         $defaultFirstBillDate = now()->day >= 11 ? now()->addMonth()->startOfMonth()->addDays(10) : now()->startOfMonth()->addDays(10);
         return view('contracts.create', compact('subscriber', 'shortcodes', 'plans', 'activityTypes', 'commitmentPeriods', 'defaultFirstBillDate'));
     }
-
     public function store(Request $request, $subscriberId)
     {
         $request->validate([
@@ -106,67 +102,55 @@ class ContractController extends Controller
             'one_time_fees.*.name' => 'required_with:one_time_fees.*.cost|string|max:100',
             'one_time_fees.*.cost' => 'required_with:one_time_fees.*.name|numeric|min:0',
         ]);
-
-        
-		$subscriber = Subscriber::with('mobilityAccount.ivueAccount.customer')->findOrFail($subscriberId);
-       
-		$shortcode = $request->shortcode_id ? Shortcode::find($request->shortcode_id) : null;
-		
-		Log::debug('Shortcode selection in store', [
-				'shortcode_id' => $request->shortcode_id,
-				'shortcode_found' => $shortcode ? true : false,
-				'slug' => $shortcode ? $shortcode->slug : 'none',
-				'data' => $shortcode ? $shortcode->data : 'none',
-		]);		
-		
-
-		$deviceData = [];
-		$price = 0;
-		if ($shortcode) {
-			$parts = explode('-', $shortcode->slug);
-			$deviceData = array_slice($parts, 1); // Slice after 'cis-'
-
-			Log::debug('Parsed deviceData array', ['deviceData' => $deviceData]);
-
-			$cleanPrice = preg_replace('/[^0-9.]/', '', $shortcode->data ?? '0');
-			$price = is_numeric($cleanPrice) ? (float) $cleanPrice : 0;
-		}
-		
-		
-		$contract = Contract::create([
-				'subscriber_id' => $subscriberId,
-				'start_date' => $request->start_date,
-				'end_date' => $request->end_date,
-				'activity_type_id' => $request->activity_type_id,
-				'contract_date' => $request->contract_date,
-				'location' => $request->location,
-				'shortcode_id' => $request->shortcode_id,
-				'manufacturer' => $deviceData[0] ?? null,
-				'model' => $deviceData[1] ?? null,
-				'version' => $deviceData[2] ?? null,
-				'device_storage' => isset($deviceData[3]) && !str_contains($deviceData[3], 'retail') ? $deviceData[3] : null,
-				'extra_info' => isset($deviceData[4]) ? $deviceData[4] : (isset($deviceData[3]) && str_contains($deviceData[3], 'retail') ? $deviceData[3] : null),
-				'device_price' => $price,
-				'agreement_credit_amount' => $request->agreement_credit_amount,
-				'required_upfront_payment' => $request->required_upfront_payment,
-				'optional_down_payment' => $request->optional_down_payment,
-				'deferred_payment_amount' => $request->deferred_payment_amount,
-				'plan_id' => $request->plan_id,
-				'commitment_period_id' => $request->commitment_period_id,
-				'first_bill_date' => $request->first_bill_date,
-				'status' => 'draft',
-		]);
-		
-		Log::debug('Created contract with parsed device fields', [
-				'contract_id' => $contract->id,
-				'manufacturer' => $contract->manufacturer,
-				'model' => $contract->model,
-				'version' => $contract->version,
-				'device_storage' => $contract->device_storage,
-				'extra_info' => $contract->extra_info,
-				'device_price' => $contract->device_price,
-		]);		
-
+        $subscriber = Subscriber::with('mobilityAccount.ivueAccount.customer')->findOrFail($subscriberId);
+        $shortcode = $request->shortcode_id ? Shortcode::find($request->shortcode_id) : null;
+        Log::debug('Shortcode selection in store', [
+            'shortcode_id' => $request->shortcode_id,
+            'shortcode_found' => $shortcode ? true : false,
+            'slug' => $shortcode ? $shortcode->slug : 'none',
+            'data' => $shortcode ? $shortcode->data : 'none',
+        ]);
+        $deviceData = [];
+        $price = 0;
+        if ($shortcode) {
+            $parts = explode('-', $shortcode->slug);
+            $deviceData = array_slice($parts, 1); // Slice after 'cis-'
+            Log::debug('Parsed deviceData array', ['deviceData' => $deviceData]);
+            $cleanPrice = preg_replace('/[^0-9.]/', '', $shortcode->data ?? '0');
+            $price = is_numeric($cleanPrice) ? (float) $cleanPrice : 0;
+        }
+        $contract = Contract::create([
+            'subscriber_id' => $subscriberId,
+            'start_date' => $request->start_date,
+            'end_date' => $request->end_date,
+            'activity_type_id' => $request->activity_type_id,
+            'contract_date' => $request->contract_date,
+            'location' => $request->location,
+            'shortcode_id' => $request->shortcode_id,
+            'manufacturer' => $deviceData[0] ?? null,
+            'model' => $deviceData[1] ?? null,
+            'version' => $deviceData[2] ?? null,
+            'device_storage' => isset($deviceData[3]) && !str_contains($deviceData[3], 'retail') ? $deviceData[3] : null,
+            'extra_info' => isset($deviceData[4]) ? $deviceData[4] : (isset($deviceData[3]) && str_contains($deviceData[3], 'retail') ? $deviceData[3] : null),
+            'device_price' => $price,
+            'agreement_credit_amount' => $request->agreement_credit_amount,
+            'required_upfront_payment' => $request->required_upfront_payment,
+            'optional_down_payment' => $request->optional_down_payment,
+            'deferred_payment_amount' => $request->deferred_payment_amount,
+            'plan_id' => $request->plan_id,
+            'commitment_period_id' => $request->commitment_period_id,
+            'first_bill_date' => $request->first_bill_date,
+            'status' => 'draft',
+        ]);
+        Log::debug('Created contract with parsed device fields', [
+            'contract_id' => $contract->id,
+            'manufacturer' => $contract->manufacturer,
+            'model' => $contract->model,
+            'version' => $contract->version,
+            'device_storage' => $contract->device_storage,
+            'extra_info' => $contract->extra_info,
+            'device_price' => $contract->device_price,
+        ]);
         if ($request->has('add_ons')) {
             foreach ($request->add_ons as $addOn) {
                 ContractAddOn::create([
@@ -177,7 +161,6 @@ class ContractController extends Controller
                 ]);
             }
         }
-
         if ($request->has('one_time_fees')) {
             foreach ($request->one_time_fees as $fee) {
                 ContractOneTimeFee::create([
@@ -187,15 +170,12 @@ class ContractController extends Controller
                 ]);
             }
         }
-
         $contract->load('addOns', 'oneTimeFees', 'subscriber.mobilityAccount.ivueAccount.customer', 'plan', 'activityType', 'commitmentPeriod');
         $totalAddOnCost = $contract->addOns->sum('cost');
         $totalOneTimeFeeCost = $contract->oneTimeFees->sum('cost');
         $totalFinancingCost = ($contract->required_upfront_payment ?? 0) + ($contract->optional_down_payment ?? 0) + ($contract->deferred_payment_amount ?? 0);
         $totalCost = ($contract->device_price ?? 0) + $totalAddOnCost + $totalOneTimeFeeCost + $totalFinancingCost;
-
         Log::debug('Generating PDF for contract', ['contract_id' => $contract->id, 'sections' => ['Header', 'Your Information', 'Device Details', 'Return Policy', 'Rate Plan Details', 'Minimum Monthly Charge', 'Total Monthly Charges', 'Add-ons', 'One-Time Fees', 'One-Time Charges', 'Total Cost', 'Signature']]);
-
         $pdf = Pdf::loadView('contracts.view', compact('contract', 'totalAddOnCost', 'totalOneTimeFeeCost', 'totalFinancingCost', 'totalCost'))
             ->setPaper('a4', 'portrait')
             ->setOptions([
@@ -211,15 +191,12 @@ class ContractController extends Controller
                 'margin_left' => 10,
                 'margin_right' => 10,
             ]);
-
         $pdfPath = "contracts/contract_{$contract->id}.pdf";
         Storage::disk('public')->put($pdfPath, $pdf->output());
         $contract->update(['pdf_path' => $pdfPath]);
-
         $customerId = $contract->subscriber->mobilityAccount->ivueAccount->customer_id;
         return redirect()->route('customers.show', $customerId)->with('success', 'Contract created successfully.');
     }
-
     public function edit($id): View
     {
         $contract = Contract::with('subscriber.mobilityAccount.ivueAccount.customer')->findOrFail($id);
@@ -255,7 +232,6 @@ class ContractController extends Controller
         $defaultFirstBillDate = now()->day >= 11 ? now()->addMonth()->startOfMonth()->addDays(10) : now()->startOfMonth()->addDays(10);
         return view('contracts.edit', compact('contract', 'shortcodes', 'plans', 'activityTypes', 'commitmentPeriods', 'defaultFirstBillDate'));
     }
-
 public function update(Request $request, Contract $contract)
     {
         $validated = $request->validate([
@@ -280,62 +256,53 @@ public function update(Request $request, Contract $contract)
             'one_time_fees.*.name' => 'required|string|max:255',
             'one_time_fees.*.cost' => 'required|numeric|min:0',
         ]);
-
         $shortcode = $request->shortcode_id ? Shortcode::find($request->shortcode_id) : null;
-		Log::debug('Shortcode selection in update', [
-				'shortcode_id' => $request->shortcode_id,
-				'shortcode_found' => $shortcode ? true : false,
-				'slug' => $shortcode ? $shortcode->slug : 'none',
-				'data' => $shortcode ? $shortcode->data : 'none',
-				'old_shortcode_id' => $contract->shortcode_id,
-		]);
-
-		$deviceData = [];
-
-		$price = 0;
-		if ($shortcode) {
-			$parts = explode('-', $shortcode->slug);
-			$deviceData = array_slice($parts, 1);
-
-			Log::debug('Parsed deviceData array in update', ['deviceData' => $deviceData]);
-
-			$cleanPrice = preg_replace('/[^0-9.]/', '', $shortcode->data ?? '0');
-			$price = is_numeric($cleanPrice) ? (float) $cleanPrice : 0;
-		}
-		
-		
-		$contract->update([
-				'start_date' => $request->start_date,
-				'end_date' => $request->end_date,
-				'activity_type_id' => $request->activity_type_id,
-				'contract_date' => $request->contract_date,
-				'location' => $request->location,
-				'shortcode_id' => $request->shortcode_id,
-				'manufacturer' => $deviceData[0] ?? null,
-				'model' => $deviceData[1] ?? null,
-				'version' => $deviceData[2] ?? null,
-				'device_storage' => isset($deviceData[3]) && !str_contains($deviceData[3], 'retail') ? $deviceData[3] : null,
-				'extra_info' => isset($deviceData[4]) ? $deviceData[4] : (isset($deviceData[3]) && str_contains($deviceData[3], 'retail') ? $deviceData[3] : null),
-				'device_price' => $price,
-				'agreement_credit_amount' => $request->agreement_credit_amount,
-				'required_upfront_payment' => $request->required_upfront_payment,
-				'optional_down_payment' => $request->optional_down_payment,
-				'deferred_payment_amount' => $request->deferred_payment_amount,
-				'plan_id' => $request->plan_id,
-				'commitment_period_id' => $request->commitment_period_id,
-				'first_bill_date' => $request->first_bill_date,
-		]);
-		
-		Log::debug('Updated contract with parsed device fields', [
-				'contract_id' => $contract->id,
-				'manufacturer' => $contract->manufacturer,
-				'model' => $contract->model,
-				'version' => $contract->version,
-				'device_storage' => $contract->device_storage,
-				'extra_info' => $contract->extra_info,
-				'device_price' => $contract->device_price,
-		]);		
-
+Log::debug('Shortcode selection in update', [
+'shortcode_id' => $request->shortcode_id,
+'shortcode_found' => $shortcode ? true : false,
+'slug' => $shortcode ? $shortcode->slug : 'none',
+'data' => $shortcode ? $shortcode->data : 'none',
+'old_shortcode_id' => $contract->shortcode_id,
+]);
+$deviceData = [];
+$price = 0;
+if ($shortcode) {
+$parts = explode('-', $shortcode->slug);
+$deviceData = array_slice($parts, 1);
+Log::debug('Parsed deviceData array in update', ['deviceData' => $deviceData]);
+$cleanPrice = preg_replace('/[^0-9.]/', '', $shortcode->data ?? '0');
+$price = is_numeric($cleanPrice) ? (float) $cleanPrice : 0;
+}
+$contract->update([
+'start_date' => $request->start_date,
+'end_date' => $request->end_date,
+'activity_type_id' => $request->activity_type_id,
+'contract_date' => $request->contract_date,
+'location' => $request->location,
+'shortcode_id' => $request->shortcode_id,
+'manufacturer' => $deviceData[0] ?? null,
+'model' => $deviceData[1] ?? null,
+'version' => $deviceData[2] ?? null,
+'device_storage' => isset($deviceData[3]) && !str_contains($deviceData[3], 'retail') ? $deviceData[3] : null,
+'extra_info' => isset($deviceData[4]) ? $deviceData[4] : (isset($deviceData[3]) && str_contains($deviceData[3], 'retail') ? $deviceData[3] : null),
+'device_price' => $price,
+'agreement_credit_amount' => $request->agreement_credit_amount,
+'required_upfront_payment' => $request->required_upfront_payment,
+'optional_down_payment' => $request->optional_down_payment,
+'deferred_payment_amount' => $request->deferred_payment_amount,
+'plan_id' => $request->plan_id,
+'commitment_period_id' => $request->commitment_period_id,
+'first_bill_date' => $request->first_bill_date,
+]);
+Log::debug('Updated contract with parsed device fields', [
+'contract_id' => $contract->id,
+'manufacturer' => $contract->manufacturer,
+'model' => $contract->model,
+'version' => $contract->version,
+'device_storage' => $contract->device_storage,
+'extra_info' => $contract->extra_info,
+'device_price' => $contract->device_price,
+]);
         // Update add-ons
         $contract->addOns()->delete();
         if ($request->add_ons) {
@@ -348,7 +315,6 @@ public function update(Request $request, Contract $contract)
                 ]);
             }
         }
-
         // Update one-time fees
         $contract->oneTimeFees()->delete();
         if ($request->one_time_fees) {
@@ -360,19 +326,17 @@ public function update(Request $request, Contract $contract)
                 ]);
             }
         }
-
         return redirect()->route('contracts.view', $contract->id)->with('success', 'Contract updated successfully.');
     }
-
-    public function sign($id): View
+    public function sign($id): \Illuminate\Contracts\View\View|\Illuminate\Http\RedirectResponse
     {
         $contract = Contract::with('subscriber.mobilityAccount.ivueAccount.customer')->findOrFail($id);
+        Log::debug('Contract status in sign method', ['contract_id' => $id, 'status' => $contract->status]);
         if ($contract->status !== 'draft') {
             return redirect()->route('contracts.view', $id)->with('error', 'Contract cannot be signed.');
         }
         return view('contracts.sign', compact('contract'));
     }
-
     public function storeSignature(Request $request, $id)
     {
         $contract = Contract::with('subscriber.mobilityAccount.ivueAccount.customer')->findOrFail($id);
@@ -404,15 +368,14 @@ public function update(Request $request, Contract $contract)
                 'signature_path' => 'storage/' . $signaturePath,
                 'status' => 'signed',
             ]);
-
+            $contract->refresh();
+            Log::info('Contract status after update', ['contract_id' => $id, 'status' => $contract->status]);
             $contract->load('addOns', 'oneTimeFees', 'subscriber.mobilityAccount.ivueAccount.customer', 'plan', 'activityType', 'commitmentPeriod');
             $totalAddOnCost = $contract->addOns->sum('cost');
             $totalOneTimeFeeCost = $contract->oneTimeFees->sum('cost');
             $totalFinancingCost = ($contract->required_upfront_payment ?? 0) + ($contract->optional_down_payment ?? 0) + ($contract->deferred_payment_amount ?? 0);
             $totalCost = ($contract->device_price ?? 0) + $totalAddOnCost + $totalOneTimeFeeCost + $totalFinancingCost;
-
             Log::debug('Generating PDF for contract', ['contract_id' => $contract->id, 'sections' => ['Header', 'Your Information', 'Device Details', 'Return Policy', 'Rate Plan Details', 'Minimum Monthly Charge', 'Total Monthly Charges', 'Add-ons', 'One-Time Fees', 'One-Time Charges', 'Total Cost', 'Signature']]);
-
             $pdf = Pdf::loadView('contracts.view', compact('contract', 'totalAddOnCost', 'totalOneTimeFeeCost', 'totalFinancingCost', 'totalCost'))
                 ->setPaper('a4', 'portrait')
                 ->setOptions([
@@ -428,11 +391,9 @@ public function update(Request $request, Contract $contract)
                     'margin_left' => 10,
                     'margin_right' => 10,
                 ]);
-
             $pdfPath = "contracts/contract_{$contract->id}.pdf";
             Storage::disk('public')->put($pdfPath, $pdf->output());
             $contract->update(['pdf_path' => $pdfPath]);
-
             Log::info('PDF regenerated with signature', ['contract_id' => $id, 'pdf_path' => $pdfPath]);
             return redirect()->route('contracts.view', $id)->with('success', 'Contract signed successfully.');
         } catch (\Exception $e) {
@@ -440,7 +401,6 @@ public function update(Request $request, Contract $contract)
             return redirect()->back()->with('error', 'Failed to save signature: ' . $e->getMessage());
         }
     }
-
     public function finalize($id)
     {
         $contract = Contract::with('subscriber.mobilityAccount.ivueAccount.customer')->findOrFail($id);
@@ -448,15 +408,12 @@ public function update(Request $request, Contract $contract)
             return redirect()->route('contracts.view', $id)->with('error', 'Contract must be signed before finalizing.');
         }
         $contract->update(['status' => 'finalized']);
-
         $contract->load('addOns', 'oneTimeFees', 'subscriber.mobilityAccount.ivueAccount.customer', 'plan', 'activityType', 'commitmentPeriod');
         $totalAddOnCost = $contract->addOns->sum('cost');
         $totalOneTimeFeeCost = $contract->oneTimeFees->sum('cost');
         $totalFinancingCost = ($contract->required_upfront_payment ?? 0) + ($contract->optional_down_payment ?? 0) + ($contract->deferred_payment_amount ?? 0);
         $totalCost = ($contract->device_price ?? 0) + $totalAddOnCost + $totalOneTimeFeeCost + $totalFinancingCost;
-
         Log::debug('Generating PDF for contract', ['contract_id' => $contract->id, 'sections' => ['Header', 'Your Information', 'Device Details', 'Return Policy', 'Rate Plan Details', 'Minimum Monthly Charge', 'Total Monthly Charges', 'Add-ons', 'One-Time Fees', 'One-Time Charges', 'Total Cost', 'Signature']]);
-
         $pdf = Pdf::loadView('contracts.view', compact('contract', 'totalAddOnCost', 'totalOneTimeFeeCost', 'totalFinancingCost', 'totalCost'))
             ->setPaper('a4', 'portrait')
             ->setOptions([
@@ -472,14 +429,12 @@ public function update(Request $request, Contract $contract)
                 'margin_left' => 10,
                 'margin_right' => 10,
             ]);
-
         $pdfPath = "contracts/contract_{$contract->id}.pdf";
         Storage::disk('public')->put($pdfPath, $pdf->output());
         $contract->update(['pdf_path' => $pdfPath]);
-
+        Log::info('PDF generated for finalized contract', ['contract_id' => $id, 'pdf_path' => $pdfPath]);
         return redirect()->route('contracts.view', $id)->with('success', 'Contract finalized successfully.');
     }
-
     public function createRevision($id)
     {
         $originalContract = Contract::with('subscriber.mobilityAccount.ivueAccount.customer')->findOrFail($id);
@@ -490,7 +445,6 @@ public function update(Request $request, Contract $contract)
         $revision->status = 'draft';
         $revision->signature_path = null;
         $revision->save();
-
         foreach ($originalContract->addOns as $addOn) {
             $newAddOn = $addOn->replicate();
             $newAddOn->contract_id = $revision->id;
@@ -501,118 +455,94 @@ public function update(Request $request, Contract $contract)
             $newFee->contract_id = $revision->id;
             $newFee->save();
         }
-
         return redirect()->route('contracts.edit', $revision->id)->with('success', 'Revision created successfully.');
     }
-
     public function ftp($id)
     {
         $contract = Contract::with('subscriber.mobilityAccount.ivueAccount.customer')->findOrFail($id);
         return redirect()->back()->with('info', 'FTP to storage vault functionality will be implemented soon.');
     }
-
-
-
-public function download($id)
-{
-    $contract = Contract::with('addOns', 'oneTimeFees', 'subscriber.mobilityAccount.ivueAccount.customer', 'plan', 'activityType', 'commitmentPeriod')->findOrFail($id);
-    if ($contract->status !== 'finalized') {
-        return redirect()->back()->with('error', 'Contract must be finalized to download.');
-    }
-    $totalAddOnCost = $contract->addOns->sum('cost');
-    $totalOneTimeFeeCost = $contract->oneTimeFees->sum('cost');
-    $totalFinancingCost = ($contract->required_upfront_payment ?? 0) + ($contract->optional_down_payment ?? 0) + ($contract->deferred_payment_amount ?? 0);
-    $totalCost = ($contract->device_price ?? 0) + $totalAddOnCost + $totalOneTimeFeeCost + $totalFinancingCost;
-
-    // Prepare signature path (file:// for mPDF reliability)
-    $signaturePath = $contract->signature_path ? public_path('storage/' . str_replace('storage/', '', trim($contract->signature_path))) : null;
-    if ($signaturePath && file_exists($signaturePath)) {
-        Log::debug('Signature path for mPDF', ['path' => $signaturePath]);
-    }
-
-    Log::debug('Generating PDF for contract', ['contract_id' => $id, 'sections' => ['Header', 'Your Information', 'Device Details', 'Return Policy', 'Rate Plan Details', 'Minimum Monthly Charge', 'Total Monthly Charges', 'Add-ons', 'One-Time Fees', 'One-Time Charges', 'Total Cost', 'Signature']]);
-
-    try {
-        // Render Blade to HTML
-        $html = view('contracts.view', compact('contract', 'totalAddOnCost', 'totalOneTimeFeeCost', 'totalFinancingCost', 'totalCost'))->render();
-
-        // Create mPDF instance
-        $mpdf = new \Mpdf\Mpdf([
-            'mode' => 'utf-8',
-            'format' => 'A4',
-            'margin_top' => 10,
-            'margin_bottom' => 10,
-            'margin_left' => 10,
-            'margin_right' => 10,
-            'dpi' => 96, // Match browser for sizing
-            'img_dpi' => 96, // Explicit for images
-            'default_font' => 'sans-serif',
-            'tempDir' => storage_path('app/temp'), // Ensure writable
-        ]);
-
-        $mpdf->WriteHTML($html);
-
-        // Save temp mPDF output
-        $tempDir = storage_path('app/temp');
-        if (!file_exists($tempDir)) {
-            mkdir($tempDir, 0755, true);
+    public function download($id)
+    {
+        $contract = Contract::with('addOns', 'oneTimeFees', 'subscriber.mobilityAccount.ivueAccount.customer', 'plan', 'activityType', 'commitmentPeriod')->findOrFail($id);
+        if ($contract->status !== 'finalized') {
+            return redirect()->back()->with('error', 'Contract must be finalized to download.');
         }
-        $tempFile = $tempDir . '/contract_' . $id . '.pdf';
-        $mpdf->Output($tempFile, \Mpdf\Output\Destination::FILE);
-
-        // Use FPDI to merge
-        $fpdi = new \setasign\Fpdi\Fpdi();
-        $pageCount = $fpdi->setSourceFile($tempFile);
-        for ($i = 1; $i <= $pageCount; $i++) {
-            $fpdi->AddPage();
-            $tplIdx = $fpdi->importPage($i);
-            $fpdi->useTemplate($tplIdx);
-        }
-
-        // Merge terms of service PDFs
-        $termsFiles = [
-            public_path('pdfs/OURAGREEMENTpage.pdf'),
-            public_path('pdfs/HayCommTermsOfServicerev2020.pdf'),
-        ];
-        foreach ($termsFiles as $file) {
-            if (file_exists($file)) {
-                Log::debug('Merging terms file', ['file' => $file]);
-                $pageCount = $fpdi->setSourceFile($file);
-                for ($i = 1; $i <= $pageCount; $i++) {
-                    $fpdi->AddPage();
-                    $tplIdx = $fpdi->importPage($i);
-                    $fpdi->useTemplate($tplIdx);
-                }
-            } else {
-                Log::warning('Terms file not found', ['file' => $file]);
+        $totalAddOnCost = $contract->addOns->sum('cost');
+        $totalOneTimeFeeCost = $contract->oneTimeFees->sum('cost');
+        $totalFinancingCost = ($contract->required_upfront_payment ?? 0) + ($contract->optional_down_payment ?? 0) + ($contract->deferred_payment_amount ?? 0);
+        $totalCost = ($contract->device_price ?? 0) + $totalAddOnCost + $totalOneTimeFeeCost + $totalFinancingCost;
+        Log::debug('Generating PDF for contract', ['contract_id' => $id, 'sections' => ['Header', 'Your Information', 'Device Details', 'Return Policy', 'Rate Plan Details', 'Minimum Monthly Charge', 'Total Monthly Charges', 'Add-ons', 'One-Time Fees', 'One-Time Charges', 'Total Cost', 'Signature']]);
+        try {
+            $pdf = Pdf::loadView('contracts.view', compact('contract', 'totalAddOnCost', 'totalOneTimeFeeCost', 'totalFinancingCost', 'totalCost'))
+                ->setPaper('a4', 'portrait')
+                ->setOptions([
+                    'isHtml5ParserEnabled' => true,
+                    'isRemoteEnabled' => true,
+                    'dpi' => 300, // Increased for better image quality
+                    'defaultFont' => 'sans-serif',
+                    'memory_limit' => '512M',
+                    'chroot' => base_path(),
+                    'isPhpEnabled' => true,
+                    'margin_top' => 10,
+                    'margin_bottom' => 10,
+                    'margin_left' => 10,
+                    'margin_right' => 10,
+                ]);
+            // Save temp file
+            $tempDir = storage_path('app/temp');
+            if (!Storage::exists('temp')) {
+                Storage::makeDirectory('temp');
             }
+            $tempFile = storage_path('app/temp/contract_' . $id . '.pdf');
+            $pdf->save($tempFile);
+            // Use FPDI to merge
+            $fpdi = new Fpdi();
+            $pageCount = $fpdi->setSourceFile($tempFile);
+            for ($i = 1; $i <= $pageCount; $i++) {
+                $fpdi->AddPage();
+                $tplIdx = $fpdi->importPage($i);
+                $fpdi->useTemplate($tplIdx);
+            }
+            // Merge terms of service PDFs
+            $termsFiles = [
+                public_path('pdfs/OURAGREEMENTpage.pdf'),
+                public_path('pdfs/HayCommTermsOfServicerev2020.pdf'),
+            ];
+            foreach ($termsFiles as $file) {
+                if (file_exists($file)) {
+                    Log::debug('Merging terms file', ['file' => $file, 'exists' => file_exists($file)]);
+                    $pageCount = $fpdi->setSourceFile($file);
+                    for ($i = 1; $i <= $pageCount; $i++) {
+                        $fpdi->AddPage();
+                        $tplIdx = $fpdi->importPage($i);
+                        $fpdi->useTemplate($tplIdx);
+                    }
+                } else {
+                    Log::warning('Terms file not found', ['file' => $file]);
+                }
+            }
+            // Clean up temp
+            Storage::delete('temp/contract_' . $id . '.pdf');
+            // Get merged PDF content and save it
+            $mergedPdfContent = $fpdi->Output('S');
+            $pdfPath = "contracts/contract_{$contract->id}.pdf";
+            Storage::disk('public')->put($pdfPath, $mergedPdfContent);
+            $contract->update(['pdf_path' => $pdfPath]);
+            // Stream download
+            $pdfFileName = ($contract->subscriber->first_name . '_' . $contract->subscriber->last_name . '_' . $contract->id . '.pdf');
+            return response()->streamDownload(function () use ($mergedPdfContent) {
+                echo $mergedPdfContent;
+            }, $pdfFileName, ['Content-Type' => 'application/pdf']);
+        } catch (\Exception $e) {
+            Log::error('PDF generation failed', [
+                'contract_id' => $id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return redirect()->back()->with('error', 'Failed to generate PDF: ' . $e->getMessage());
         }
-
-        // Clean up temp
-        unlink($tempFile);
-
-        // Get merged PDF content
-        $mergedPdfContent = $fpdi->Output('S');
-        $pdfPath = "contracts/contract_{$contract->id}.pdf";
-        Storage::disk('public')->put($pdfPath, $mergedPdfContent);
-        $contract->update(['pdf_path' => $pdfPath]);
-
-        // Stream download
-        $pdfFileName = ($contract->subscriber->first_name . '_' . $contract->subscriber->last_name . '_' . $contract->id . '.pdf');
-        return response()->streamDownload(function () use ($mergedPdfContent) {
-            echo $mergedPdfContent;
-        }, $pdfFileName, ['Content-Type' => 'application/pdf']);
-    } catch (\Exception $e) {
-        Log::error('PDF generation failed', [
-            'contract_id' => $id,
-            'error' => $e->getMessage(),
-            'trace' => $e->getTraceAsString(),
-        ]);
-        return redirect()->back()->with('error', 'Failed to generate PDF: ' . $e->getMessage());
     }
-}
-
-
     public function view($id): View
     {
         $contract = Contract::with('addOns', 'oneTimeFees', 'subscriber.mobilityAccount.ivueAccount.customer', 'plan', 'activityType', 'commitmentPeriod')->findOrFail($id);
@@ -622,7 +552,6 @@ public function download($id)
         $totalCost = ($contract->device_price ?? 0) + $totalAddOnCost + $totalOneTimeFeeCost + $totalFinancingCost;
         return view('contracts.view', compact('contract', 'totalAddOnCost', 'totalOneTimeFeeCost', 'totalFinancingCost', 'totalCost'));
     }
-	
     public function email($id)
     {
         $contract = Contract::with('subscriber.mobilityAccount.ivueAccount.customer')->findOrFail($id);

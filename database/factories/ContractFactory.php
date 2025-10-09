@@ -38,7 +38,7 @@ class ContractFactory extends Factory
             'optional_down_payment' => $this->faker->optional()->randomFloat(2, 0, 200),
             'deferred_payment_amount' => $this->faker->optional()->randomFloat(2, 0, 500),
             'pdf_path' => $this->faker->optional()->filePath(),
-			'shortcode_id' => $this->faker->randomElement(['15', '11', '7'])
+			'shortcode_id' => $this->faker->randomElement(['15', '11', '7']),
             'signature_path' => $this->faker->optional()->filePath(),
             'created_at' => now(),
             'updated_at' => now(),
