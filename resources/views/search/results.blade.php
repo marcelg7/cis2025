@@ -24,43 +24,8 @@
                 @endif
             </div>
 
-            <!-- Devices -->
-            <div>
-                <h2 class="text-lg font-medium text-gray-900">Devices</h2>
-                @if ($results['devices']->isEmpty())
-                    <p class="text-gray-500">No devices found.</p>
-                @else
-                    <ul class="mt-2 divide-y divide-gray-200 bg-white shadow rounded-lg">
-                        @foreach ($results['devices'] as $device)
-                            <li class="px-6 py-4">
-                                <a href="{{ route('devices.edit', $device->id) }}" class="text-indigo-600 hover:text-indigo-900">
-                                    {{ $device->manufacturer }} {{ $device->model }}
-                                </a>
-                                <p class="text-sm text-gray-600">SRP: ${{ number_format($device->srp, 2) }}</p>
-                            </li>
-                        @endforeach
-                    </ul>
-                @endif
-            </div>
+ 
 
-            <!-- Plans -->
-            <div>
-                <h2 class="text-lg font-medium text-gray-900">Plans</h2>
-                @if ($results['plans']->isEmpty())
-                    <p class="text-gray-500">No plans found.</p>
-                @else
-                    <ul class="mt-2 divide-y divide-gray-200 bg-white shadow rounded-lg">
-                        @foreach ($results['plans'] as $plan)
-                            <li class="px-6 py-4">
-                                <a href="{{ route('plans.edit', $plan->id) }}" class="text-indigo-600 hover:text-indigo-900">
-                                    {{ $plan->name }}
-                                </a>
-                                <p class="text-sm text-gray-600">${{ number_format($plan->price, 2) }} - {{ $plan->details ?? 'No details' }}</p>
-                            </li>
-                        @endforeach
-                    </ul>
-                @endif
-            </div>
 
             <!-- Activity Types -->
             <div>

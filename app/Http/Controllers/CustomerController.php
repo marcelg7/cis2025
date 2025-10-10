@@ -17,7 +17,7 @@ class CustomerController extends Controller
 {
     public function index(): View
     {
-        $latestContracts = Contract::with(['subscriber.mobilityAccount.ivueAccount.customer', 'plan', 'device', 'activityType'])
+        $latestContracts = Contract::with(['subscriber.mobilityAccount.ivueAccount.customer', 'activityType'])
             ->latest()
             ->take(12)
             ->get();
@@ -56,7 +56,7 @@ class CustomerController extends Controller
             Log::info('API response: ' . json_encode($data));
             if (empty($data) || !isset($data['customer'])) {
                 Log::warning('Empty or invalid API response for customer: ' . $customerNumber);
-                $latestContracts = Contract::with(['subscriber.mobilityAccount.ivueAccount.customer', 'plan', 'device', 'activityType'])
+                $latestContracts = Contract::with(['subscriber.mobilityAccount.ivueAccount.customer', 'device', 'activityType'])
                     ->latest()
                     ->take(12)
                     ->get();
@@ -104,7 +104,7 @@ class CustomerController extends Controller
             return view('customers.show', compact('customer'));
         } catch (RequestException $e) {
             Log::error('API fetch error: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
-            $latestContracts = Contract::with(['subscriber.mobilityAccount.ivueAccount.customer', 'plan', 'device', 'activityType'])
+            $latestContracts = Contract::with(['subscriber.mobilityAccount.ivueAccount.customer', 'device', 'activityType'])
                 ->latest()
                 ->take(12)
                 ->get();
@@ -121,7 +121,7 @@ class CustomerController extends Controller
                 ->withErrors(['customer_number' => 'Failed to fetch customer: ' . $e->getMessage()]);
         } catch (\Exception $e) {
             Log::error('Fetch error: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
-            $latestContracts = Contract::with(['subscriber.mobilityAccount.ivueAccount.customer', 'plan', 'device', 'activityType'])
+            $latestContracts = Contract::with(['subscriber.mobilityAccount.ivueAccount.customer', 'device', 'activityType'])
                 ->latest()
                 ->take(12)
                 ->get();

@@ -1,43 +1,33 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
-use App\Models\Device;
-use App\Models\Plan;
 use App\Models\ActivityType;
 use App\Models\CommitmentPeriod;
 use App\Models\Contract;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
-class SearchController extends Controller {
-    public function search(Request $request): View {
+class SearchController extends Controller
+{
+    public function search(Request $request): View
+    {
         $query = $request->input('query');
-		// Initialize all result categories to empty collections
-		$results = [
-			'customers' => collect(),
-			'devices' => collect(),
-			'plans' => collect(),
-			'activity_types' => collect(),
-			'commitment_periods' => collect(),
-			'contracts' => collect()
-		];
+
+        // Initialize all result categories to empty collections
+        $results = [
+            'customers' => collect(),
+            'activity_types' => collect(),
+            'commitment_periods' => collect(),
+            'contracts' => collect()
+        ];
 
         if ($query) {
             // Search Customers
             $results['customers'] = Customer::where('ivue_customer_number', 'LIKE', "%{$query}%")
                 ->orWhere('display_name', 'LIKE', "%{$query}%")
                 ->orWhere('email', 'LIKE', "%{$query}%")
-                ->get();
-
-            // Search Devices
-            $results['devices'] = Device::where('manufacturer', 'LIKE', "%{$query}%")
-                ->orWhere('model', 'LIKE', "%{$query}%")
-                ->get();
-
-            // Search Plans
-            $results['plans'] = Plan::where('name', 'LIKE', "%{$query}%")
-                ->orWhere('details', 'LIKE', "%{$query}%")
                 ->get();
 
             // Search Activity Types

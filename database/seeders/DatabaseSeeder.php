@@ -1,13 +1,14 @@
 <?php
+
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use App\Models\Customer;
-use App\Models\Plan;
 use App\Models\IvueAccount;
 use App\Models\MobilityAccount;
 use App\Models\Subscriber;
 use App\Models\Contract;
+
 use Illuminate\Support\Facades\DB;
 
 class DatabaseSeeder extends Seeder
@@ -37,7 +38,6 @@ class DatabaseSeeder extends Seeder
                             ->count(rand(1, 2))
                             ->create([
                                 'subscriber_id' => $subscriber->id,
-                                'plan_id' => 1, // Uses the default plan
                                 'is_test' => 1,
                             ]);
                     });
@@ -58,19 +58,6 @@ class DatabaseSeeder extends Seeder
         ];
         DB::table('commitment_periods')->insertOrIgnore($commitmentPeriods);
 
-        // Insert default device only if it doesn't exist
-        $devices = [
-            ['id' => 1, 'manufacturer' => 'Apple', 'model' => 'Apple iPhone 16e 256GB', 'srp' => 111.11, 'image' => 'devices/M3s57GDw3gBuFYgOcsN6Ns3kckyJjezGNn7tCM78.png', 'is_active' => 1, 'created_at' => now(), 'updated_at' => now()],
-        ];
-        DB::table('devices')->insertOrIgnore($devices);
 
-        // Insert default plan only if it doesn't exist
-        $plans = [
-            ['id' => 1, 'service_level' => 'consumer', 'plan_type' => 'smartpay', 'name' => 'Basic SmartPay (BASPC2524)', 'price' => 45.00, 'details' => '<p>Unlimited Canada-wide calling...</p>', 'is_active' => 1, 'created_at' => now(), 'updated_at' => now(), 'is_test' => 1],
-        ];
-        DB::table('plans')->insertOrIgnore($plans);
-		
-		// Add 2-5 test plans using factory
-		Plan::factory()->count(rand(2, 5))->create(['is_test' => 1]);
     }
 }

@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
@@ -7,23 +8,26 @@ use Illuminate\Support\Facades\DB;
 
 class AdminController extends Controller
 {
-	public function __construct()
-	{
-		$this->middleware('auth');
-		$this->middleware(\App\Http\Middleware\CheckRole::class . ':admin'); // Explicit class with parameter
-	}
+    public function __construct()
+    {
+        $this->middleware('auth');
+        $this->middleware(\App\Http\Middleware\CheckRole::class . ':admin'); // Explicit class with parameter
+    }
 
     public function index()
     {
         $testContractsCount = DB::table('contracts')->where('is_test', 1)->count();
         $testSubscribersCount = DB::table('subscribers')->where('is_test', 1)->count();
         $testCustomersCount = DB::table('customers')->where('is_test', 1)->count();
-        $testPlansCount = DB::table('plans')->where('is_test', 1)->where('id', '!=', 1)->count();
+
+
+
+
         return view('admin.index', compact(
             'testContractsCount',
             'testSubscribersCount',
             'testCustomersCount',
-            'testPlansCount'
+
         ));
     }
 

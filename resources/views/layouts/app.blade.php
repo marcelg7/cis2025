@@ -27,6 +27,9 @@
                             <x-nav-link :href="route('contracts.index')" :active="request()->routeIs('contracts.*')">
                                 Contracts
                             </x-nav-link>
+                            <x-nav-link :href="route('bell-pricing.index')" :active="request()->routeIs('bell-pricing.*')">
+                                Bell Pricing
+                            </x-nav-link>
                             <x-nav-link href="https://hay.net" target="_blank" :active="false">
                                 Hay Website
                                 <x-icon-open />
@@ -74,12 +77,7 @@
                                                 Admin
                                             </a>
                                         @endif
-                                        <a href="{{ route('devices.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                            Devices
-                                        </a>
-                                        <a href="{{ route('plans.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                            Plans
-                                        </a>
+
                                         <a href="{{ route('activity-types.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                             Activity Types
                                         </a>
@@ -92,28 +90,26 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="hidden sm:flex sm:items-center sm:ms-6">
-                                <div class="relative">
-                                    <button class="flex items-center text-sm font-medium text-gray-900 hover:text-gray-700 focus:outline-none" type="button" id="user-menu-button" aria-expanded="false" aria-haspopup="true">
-                                        {{ auth()->user()->name }}
-                                        <svg class="ml-2 h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-                                        </svg>
-                                    </button>
-                                    <div class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 hidden" id="user-menu">
-                                        <a href="{{ route('password.custom_change') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                            Change Password
-                                        </a>
-                                        <a href="{{ route('users.settings.edit') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                            Settings
-                                        </a>
-                                        <form action="{{ route('logout') }}" method="POST">
-                                            @csrf
-                                            <button type="submit" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                                Logout
-                                            </button>
-                                        </form>
-                                    </div>
+                            <div class="relative">
+                                <button class="flex items-center text-sm font-medium text-gray-900 hover:text-gray-700 focus:outline-none" type="button" id="user-menu-button" aria-expanded="false" aria-haspopup="true">
+                                    {{ auth()->user()->name }}
+                                    <svg class="ml-2 h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                    </svg>
+                                </button>
+                                <div class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 hidden" id="user-menu">
+                                    <a href="{{ route('password.custom_change') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                        Change Password
+                                    </a>
+                                    <a href="{{ route('users.settings.edit') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                        Settings
+                                    </a>
+                                    <form action="{{ route('logout') }}" method="POST">
+                                        @csrf
+                                        <button type="submit" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                            Logout
+                                        </button>
+                                    </form>
                                 </div>
                             </div>
                         @endauth
@@ -127,6 +123,9 @@
                     </x-responsive-nav-link>
                     <x-responsive-nav-link :href="route('contracts.index')" :active="request()->routeIs('contracts.*')">
                         Contracts
+                    </x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('bell-pricing.index')" :active="request()->routeIs('bell-pricing.*')">
+                        Bell Pricing
                     </x-responsive-nav-link>
                     <x-responsive-nav-link href="https://hay.net" target="_blank" :active="false" class="flex items-center">
                         Hay Website

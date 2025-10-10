@@ -3,30 +3,33 @@
     $layout = $isPdf ? 'layouts.pdf' : 'layouts.app';
     \Illuminate\Support\Facades\Log::debug('View layout selection', ['isPdf' => $isPdf, 'layout' => $layout, 'path' => request()->path()]);
     // Calculate financial variables at the top to ensure availability
-    $deviceAmount = ($contract->device_price ?? 0) - ($contract->agreement_credit_amount ?? 0);
+    $devicePrice = $contract->bell_retail_price ?? $contract->device_price ?? 0;
+    $deviceAmount = $devicePrice - ($contract->agreement_credit_amount ?? 0);
     $totalFinancedAmount = $deviceAmount - ($contract->required_upfront_payment ?? 0) - ($contract->optional_down_payment ?? 0);
     $monthlyDevicePayment = ($totalFinancedAmount - ($contract->deferred_payment_amount ?? 0)) / 24;
-    $earlyCancellationFee = $totalFinancedAmount + ($contract->device_return_amount ?? 0);
+    $earlyCancellationFee = $totalFinancedAmount + ($contract->bell_dro_amount ?? 0);
     $monthlyReduction = $monthlyDevicePayment;
 @endphp
+
 @extends($layout)
+
 @section('content')
-	@if ($isPdf)
-		<style>
-			.signature-wrapper { 
-				width: 150mm; 
-				height: auto; 
-			}
-			.signature-wrapper img { 
-				width: 100%; 
-				height: auto;  /* Remove !important */
-				max-width: none; 
-				image-rendering: optimizeQuality; 
-				object-fit: contain;
-				display: block;
-			}
-		</style>
-	@endif
+@if ($isPdf)
+<style>
+.signature-wrapper {
+width: 150mm;
+height: auto;
+}
+.signature-wrapper img {
+width: 100%;
+height: auto; /* Remove !important */
+max-width: none;
+image-rendering: optimizeQuality;
+object-fit: contain;
+display: block;
+}
+</style>
+@endif
     @if (!$isPdf)
         <style>
             @media print {
@@ -156,19 +159,29 @@
             <!-- Device Details -->
             <div class="px-4 py-3 sm:px-4" style="{{ $isPdf ? 'padding: 0.5rem;' : '' }}">
                 <h4 class="text-md font-medium text-gray-900" style="{{ $isPdf ? 'font-size: 12pt; margin-bottom: 0.25rem;' : '' }}">Your Device Details</h4>
+                
+                @php
+                    // Determine device display name from Bell
+                    $deviceDisplayName = $contract->bell_device_id && $contract->bellDevice ? $contract->bellDevice->name : 'N/A';
+                @endphp
+                
                 @if($isPdf)
                     <table width="100%" style="table-layout: fixed; font-size: 9pt; color: #333;">
                         <tr>
                             <td width="50%" style="padding-right: 0.5rem;">
-                                <p><strong>Model:</strong> {{ collect([
-                                    $contract->manufacturer ? ucfirst($contract->manufacturer) : null,
-                                    $contract->model ? ($contract->model === 'iphone' ? 'iPhone' : ucfirst($contract->model)) : null,
-                                    $contract->version,
-                                    $contract->device_storage ? str_replace('gb', 'GB', $contract->device_storage) : null,
-                                    $contract->extra_info ? ucfirst($contract->extra_info) : null,
-                                ])->filter()->implode(' ') }}</p>
-                                <p style="font-style: italic; font-size: 8pt;">All amounts are before taxes.</p>
-                                <p><strong>Device Retail Price:</strong> ${{ number_format($contract->device_price ?? 0, 2) }}</p>
+                                <p><strong>Model:</strong> {{ $deviceDisplayName }}</p>
+                                
+                                @if($contract->bell_device_id && $contract->bellDevice)
+                                    <!-- Bell Device Pricing Info -->
+                                    <p style="margin-top: 0.5rem;"><strong>Pricing Type:</strong> {{ ucfirst($contract->bell_pricing_type ?? 'N/A') }}</p>
+                                    <p><strong>Plan Tier:</strong> {{ $contract->bell_tier ?? 'N/A' }}</p>
+                                    @if($contract->bell_dro_amount && $contract->bell_dro_amount > 0)
+                                        <p><strong>DRO Amount:</strong> ${{ number_format($contract->bell_dro_amount, 2) }}</p>
+                                    @endif
+                                @endif
+                                
+                                <p style="font-style: italic; font-size: 8pt; margin-top: 0.5rem;">All amounts are before taxes.</p>
+                                <p><strong>Device Retail Price:</strong> ${{ number_format($devicePrice, 2) }}</p>
                                 <p><strong>Agreement Credit:</strong> ${{ number_format($contract->agreement_credit_amount ?? 0, 2) }}</p>
                                 <p><strong>Device Amount:</strong> ${{ number_format($deviceAmount, 2) }}</p>
                                 <p><strong>Up-front Payment Required:</strong> ${{ number_format($contract->required_upfront_payment ?? 0, 2) }}</p>
@@ -179,6 +192,11 @@
                             </td>
                             <td width="50%" style="padding-left: 0.5rem;">
                                 <p><strong>Monthly Device Payment:</strong> ${{ number_format($monthlyDevicePayment, 2) }}</p>
+                                
+                                @if($contract->bell_device_id && $contract->bell_monthly_device_cost)
+                                    <p style="font-size: 8pt; color: #666;">(Bell Calculated: ${{ number_format($contract->bell_monthly_device_cost, 2) }})</p>
+                                @endif
+                                
                                 <p><strong>Commitment Period:</strong> {{ $contract->commitmentPeriod->name ?? '2 Year Term Smart Pay' }}</p>
                                 <p><strong>Remaining Device Balance:</strong> ${{ number_format($totalFinancedAmount - ($contract->deferred_payment_amount ?? 0), 2) }}</p>
                                 <p><strong>Start Date:</strong> {{ $contract->start_date->format('M d, Y') }}</p>
@@ -195,15 +213,25 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <div class="mt-2 text-sm text-gray-600">
-                                <p><strong>Model:</strong> {{ collect([
-                                    $contract->manufacturer ? ucfirst($contract->manufacturer) : null,
-                                    $contract->model ? ($contract->model === 'iphone' ? 'iPhone' : ucfirst($contract->model)) : null,
-                                    $contract->version,
-                                    $contract->device_storage ? str_replace('gb', 'GB', $contract->device_storage) : null,
-                                    $contract->extra_info ? ucfirst($contract->extra_info) : null,
-                                ])->filter()->implode(' ') }}</p>
+                                <p><strong>Model:</strong> {{ $deviceDisplayName }}</p>
+                                
+                                @if($contract->bell_device_id && $contract->bellDevice)
+                                    <!-- Bell Device Pricing Info -->
+                                    <div class="mt-3 p-3 bg-blue-50 border border-blue-200 rounded">
+                                        <p class="text-xs font-semibold text-blue-900 mb-1">Bell Pricing Details</p>
+                                        <p class="text-xs"><strong>Pricing Type:</strong> {{ ucfirst($contract->bell_pricing_type ?? 'N/A') }}</p>
+                                        <p class="text-xs"><strong>Plan Tier:</strong> {{ $contract->bell_tier ?? 'N/A' }}</p>
+                                        @if($contract->bell_dro_amount && $contract->bell_dro_amount > 0)
+                                            <p class="text-xs"><strong>DRO Amount:</strong> ${{ number_format($contract->bell_dro_amount, 2) }}</p>
+                                        @endif
+                                        @if($contract->bell_plan_cost)
+                                            <p class="text-xs"><strong>Bell Plan Cost:</strong> ${{ number_format($contract->bell_plan_cost, 2) }}</p>
+                                        @endif
+                                    </div>
+                                @endif
+                                
                                 <p class="mt-2 italic">All amounts are before taxes.</p>
-                                <p><strong>Device Retail Price:</strong> ${{ number_format($contract->device_price ?? 0, 2) }}</p>
+                                <p><strong>Device Retail Price:</strong> ${{ number_format($devicePrice, 2) }}</p>
                                 <p><strong>Agreement Credit:</strong> ${{ number_format($contract->agreement_credit_amount ?? 0, 2) }}</p>
                                 <p><strong>Device Amount:</strong> ${{ number_format($deviceAmount, 2) }}</p>
                                 <p><strong>Up-front Payment Required:</strong> ${{ number_format($contract->required_upfront_payment ?? 0, 2) }}</p>
@@ -215,6 +243,11 @@
                         </div>
                         <div>
                             <h4 class="text-lg font-medium text-gray-900">Monthly Device Payment: ${{ number_format($monthlyDevicePayment, 2) }}</h4>
+                            
+                            @if($contract->bell_device_id && $contract->bell_monthly_device_cost)
+                                <p class="text-xs text-gray-500 mt-1">(Bell Calculated: ${{ number_format($contract->bell_monthly_device_cost, 2) }})</p>
+                            @endif
+                            
                             <div class="mt-2 text-sm text-gray-600">
                                 <p><strong>Commitment Period:</strong> {{ $contract->commitmentPeriod->name ?? '2 Year Term Smart Pay' }}</p>
                                 <p class="mt-2"><strong>Remaining Device Balance:</strong> ${{ number_format($totalFinancedAmount - ($contract->deferred_payment_amount ?? 0), 2) }}</p>
@@ -222,7 +255,7 @@
                                 <p><strong>End Date:</strong> {{ $contract->end_date->format('M d, Y') }}</p>
                                 <p>Your service will continue month-to-month after this end date.</p>
                                 <p class="mt-2 text-xs">
-                                    Early Cancellation Fee is the remaining balance of your device plus the full Deferred Return Option amount. In this case, your Buyout Cost would be ${{ number_format($monthlyDevicePayment, 2) }} per month left on the term plus the Device Return Option of ${{ number_format($contract->device_return_amount ?? 0, 2) }}.<br>
+                                    Early Cancellation Fee is the remaining balance of your device plus the full Deferred Return Option amount. In this case, your Buyout Cost would be ${{ number_format($monthlyDevicePayment, 2) }} per month left on the term plus the Device Return Option of ${{ number_format($contract->bell_dro_amount ?? 0, 2) }}.<br>
                                     Fee will be $0 on {{ $contract->end_date->format('M d, Y') }} and will decrease each month by: ${{ number_format($monthlyReduction, 2) }}
                                 </p>
                             </div>
@@ -240,67 +273,68 @@
                     <div style="page-break-after: always;"></div>
                 @endif
             </div>
-            <!-- Rate Plan Details -->
-            <div class="px-4 py-3 sm:px-4" style="{{ $isPdf ? 'padding: 0.5rem;' : '' }}">
-                <h4 class="text-md font-medium text-gray-900" style="{{ $isPdf ? 'font-size: 12pt; margin-bottom: 0.25rem;' : '' }}">Your Rate Plan Details</h4>
-                @if($isPdf)
-                    <table width="100%" style="table-layout: fixed; font-size: 9pt; color: #333;">
-                        <tr>
-                            <td width="50%" style="padding-right: 0.5rem;">
-                                <p><strong>Plan:</strong> {{ $contract->plan->name }}</p>
-                            </td>
-                            <td width="50%" style="padding-left: 0.5rem;">
-                                <p><strong>Monthly Rate Plan Charge:</strong> ${{ number_format($contract->plan->price, 2) }}</p>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td colspan="2" style="padding-top: 0.25rem;">
-                                <p>Unlimited Canada-wide calling</p>
-                                <p>Unlimited Canada-wide text, picture, and video messages</p>
-                                <p>50 GB unlimited non-shareable data at speeds up to 250 Mbps, after 75 GB reduced speeds are up to 512 Kbps.</p>
-                                <p>Standard Definition Video Streaming (480p)</p>
-                                <p>5G network access</p>
-                                <p>Call Display | Message Centre | Call Waiting | Conference Calling</p>
-                                <p>CAN-U.S Calling = $0.75/minute | CAN-U.S Texting = $0.40/text</p>
-                                <p class="font-semibold">Note: This plan may be subject to rate increases by the provider, which will apply during your term.</p>
-                                <p class="text-xs mt-2">If you exceed the usage allowed in your rate plan, additional usage charges may apply. See <a href="https://hay.net/cellular-service" class="text-indigo-600 hover:underline">hay.net/cellular-service</a> for current charges.</p>
-                            </td>
-                        </tr>
-                    </table>
-                @else
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <div class="mt-2 text-sm text-gray-600">
-                                <p><strong>Plan:</strong> {{ $contract->plan->name }}</p>
-                            </div>
-                        </div>
-                        <div>
-                            <div class="mt-2 text-sm text-gray-600">
-                                <p><strong>Monthly Rate Plan Charge:</strong> ${{ number_format($contract->plan->price, 2) }}</p>
-                            </div>
-                        </div>
-                        <div class="col-span-2 text-sm text-gray-600">
-                            <p>Unlimited Canada-wide calling</p>
-                            <p>Unlimited Canada-wide text, picture, and video messages</p>
-                            <p>50 GB unlimited non-shareable data at speeds up to 250 Mbps, after 75 GB reduced speeds are up to 512 Kbps.</p>
-                            <p>Standard Definition Video Streaming (480p)</p>
-                            <p>5G network access</p>
-                            <p>Call Display | Message Centre | Call Waiting | Conference Calling</p>
-                            <p>CAN-U.S Calling = $0.75/minute | CAN-U.S Texting = $0.40/text</p>
-                            <p class="font-semibold">Note: This plan may be subject to rate increases by the provider, which will apply during your term.</p>
-                            <p class="text-xs mt-2">If you exceed the usage allowed in your rate plan, additional usage charges may apply. See <a href="https://hay.net/cellular-service" class="text-indigo-600 hover:underline">hay.net/cellular-service</a> for current charges.</p>
-                        </div>
-                    </div>
-                @endif
-            </div>
-            <hr class="border-gray-200" style="{{ $isPdf ? 'margin: 0.5rem 0;' : '' }}">
-            <!-- Minimum Monthly Charge -->
-            <div class="px-4 py-3 sm:px-4" style="{{ $isPdf ? 'padding: 0.5rem; font-size: 10pt; font-weight: bold;' : '' }}">
-                @php
-                    $minimumMonthlyCharge = ($contract->plan->price ?? 0) + $monthlyDevicePayment;
-                @endphp
-                Minimum Monthly Charge: ${{ number_format($minimumMonthlyCharge, 2) }}
-            </div>
+			<hr class="border-gray-200" style="{{ $isPdf ? 'margin: 0.5rem 0;' : '' }}">
+			<!-- Rate Plan Details -->
+			<div class="px-4 py-3 sm:px-4" style="{{ $isPdf ? 'padding: 0.5rem;' : '' }}">
+				<h4 class="text-md font-medium text-gray-900" style="{{ $isPdf ? 'font-size: 12pt; margin-bottom: 0.25rem;' : '' }}">Your Rate Plan Details</h4>
+				@if($isPdf)
+					<table width="100%" style="table-layout: fixed; font-size: 9pt; color: #333;">
+						<tr>
+							<td width="50%" style="padding-right: 0.5rem;">
+								<p><strong>Plan:</strong> {{ $contract->bell_tier ?? 'N/A' }} Tier</p>
+							</td>
+							<td width="50%" style="padding-left: 0.5rem;">
+								<p><strong>Monthly Rate Plan Charge:</strong> ${{ number_format($contract->bell_plan_cost ?? 0, 2) }}</p>
+							</td>
+						</tr>
+						<tr>
+							<td colspan="2" style="padding-top: 0.25rem;">
+								<p>Unlimited Canada-wide calling</p>
+								<p>Unlimited Canada-wide text, picture, and video messages</p>
+								<p>50 GB unlimited non-shareable data at speeds up to 250 Mbps, after 75 GB reduced speeds are up to 512 Kbps.</p>
+								<p>Standard Definition Video Streaming (480p)</p>
+								<p>5G network access</p>
+								<p>Call Display | Message Centre | Call Waiting | Conference Calling</p>
+								<p>CAN-U.S Calling = $0.75/minute | CAN-U.S Texting = $0.40/text</p>
+								<p class="font-semibold">Note: This plan may be subject to rate increases by the provider, which will apply during your term.</p>
+								<p class="text-xs mt-2">If you exceed the usage allowed in your rate plan, additional usage charges may apply. See <a href="https://hay.net/cellular-service" class="text-indigo-600 hover:underline">hay.net/cellular-service</a> for current charges.</p>
+							</td>
+						</tr>
+					</table>
+				@else
+					<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+						<div>
+							<div class="mt-2 text-sm text-gray-600">
+								<p><strong>Plan:</strong> {{ $contract->bell_tier ?? 'N/A' }} Tier</p>
+							</div>
+						</div>
+						<div>
+							<div class="mt-2 text-sm text-gray-600">
+								<p><strong>Monthly Rate Plan Charge:</strong> ${{ number_format($contract->bell_plan_cost ?? 0, 2) }}</p>
+							</div>
+						</div>
+						<div class="col-span-2 text-sm text-gray-600">
+							<p>Unlimited Canada-wide calling</p>
+							<p>Unlimited Canada-wide text, picture, and video messages</p>
+							<p>50 GB unlimited non-shareable data at speeds up to 250 Mbps, after 75 GB reduced speeds are up to 512 Kbps.</p>
+							<p>Standard Definition Video Streaming (480p)</p>
+							<p>5G network access</p>
+							<p>Call Display | Message Centre | Call Waiting | Conference Calling</p>
+							<p>CAN-U.S Calling = $0.75/minute | CAN-U.S Texting = $0.40/text</p>
+							<p class="font-semibold">Note: This plan may be subject to rate increases by the provider, which will apply during your term.</p>
+							<p class="text-xs mt-2">If you exceed the usage allowed in your rate plan, additional usage charges may apply. See <a href="https://hay.net/cellular-service" class="text-indigo-600 hover:underline">hay.net/cellular-service</a> for current charges.</p>
+						</div>
+					</div>
+				@endif
+			</div>
+			<hr class="border-gray-200" style="{{ $isPdf ? 'margin: 0.5rem 0;' : '' }}">
+			<!-- Minimum Monthly Charge -->
+			<div class="px-4 py-3 sm:px-4" style="{{ $isPdf ? 'padding: 0.5rem; font-size: 10pt; font-weight: bold;' : '' }}">
+				@php
+					$minimumMonthlyCharge = ($contract->bell_plan_cost ?? 0) + $monthlyDevicePayment;
+				@endphp
+				Minimum Monthly Charge: ${{ number_format($minimumMonthlyCharge, 2) }}
+			</div>
             <hr class="border-gray-200" style="{{ $isPdf ? 'margin: 0.5rem 0;' : '' }}">
             <!-- Total Monthly Charges -->
             <div class="px-4 py-3 sm:px-4" style="{{ $isPdf ? 'padding: 0.5rem;' : '' }}">
@@ -363,7 +397,7 @@
             <div class="px-4 py-3 sm:px-4" style="{{ $isPdf ? 'padding: 0.5rem;' : '' }}">
                 <h4 class="text-md font-medium text-gray-900" style="{{ $isPdf ? 'font-size: 12pt; margin-bottom: 0.25rem;' : '' }}">One-Time Charges</h4>
                 @php
-                    $subtotal = ($contract->amount_paid_for_device ?? 0) + ($contract->required_upfront_payment ?? 0) + ($contract->optional_down_payment ?? 0);
+                    $subtotal = $deviceAmount + ($contract->required_upfront_payment ?? 0) + ($contract->optional_down_payment ?? 0);
                     $taxes = $subtotal * 0.13;
                     $total = $subtotal + $taxes;
                 @endphp
@@ -434,30 +468,30 @@
         $signatureExists = file_exists($signatureFullPath);
         $signatureBase64 = null;
         $signatureSrc = null;
-        
+       
         if ($signatureExists) {
             try {
                 $signatureData = file_get_contents($signatureFullPath);
                 $signatureBase64 = 'data:image/png;base64,' . base64_encode($signatureData);
-                
+               
                 // Use base64 for BOTH PDF and HTML for consistency
                 $signatureSrc = $signatureBase64;
-                
+               
             } catch (\Exception $e) {
                 Log::error('Failed to process signature', [
-                    'contract_id' => $contract->id, 
+                    'contract_id' => $contract->id,
                     'error' => $e->getMessage()
                 ]);
             }
         }
-        
+       
         Log::debug('Signature path check in view', [
             'contract_id' => $contract->id,
             'signature_exists' => $signatureExists,
             'signature_base64_available' => !empty($signatureBase64),
         ]);
     @endphp
-    
+   
     <div class="px-4 py-3 sm:px-4" style="{{ $isPdf ? 'padding: 0.5rem;' : '' }}">
         <h4 class="text-md font-medium text-gray-900" style="{{ $isPdf ? 'font-size: 12pt; margin-bottom: 0.25rem;' : '' }}">Signature</h4>
         @if ($signatureExists && !empty($signatureSrc))

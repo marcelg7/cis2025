@@ -1,9 +1,8 @@
 <?php
+
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\MobileController;
 use App\Http\Controllers\UserSettingsController;
-use App\Http\Controllers\DeviceController;
-use App\Http\Controllers\PlanController;
 use App\Http\Controllers\ActivityTypeController;
 use App\Http\Controllers\CommitmentPeriodController;
 use App\Http\Controllers\ContractController;
@@ -11,6 +10,7 @@ use App\Http\Controllers\SearchController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\BellPricingController;
 
 // Protected Routes (Require Authentication)
 Route::middleware(['auth'])->group(function () {
@@ -25,21 +25,17 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/change-password', function () {
         return view('auth.change-password');
     })->name('password.custom_change');
-
     // Admin Routes
     Route::get('/admin', [AdminController::class, 'index'])->name('admin.index');
     Route::post('/admin/clear-test-data', [AdminController::class, 'clearTestData'])->name('admin.clear-test-data');
-    Route::post('/admin/seed-test-data', [AdminController::class, 'seedTestData'])->name('admin.seed-test-data'); 
-
+    Route::post('/admin/seed-test-data', [AdminController::class, 'seedTestData'])->name('admin.seed-test-data');
     // Settings Routes
     Route::get('/settings', [UserSettingsController::class, 'edit'])->name('users.settings.edit');
     Route::patch('/settings', [UserSettingsController::class, 'update'])->name('users.settings.update');
     Route::get('/mobile/devices', [MobileController::class, 'devices'])->name('mobile.devices');
     Route::get('/test-wp', [MobileController::class, 'testWordpress'])->name('test.wordpress');
-
     // Search Route
     Route::get('/search', [SearchController::class, 'search'])->name('search');
-
     // Contract Routes
     Route::get('/contracts', [ContractController::class, 'index'])->name('contracts.index');
     Route::get('/contracts/{subscriber}/create', [ContractController::class, 'create'])->name('contracts.create');
@@ -54,18 +50,25 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/contracts/{contract}/download', [ContractController::class, 'download'])->name('contracts.download');
     Route::post('/contracts/{contract}/email', [ContractController::class, 'email'])->name('contracts.email');
     Route::get('/contracts/{contract}/ftp', [ContractController::class, 'ftp'])->name('contracts.ftp');
-
+    // Bell Pricing Routes
+    Route::get('/bell-pricing', [BellPricingController::class, 'index'])->name('bell-pricing.index');
+    Route::get('/bell-pricing/upload', [BellPricingController::class, 'uploadForm'])->name('bell-pricing.upload');
+    Route::post('/bell-pricing/upload', [BellPricingController::class, 'upload'])->name('bell-pricing.upload.store');
+    Route::get('/bell-pricing/{id}', [BellPricingController::class, 'show'])->name('bell-pricing.show');
+    Route::get('/bell-pricing/{id}/history', [BellPricingController::class, 'history'])->name('bell-pricing.history');
+    Route::get('/bell-pricing-compare', [BellPricingController::class, 'compare'])->name('bell-pricing.compare');
+    
+    // API endpoints for Bell Pricing
+    Route::get('/api/bell-pricing', [BellPricingController::class, 'getPricing'])->name('api.bell-pricing');
+    Route::get('/api/bell-pricing/device', [BellPricingController::class, 'getDevicePricing'])->name('api.bell-pricing.device');
+	
     // Admin-Only Routes
     Route::middleware([\App\Http\Middleware\Admin::class])->group(function () {
-        Route::resource('devices', DeviceController::class);
-        Route::resource('plans', PlanController::class);
         Route::resource('activity-types', ActivityTypeController::class);
         Route::resource('commitment-periods', CommitmentPeriodController::class);
         Route::resource('users', UserController::class);
     });
 });
-
 Route::get('/test-alpine', fn() => view('test-alpine'))->name('test.alpine');
-
 // Ensure auth routes are included
 require base_path('routes/auth.php');

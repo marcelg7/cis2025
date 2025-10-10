@@ -1,9 +1,5 @@
 @extends('layouts.app')
 
-@section('header')
-    <h2 class="font-semibold text-xl text-gray-800 leading-tight">Admin Dashboard</h2>
-@endsection
-
 @section('content')
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
@@ -13,7 +9,7 @@
                     <p>Test Contracts: {{ $testContractsCount }}</p>
                     <p>Test Subscribers: {{ $testSubscribersCount }}</p>
                     <p>Test Customers: {{ $testCustomersCount }}</p>
-                    <p>Test Plans: {{ $testPlansCount }}</p>
+
                     <!-- Clear Test Data Form -->
                     <h4 class="mt-4">Clear Test Data</h4>
                     <form method="POST" action="{{ route('admin.clear-test-data') }}">

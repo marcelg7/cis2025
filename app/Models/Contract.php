@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Contract extends Model {
     protected $guarded = [];
@@ -22,10 +23,17 @@ class Contract extends Model {
 			'required_upfront_payment',
 			'optional_down_payment',
 			'deferred_payment_amount',
-			'plan_id',
 			'commitment_period_id',
 			'first_bill_date',
 			'status',
+			'bell_device_id',           
+			'bell_pricing_type',        
+			'bell_tier',                
+			'bell_retail_price',        
+			'bell_monthly_device_cost', 
+			'bell_plan_cost',           
+			'bell_dro_amount',          
+			'bell_plan_plus_device',    			
 			'manufacturer',
 			'model',
 			'version',
@@ -34,6 +42,7 @@ class Contract extends Model {
 			'device_price',
 			'pdf_path',
 			'signature_path',
+			'updated_by',
     ];
 	
     // Add date casting
@@ -43,6 +52,16 @@ class Contract extends Model {
         'contract_date' => 'date',
         'first_bill_date' => 'date',
 		'is_test' => 'boolean',
+		'device_price' => 'decimal:2',
+        'agreement_credit_amount' => 'decimal:2',
+        'required_upfront_payment' => 'decimal:2',
+        'optional_down_payment' => 'decimal:2',
+        'deferred_payment_amount' => 'decimal:2',
+        'bell_retail_price' => 'decimal:2',           
+        'bell_monthly_device_cost' => 'decimal:2',    
+        'bell_plan_cost' => 'decimal:2',              
+        'bell_dro_amount' => 'decimal:2',             
+        'bell_plan_plus_device' => 'decimal:2',       		
     ];
 
 
@@ -54,19 +73,14 @@ class Contract extends Model {
 			return $this->belongsTo(Subscriber::class);
 		}
 
-		public function plan()
-		{
-			return $this->belongsTo(Plan::class);
-		}
-
 		public function activityType()
 		{
 			return $this->belongsTo(ActivityType::class);
 		}
 
-		public function device()
+		public function bellDevice(): BelongsTo
 		{
-			return $this->belongsTo(Device::class);
+			return $this->belongsTo(BellDevice::class);
 		}
 
 		public function commitmentPeriod()
@@ -74,10 +88,6 @@ class Contract extends Model {
 			return $this->belongsTo(CommitmentPeriod::class);
 		}
 
-		public function shortcode()
-		{
-			return $this->belongsTo(Shortcode::class);
-		}
 
 		public function addOns()
 		{
@@ -88,4 +98,10 @@ class Contract extends Model {
 		{
 			return $this->hasMany(ContractOneTimeFee::class);
 		}
+
+		public function updatedBy()
+		{
+			return $this->belongsTo(User::class, 'updated_by');
+		}		
+		
 	}
