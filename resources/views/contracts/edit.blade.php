@@ -103,15 +103,15 @@
                                     id="bell_device_id"
                                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
                                 <option value="">Select a device</option>
-                                @foreach($bellDevices as $device)
-                                    <option value="{{ $device['id'] }}"
-                                            data-name="{{ $device['name'] }}"
-                                            data-has-smartpay="{{ $device['has_smartpay'] ? 'true' : 'false' }}"
-                                            data-has-dro="{{ $device['has_dro'] ? 'true' : 'false' }}"
-                                            {{ old('bell_device_id', $contract->bell_device_id) == $device['id'] ? 'selected' : '' }}>
-                                        {{ $device['display'] }}
-                                    </option>
-                                @endforeach
+							@foreach($bellDevices as $device)
+								<option value="{{ $device['id'] }}"
+										data-name="{{ $device['name'] }}"
+										data-has-smartpay="{{ $device['has_smartpay'] ? 'true' : 'false' }}"
+										data-has-dro="{{ $device['has_dro'] ? 'true' : 'false' }}"
+										{{ old('bell_device_id', $contract->bell_device_id) == $device['id'] ? 'selected' : '' }}>
+									{{ $device['name'] }}
+								</option>
+							@endforeach
                             </select>
                         </div>
                         <!-- Pricing Type -->
@@ -170,6 +170,9 @@
                         Apply to Contract
                     </button>
                 </div>
+				
+				<!-- Plans Section include partical -->
+				@include('contracts.partials._cellular_pricing_fields')
                 
                 <div class="mt-4 grid grid-cols-1 gap-y-6 sm:grid-cols-2 sm:gap-x-4">
                     <div>

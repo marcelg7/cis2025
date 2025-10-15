@@ -11,6 +11,9 @@ use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\BellPricingController;
+use App\Http\Controllers\CellularPricingController;
+use App\Http\Controllers\RatePlanController;
+use App\Http\Controllers\MobileInternetPlanController;
 
 // Protected Routes (Require Authentication)
 Route::middleware(['auth'])->group(function () {
@@ -61,13 +64,52 @@ Route::middleware(['auth'])->group(function () {
     // API endpoints for Bell Pricing
     Route::get('/api/bell-pricing', [BellPricingController::class, 'getPricing'])->name('api.bell-pricing');
     Route::get('/api/bell-pricing/device', [BellPricingController::class, 'getDevicePricing'])->name('api.bell-pricing.device');
+
+
+		
+	// Rate Plans - Edit Routes
+	Route::get('/cellular-pricing/rate-plans/{ratePlan}/edit', [RatePlanController::class, 'edit'])->name('cellular-pricing.rate-plans.edit');
+	Route::put('/cellular-pricing/rate-plans/{ratePlan}', [RatePlanController::class, 'update'])->name('cellular-pricing.rate-plans.update');
+
+	// Mobile Internet Plans - Edit Routes
+	Route::get('/cellular-pricing/mobile-internet/{mobileInternetPlan}', [MobileInternetPlanController::class, 'show'])->name('cellular-pricing.mobile-internet.show');
+	Route::get('/cellular-pricing/mobile-internet/{mobileInternetPlan}/edit', [MobileInternetPlanController::class, 'edit'])->name('cellular-pricing.mobile-internet.edit');
+	Route::put('/cellular-pricing/mobile-internet/{mobileInternetPlan}', [MobileInternetPlanController::class, 'update'])->name('cellular-pricing.mobile-internet.update');
 	
-    // Admin-Only Routes
+
+	
+	// Cellular Pricing Routes
+    // Upload interface
+    Route::get('/cellular-pricing/upload', [CellularPricingController::class, 'upload'])->name('cellular-pricing.upload');
+    Route::post('/cellular-pricing/import', [CellularPricingController::class, 'import'])->name('cellular-pricing.import');
+    // Browse interfaces
+    Route::get('/cellular-pricing/rate-plans', [CellularPricingController::class, 'ratePlans'])->name('cellular-pricing.rate-plans');
+    Route::get('/cellular-pricing/rate-plans/{id}', [CellularPricingController::class, 'ratePlanShow'])->name('cellular-pricing.rate-plan-show');
+    Route::get('/cellular-pricing/mobile-internet', [CellularPricingController::class, 'mobileInternet'])->name('cellular-pricing.mobile-internet');
+    Route::get('/cellular-pricing/add-ons', [CellularPricingController::class, 'addOns'])->name('cellular-pricing.add-ons');
+    // Compare
+    Route::get('/cellular-pricing/compare', [CellularPricingController::class, 'compare'])->name('cellular-pricing.compare');
+	
+
+	// Admin-Only Routes
     Route::middleware([\App\Http\Middleware\Admin::class])->group(function () {
         Route::resource('activity-types', ActivityTypeController::class);
         Route::resource('commitment-periods', CommitmentPeriodController::class);
         Route::resource('users', UserController::class);
     });
+	
+	
+	Route::middleware(['auth'])->prefix('api')->group(function () {
+		// API endpoints for pricing lookups
+		Route::get('/cellular-pricing/rate-plan', [CellularPricingController::class, 'getPricing']);
+		Route::get('/cellular-pricing/mobile-internet', [CellularPricingController::class, 'getMobileInternetPricing']);
+		Route::get('/cellular-pricing/add-on', [CellularPricingController::class, 'getAddOnPricing']);
+		// API endpoints for Bell Pricing
+		Route::get('/api/bell-pricing', [BellPricingController::class, 'getPricing'])->name('api.bell-pricing');
+		Route::get('/api/bell-pricing/device', [BellPricingController::class, 'getDevicePricing'])->name('api.bell-pricing.device');
+	
+	});
+	
 });
 Route::get('/test-alpine', fn() => view('test-alpine'))->name('test.alpine');
 // Ensure auth routes are included
