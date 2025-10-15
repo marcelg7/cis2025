@@ -33,7 +33,12 @@ class Contract extends Model {
 			'bell_monthly_device_cost', 
 			'bell_plan_cost',           
 			'bell_dro_amount',          
-			'bell_plan_plus_device',    			
+			'bell_plan_plus_device', 
+			'rate_plan_id',
+			'mobile_internet_plan_id',
+			'rate_plan_price',
+			'mobile_internet_price',
+			'selected_tier',   			
 			'manufacturer',
 			'model',
 			'version',
@@ -61,7 +66,9 @@ class Contract extends Model {
         'bell_monthly_device_cost' => 'decimal:2',    
         'bell_plan_cost' => 'decimal:2',              
         'bell_dro_amount' => 'decimal:2',             
-        'bell_plan_plus_device' => 'decimal:2',       		
+        'bell_plan_plus_device' => 'decimal:2',  
+		'rate_plan_price' => 'decimal:2',
+		'mobile_internet_price' => 'decimal:2',		
     ];
 
 
@@ -102,6 +109,40 @@ class Contract extends Model {
 		public function updatedBy()
 		{
 			return $this->belongsTo(User::class, 'updated_by');
+		}		
+
+		/**
+		 * Get the rate plan for this contract
+		 */
+		public function ratePlan(): BelongsTo
+		{
+			return $this->belongsTo(RatePlan::class);
+		}
+
+		/**
+		 * Get the mobile internet plan for this contract
+		 */
+		public function mobileInternetPlan(): BelongsTo
+		{
+			return $this->belongsTo(MobileInternetPlan::class);
+		}
+
+		/**
+		 * Get the total monthly rate for cellular services
+		 */
+		public function getTotalCellularRateAttribute(): float
+		{
+			$total = 0;
+			
+			if ($this->rate_plan_price) {
+				$total += $this->rate_plan_price;
+			}
+			
+			if ($this->mobile_internet_price) {
+				$total += $this->mobile_internet_price;
+			}
+			
+			return $total;
 		}		
 		
 	}

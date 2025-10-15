@@ -7,6 +7,12 @@
     <title>Hay Contract Information System WCOC</title>
     @vite(['resources/css/app.css', 'resources/css/app2.css', 'resources/js/app.js'])
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.2.0/dist/signature_pad.umd.min.js"></script>
+    <style>
+        /* Ensure Pricing Dropdown width is respected */
+        .pricing-dropdown {
+            min-width: 230px !important; /* Matches Tailwind w-96 */
+        }
+    </style>
 </head>
 <body class="font-sans antialiased">
     <div class="min-h-screen bg-white">
@@ -27,9 +33,64 @@
                             <x-nav-link :href="route('contracts.index')" :active="request()->routeIs('contracts.*')">
                                 Contracts
                             </x-nav-link>
-                            <x-nav-link :href="route('bell-pricing.index')" :active="request()->routeIs('bell-pricing.*')">
-                                Bell Pricing
-                            </x-nav-link>
+                            
+                            <!-- Bell Pricing Dropdown -->
+                            <div class="relative" x-data="{ open: false }" @click.away="open = false">
+                                <button @click="open = !open" 
+                                        class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium leading-5 transition duration-150 ease-in-out h-16 {{ request()->routeIs('bell-pricing.*') || request()->routeIs('cellular-pricing.*') ? 'border-indigo-400 text-gray-900 focus:border-indigo-700' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 focus:text-gray-700 focus:border-gray-300' }}">
+                                    Pricing
+                                    <svg class="ml-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                    </svg>
+                                </button>
+                                
+                                <div x-show="open"
+                                     x-transition:enter="transition ease-out duration-200"
+                                     x-transition:enter-start="transform opacity-0 scale-95"
+                                     x-transition:enter-end="transform opacity-100 scale-100"
+                                     x-transition:leave="transition ease-in duration-75"
+                                     x-transition:leave-start="transform opacity-100 scale-100"
+                                     x-transition:leave-end="transform opacity-0 scale-95"
+                                     class="absolute right-0 z-50 mt-0 w-80 rounded-md shadow-lg pricing-dropdown"
+                                     style="display: none;">
+                                    <div class="rounded-md ring-1 ring-black ring-opacity-5 py-1 bg-white">
+                                        <div class="px-4 py-2 text-xs font-semibold text-gray-400 uppercase">Bell Device Pricing</div>
+                                        <a href="{{ route('bell-pricing.index') }}" 
+                                           class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 whitespace-nowrap {{ request()->routeIs('bell-pricing.index') ? 'bg-gray-50' : '' }}">
+                                            Browse Devices
+                                        </a>
+                                        <a href="{{ route('bell-pricing.upload') }}" 
+                                           class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 whitespace-nowrap {{ request()->routeIs('bell-pricing.upload') ? 'bg-gray-50' : '' }}">
+                                            Upload Device Pricing
+                                        </a>
+                                        <a href="{{ route('bell-pricing.compare') }}" 
+                                           class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 whitespace-nowrap {{ request()->routeIs('bell-pricing.compare') ? 'bg-gray-50' : '' }}">
+                                            Compare Devices
+                                        </a>
+                                        
+                                        <div class="border-t border-gray-200 my-1"></div>
+                                        
+                                        <div class="px-4 py-2 text-xs font-semibold text-gray-400 uppercase">Cellular Plans</div>
+                                        <a href="{{ route('cellular-pricing.rate-plans') }}" 
+                                           class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 whitespace-nowrap {{ request()->routeIs('cellular-pricing.rate-plans*') ? 'bg-gray-50' : '' }}">
+                                            Rate Plans
+                                        </a>
+                                        <a href="{{ route('cellular-pricing.mobile-internet') }}" 
+                                           class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 whitespace-nowrap {{ request()->routeIs('cellular-pricing.mobile-internet') ? 'bg-gray-50' : '' }}">
+                                            Mobile Internet
+                                        </a>
+                                        <a href="{{ route('cellular-pricing.add-ons') }}" 
+                                           class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 whitespace-nowrap {{ request()->routeIs('cellular-pricing.add-ons') ? 'bg-gray-50' : '' }}">
+                                            Plan Add-Ons
+                                        </a>
+                                        <a href="{{ route('cellular-pricing.upload') }}" 
+                                           class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 whitespace-nowrap {{ request()->routeIs('cellular-pricing.upload') ? 'bg-gray-50' : '' }}">
+                                            Upload Plan Pricing
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>                
+                            
                             <x-nav-link href="https://hay.net" target="_blank" :active="false">
                                 Hay Website
                                 <x-icon-open />
@@ -77,7 +138,6 @@
                                                 Admin
                                             </a>
                                         @endif
-
                                         <a href="{{ route('activity-types.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                             Activity Types
                                         </a>
@@ -124,9 +184,34 @@
                     <x-responsive-nav-link :href="route('contracts.index')" :active="request()->routeIs('contracts.*')">
                         Contracts
                     </x-responsive-nav-link>
-                    <x-responsive-nav-link :href="route('bell-pricing.index')" :active="request()->routeIs('bell-pricing.*')">
-                        Bell Pricing
+                    
+                    <!-- Bell Device Pricing -->
+                    <div class="px-4 py-2 text-xs font-semibold text-gray-400 uppercase">Bell Device Pricing</div>
+                    <x-responsive-nav-link :href="route('bell-pricing.index')" :active="request()->routeIs('bell-pricing.index')">
+                        Browse Devices
                     </x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('bell-pricing.upload')" :active="request()->routeIs('bell-pricing.upload')">
+                        Upload Device Pricing
+                    </x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('bell-pricing.compare')" :active="request()->routeIs('bell-pricing.compare')">
+                        Compare Devices
+                    </x-responsive-nav-link>
+                    
+                    <!-- Cellular Plans -->
+                    <div class="px-4 py-2 text-xs font-semibold text-gray-400 uppercase mt-2">Cellular Plans</div>
+                    <x-responsive-nav-link :href="route('cellular-pricing.rate-plans')" :active="request()->routeIs('cellular-pricing.rate-plans*')">
+                        Rate Plans
+                    </x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('cellular-pricing.mobile-internet')" :active="request()->routeIs('cellular-pricing.mobile-internet')">
+                        Mobile Internet
+                    </x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('cellular-pricing.add-ons')" :active="request()->routeIs('cellular-pricing.add-ons')">
+                        Plan Add-Ons
+                    </x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('cellular-pricing.upload')" :active="request()->routeIs('cellular-pricing.upload')">
+                        Upload Plan Pricing
+                    </x-responsive-nav-link>
+                    
                     <x-responsive-nav-link href="https://hay.net" target="_blank" :active="false" class="flex items-center">
                         Hay Website
                         <x-icon-open />
