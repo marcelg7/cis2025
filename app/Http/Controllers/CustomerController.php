@@ -202,4 +202,9 @@ class CustomerController extends Controller
         return redirect()->route('customers.show', $customerId)
             ->with('success', 'Subscriber added successfully.');
     }
+
+
+
+
+
 }

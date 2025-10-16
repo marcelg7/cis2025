@@ -53,6 +53,18 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/contracts/{contract}/download', [ContractController::class, 'download'])->name('contracts.download');
     Route::post('/contracts/{contract}/email', [ContractController::class, 'email'])->name('contracts.email');
     Route::get('/contracts/{contract}/ftp', [ContractController::class, 'ftp'])->name('contracts.ftp');
+		
+	// Financing Form Routes
+	Route::get('/contracts/{contract}/financing', [ContractController::class, 'financingForm'])->name('contracts.financing');
+	Route::get('/contracts/{contract}/financing/sign', [ContractController::class, 'signFinancing'])->name('contracts.financing.sign');
+	Route::post('/contracts/{contract}/financing/signature', [ContractController::class, 'storeFinancingSignature'])->name('contracts.financing.signature');
+	Route::post('/contracts/{contract}/financing/finalize', [ContractController::class, 'finalizeFinancing'])->name('contracts.financing.finalize');
+	Route::get('/contracts/{contract}/financing/download', [ContractController::class, 'downloadFinancing'])->name('contracts.financing.download');
+	
+	// Financing CSR Initials
+	Route::get('contracts/{id}/financing/csr-initial', [ContractController::class, 'signCsrFinancing'])->name('contracts.financing.csr-initial');
+	Route::post('contracts/{id}/financing/csr-initial', [ContractController::class, 'storeCsrFinancingInitials'])->name('contracts.financing.store-csr-initial');
+	
     // Bell Pricing Routes
     Route::get('/bell-pricing', [BellPricingController::class, 'index'])->name('bell-pricing.index');
     Route::get('/bell-pricing/upload', [BellPricingController::class, 'uploadForm'])->name('bell-pricing.upload');

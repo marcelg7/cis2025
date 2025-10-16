@@ -79,32 +79,45 @@ class MobileInternetPlanController extends Controller
     /**
      * Update the specified mobile internet plan in storage.
      */
-    public function update(Request $request, MobileInternetPlan $mobileInternetPlan): RedirectResponse
-    {
-        $validated = $request->validate([
-            'soc_code' => 'required|string|max:50|unique:mobile_internet_plans,soc_code,' . $mobileInternetPlan->id,
-            'plan_name' => 'required|string|max:255',
-            'monthly_rate' => 'required|numeric|min:0',
-            'category' => 'nullable|string|max:100',
-            'promo_group' => 'nullable|string|max:100',
-            'description' => 'nullable|string|max:65535',
-            'effective_date' => 'required|date',
-            'is_current' => 'boolean',
-            'is_active' => 'boolean',
-            'is_test' => 'boolean',
-        ]);
+	public function update(Request $request, MobileInternetPlan $mobileInternetPlan): RedirectResponse
+	{
+		\Log::info('Update method called', [
+			'plan_id' => $mobileInternetPlan->id,
+			'soc_code' => $request->soc_code,
+			'existing_soc_code' => $mobileInternetPlan->soc_code
+		]);
+		
+		// Check if SOC code is being changed and if the new one already exists
+		if ($request->soc_code !== $mobileInternetPlan->soc_code) {
+			$exists = MobileInternetPlan::where('soc_code', $request->soc_code)
+				->where('id', '!=', $mobileInternetPlan->id)
+				->exists();
+			
+			if ($exists) {
+				return back()->withErrors(['soc_code' => 'The soc code has already been taken.'])->withInput();
+			}
+		}
+		
+		$validated = $request->validate([
+			'soc_code' => 'required|string|max:50',
+			'plan_name' => 'required|string|max:255',
+			'monthly_rate' => 'required|numeric|min:0',
+			'category' => 'nullable|string|max:100',
+			'promo_group' => 'nullable|string|max:100',
+			'description' => 'nullable|string',
+			'effective_date' => 'required|date',
+			'is_active' => 'boolean',
+		]);
 
-        // Handle checkboxes
-        $validated['is_current'] = $request->has('is_current');
-        $validated['is_active'] = $request->has('is_active');
-        $validated['is_test'] = $request->has('is_test');
+		// Handle checkboxes
+		$validated['is_active'] = $request->has('is_active');
 
-        $mobileInternetPlan->update($validated);
+		$mobileInternetPlan->update($validated);
 
-        return redirect()
-            ->route('cellular-pricing.mobile-internet')
-            ->with('success', 'Mobile internet plan updated successfully.');
-    }
+		return redirect()
+			->route('cellular-pricing.mobile-internet')
+			->with('success', 'Mobile internet plan updated successfully.');
+	}
 
     /**
      * Remove the specified mobile internet plan from storage.

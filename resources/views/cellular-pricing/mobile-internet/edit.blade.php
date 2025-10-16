@@ -62,7 +62,7 @@
 
                 <div>
                     <label for="effective_date" class="block text-sm font-medium text-gray-700">Effective Date</label>
-					<input type="date" name="effective_date" id="effective_date" value="{{ old('effective_date', $mobileInternetPlan->effective_date->format('Y-m-d')) }}"
+                    <input type="date" name="effective_date" id="effective_date" value="{{ old('effective_date', $mobileInternetPlan->effective_date ? $mobileInternetPlan->effective_date->format('Y-m-d') : '') }}"
                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required>
                     @error('effective_date')
                         <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
@@ -70,35 +70,21 @@
                 </div>
             </div>
 
-            <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="flex items-center">
-                    <input type="checkbox" name="is_current" id="is_current" value="1" 
-                           {{ old('is_current', $mobileInternetPlan->is_current) ? 'checked' : '' }}
-                           class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
-                    <label for="is_current" class="ml-2 block text-sm text-gray-900">Current</label>
-                </div>
-
+            <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="flex items-center">
                     <input type="checkbox" name="is_active" id="is_active" value="1" 
                            {{ old('is_active', $mobileInternetPlan->is_active) ? 'checked' : '' }}
                            class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
                     <label for="is_active" class="ml-2 block text-sm text-gray-900">Active</label>
                 </div>
-
-                <div class="flex items-center">
-                    <input type="checkbox" name="is_test" id="is_test" value="1" 
-                           {{ old('is_test', $mobileInternetPlan->is_test) ? 'checked' : '' }}
-                           class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
-                    <label for="is_test" class="ml-2 block text-sm text-gray-900">Test Plan</label>
-                </div>
             </div>
         </div>
         
-        <!-- Plan Description for Contract -->
+        <!-- Plan Description -->
         <div class="bg-white shadow rounded-lg p-6">
             <h3 class="text-lg font-semibold text-gray-900 mb-4">Plan Description & Contract Details</h3>
             <p class="text-sm text-gray-600 mb-4">
-                Add detailed information about this mobile internet plan that will be displayed on contracts. 
+                Add detailed information about this plan that will be displayed on contracts. 
                 Use the editor below to format the text with bullet points, bold text, etc.
             </p>
             
@@ -127,7 +113,7 @@
                     <li>Links and special formatting</li>
                 </ul>
                 <p class="mt-2 text-xs text-blue-700">
-                    <strong>Note:</strong> If no description is specified here, the contract will display basic plan information.
+                    <strong>Note:</strong> If no description is specified here, the contract will display default plan information.
                 </p>
             </div>
         </div>

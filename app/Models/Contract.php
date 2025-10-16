@@ -48,6 +48,12 @@ class Contract extends Model {
 			'pdf_path',
 			'signature_path',
 			'updated_by',
+			'financing_status',
+			'financing_signature_path',
+			'financing_signed_at',
+			'financing_pdf_path',
+			'financing_csr_initials_path',
+			'financing_csr_initialed_at',			
     ];
 	
     // Add date casting
@@ -56,6 +62,7 @@ class Contract extends Model {
         'end_date' => 'date',
         'contract_date' => 'date',
         'first_bill_date' => 'date',
+		'financing_signed_at' => 'datetime',
 		'is_test' => 'boolean',
 		'device_price' => 'decimal:2',
         'agreement_credit_amount' => 'decimal:2',
@@ -144,5 +151,43 @@ class Contract extends Model {
 			
 			return $total;
 		}		
+		public function requiresFinancing(): bool
+		{
+			// Requires financing if:
+			// 1. Has a Bell device
+			// 2. Has device financing (retail price - credits - payments > 0)
+			if (!$this->bell_device_id) {
+				return false;
+			}
+			
+			$financedAmount = $this->getTotalFinancedAmount();
+			return $financedAmount > 0;
+		}
+
+		/**
+		 * Get total financed amount
+		 */
+		public function getTotalFinancedAmount(): float
+		{
+			$devicePrice = $this->bell_retail_price ?? 0;
+			$credit = $this->agreement_credit_amount ?? 0;
+			$upfront = $this->required_upfront_payment ?? 0;
+			$downPayment = $this->optional_down_payment ?? 0;
+			
+			return max(0, $devicePrice - $credit - $upfront - $downPayment);
+		}
+
+		/**
+		 * Get monthly device payment
+		 */
+		public function getMonthlyDevicePayment(): float
+		{
+			$financedAmount = $this->getTotalFinancedAmount();
+			$deferred = $this->deferred_payment_amount ?? 0;
+			
+			return ($financedAmount - $deferred) / 24;
+		}		
+		
+		
 		
 	}
