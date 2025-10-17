@@ -16,6 +16,8 @@ use App\Http\Controllers\CellularPricingController;
 use App\Http\Controllers\RatePlanController;
 use App\Http\Controllers\MobileInternetPlanController;
 use App\Http\Controllers\ChangelogController;
+use App\Http\Controllers\TermsOfServiceController;
+
 
 // Protected Routes (Require Authentication)
 Route::middleware(['auth'])->group(function () {
@@ -119,11 +121,19 @@ Route::middleware(['auth'])->group(function () {
 	Route::middleware(['auth'])->get('/changelog', [ChangelogController::class, 'index'])->name('changelog');
 
 	// Admin-Only Routes
-    Route::middleware([\App\Http\Middleware\Admin::class])->group(function () {
-        Route::resource('activity-types', ActivityTypeController::class);
-        Route::resource('commitment-periods', CommitmentPeriodController::class);
-        Route::resource('users', UserController::class);
-    });
+	Route::middleware([\App\Http\Middleware\Admin::class])->group(function () {
+		Route::resource('activity-types', ActivityTypeController::class);
+		Route::resource('commitment-periods', CommitmentPeriodController::class);
+		Route::resource('users', UserController::class);
+		
+		// NEW: Terms of Service Management
+		Route::get('/terms-of-service', [TermsOfServiceController::class, 'index'])->name('terms-of-service.index');
+		Route::get('/terms-of-service/create', [TermsOfServiceController::class, 'create'])->name('terms-of-service.create');
+		Route::post('/terms-of-service', [TermsOfServiceController::class, 'store'])->name('terms-of-service.store');
+		Route::post('/terms-of-service/{id}/activate', [TermsOfServiceController::class, 'activate'])->name('terms-of-service.activate');
+		Route::get('/terms-of-service/{id}/download', [TermsOfServiceController::class, 'download'])->name('terms-of-service.download');
+		Route::delete('/terms-of-service/{id}', [TermsOfServiceController::class, 'destroy'])->name('terms-of-service.destroy');
+	});
 	
 	
 	Route::middleware(['auth'])->prefix('api')->group(function () {

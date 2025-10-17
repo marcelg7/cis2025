@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Contract;
+use App\Models\TermsOfService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use HTMLPurifier;
 use HTMLPurifier_Config;
@@ -46,7 +47,6 @@ class ContractPdfService
         Log::debug('Calculated financials', [
             'contract_id' => $contract->id,
             'devicePrice' => $devicePrice,
-            // ... add other vars if needed for debugging
         ]);
 
         // Sanitize HTML
@@ -133,7 +133,7 @@ class ContractPdfService
             }
         }
 
-        // NEW: Add DRO if applicable
+        // Add DRO if applicable
         if ($contract->requiresDro() &&
             $contract->dro_status === 'finalized' &&
             $contract->dro_pdf_path &&
@@ -149,21 +149,65 @@ class ContractPdfService
             }
         }
 
-        // Add terms and conditions
-        $termsFiles = [
-            public_path('pdfs/OURAGREEMENTpage.pdf'),
-            public_path('pdfs/HayCommTermsOfServicerev2020.pdf'),
-        ];
-        foreach ($termsFiles as $file) {
-            if (file_exists($file)) {
-                $pageCount = $fpdi->setSourceFile($file);
+        // NEW: Add active Terms of Service from database
+        $activeTerms = TermsOfService::getActive();
+        if ($activeTerms && Storage::disk('public')->exists($activeTerms->path)) {
+            Log::info('Adding Terms of Service to merged document', [
+                'contract_id' => $contract->id,
+                'tos_version' => $activeTerms->version,
+                'tos_id' => $activeTerms->id
+            ]);
+            
+            $termsPdfPath = storage_path('app/public/' . $activeTerms->path);
+            try {
+                $pageCount = $fpdi->setSourceFile($termsPdfPath);
                 for ($i = 1; $i <= $pageCount; $i++) {
                     $fpdi->AddPage();
                     $tplIdx = $fpdi->importPage($i);
                     $fpdi->useTemplate($tplIdx);
                 }
-            } else {
-                Log::warning('Terms file not found', ['file' => $file]);
+            } catch (\Exception $e) {
+                Log::error('Failed to add Terms of Service to merged PDF', [
+                    'contract_id' => $contract->id,
+                    'tos_id' => $activeTerms->id,
+                    'error' => $e->getMessage()
+                ]);
+            }
+        } else {
+            Log::warning('No active Terms of Service found or file does not exist', [
+                'contract_id' => $contract->id,
+                'has_active_terms' => !is_null($activeTerms),
+                'path' => $activeTerms->path ?? null
+            ]);
+        }
+
+        // LEGACY: Add old hardcoded terms files as fallback (remove once new system is in use)
+        $legacyTermsFiles = [
+            public_path('pdfs/OURAGREEMENTpage.pdf'),
+            public_path('pdfs/HayCommTermsOfServicerev2020.pdf'),
+        ];
+        
+        // Only use legacy files if no active Terms of Service exists
+        if (!$activeTerms) {
+            Log::info('Using legacy terms files as fallback', ['contract_id' => $contract->id]);
+            foreach ($legacyTermsFiles as $file) {
+                if (file_exists($file)) {
+                    try {
+                        $pageCount = $fpdi->setSourceFile($file);
+                        for ($i = 1; $i <= $pageCount; $i++) {
+                            $fpdi->AddPage();
+                            $tplIdx = $fpdi->importPage($i);
+                            $fpdi->useTemplate($tplIdx);
+                        }
+                    } catch (\Exception $e) {
+                        Log::error('Failed to add legacy terms file', [
+                            'file' => $file,
+                            'error' => $e->getMessage()
+                        ]);
+                    }
+                } else {
+                    Log::warning('Legacy terms file not found', ['file' => $file]);
+                }
             }
         }
 
