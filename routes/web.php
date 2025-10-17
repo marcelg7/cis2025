@@ -11,6 +11,7 @@ use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\BellPricingController;
+use App\Http\Controllers\Api\BellDeviceController;
 use App\Http\Controllers\CellularPricingController;
 use App\Http\Controllers\RatePlanController;
 use App\Http\Controllers\MobileInternetPlanController;
@@ -121,6 +122,8 @@ Route::middleware(['auth'])->group(function () {
 		// API endpoints for Bell Pricing
 		Route::get('/api/bell-pricing', [BellPricingController::class, 'getPricing'])->name('api.bell-pricing');
 		Route::get('/api/bell-pricing/device', [BellPricingController::class, 'getDevicePricing'])->name('api.bell-pricing.device');
+		// API endpoints for Bell Device Compatibility
+		Route::get('/bell-devices/compatible', [BellDeviceController::class, 'compatible']);
 	
 	});
 	

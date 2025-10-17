@@ -8,9 +8,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class BellDevice extends Model
 {
+    use HasFactory;
 
-    
-	protected $fillable = [
+    protected $fillable = [
         'name',
         'manufacturer',
         'model',
@@ -21,6 +21,18 @@ class BellDevice extends Model
     protected $casts = [
         'is_active' => 'boolean',
     ];
+
+    protected $appends = ['has_smartpay', 'has_dro'];
+
+    public function getHasSmartpayAttribute()
+    {
+        return $this->currentPricing()->exists(); // Checks if any current SmartPay pricing exists
+    }
+
+    public function getHasDroAttribute()
+    {
+        return $this->currentDroPricing()->exists(); // Checks if any current DRO pricing exists
+    }
 
     public function pricing(): HasMany
     {

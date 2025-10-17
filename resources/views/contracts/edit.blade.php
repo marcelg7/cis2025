@@ -526,6 +526,14 @@ let feeCount = {{ $contract->oneTimeFees->count() }};
             document.getElementById('hidden_bell_dro_amount').value = pricing.dro_amount || 0;
             document.getElementById('hidden_bell_plan_plus_device').value = pricing.plan_plus_device_pre_tax;
             
+			// If DRO, auto-set deferred payment to DRO amount
+			const deferredInput = document.getElementById('deferred_payment_amount');
+			if (currentPricingData.pricing_type === 'dro' && pricing.dro_amount) {
+				deferredInput.value = parseFloat(pricing.dro_amount).toFixed(2);
+			} else {
+				deferredInput.value = ''; // Clear if not DRO
+			}				
+			
             // Auto-populate agreement credit if available
             if (pricing.agreement_credit) {
                 document.getElementById('agreement_credit_amount').value = pricing.agreement_credit;
