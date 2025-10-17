@@ -223,6 +223,17 @@ class ContractController extends Controller
             $contract->update(['financing_status' => 'not_required']);
             Log::info('Contract does not require financing form', ['contract_id' => $contract->id]);
         }
+		// Set DRO status based on whether DRO is required
+		if ($contract->requiresDro()) {
+			$contract->update(['dro_status' => 'pending']);
+			Log::info('Contract requires DRO form', ['contract_id' => $contract->id]);
+		} else {
+			$contract->update(['dro_status' => 'not_required']);
+			Log::info('Contract does not require DRO form', ['contract_id' => $contract->id]);
+		}		
+		
+		
+		
         if ($request->has('add_ons')) {
             foreach ($request->add_ons as $addOn) {
                 ContractAddOn::create([
@@ -506,6 +517,19 @@ class ContractController extends Controller
             }
         }
        
+		// NEW: Update DRO status based on whether DRO is required
+		if ($contract->requiresDro()) {
+			if ($contract->dro_status === 'not_required') {
+				$contract->update(['dro_status' => 'pending']);
+				Log::info('Contract now requires DRO form', ['contract_id' => $contract->id]);
+			}
+		} else {
+			if ($contract->dro_status !== 'not_required') {
+				$contract->update(['dro_status' => 'not_required']);
+				Log::info('Contract no longer requires DRO form', ['contract_id' => $contract->id]);
+			}
+		}
+	   
         // Update add-ons
         $contract->addOns()->delete();
         if ($request->add_ons) {
@@ -634,6 +658,19 @@ class ContractController extends Controller
         if ($contract->status !== 'signed') {
             return redirect()->route('contracts.view', $id)->with('error', 'Contract must be signed before finalizing.');
         }
+
+		// NEW: Check if financing form is required and completed
+		if ($contract->requiresFinancing() && $contract->financing_status !== 'finalized') {
+			return redirect()->route('contracts.view', $id)
+				->with('error', 'Financing form must be completed and finalized before finalizing the contract.');
+		}
+		
+		// NEW: Check if DRO form is required and completed
+		if ($contract->requiresDro() && $contract->dro_status !== 'finalized') {
+			return redirect()->route('contracts.view', $id)
+				->with('error', 'DRO form must be completed and finalized before finalizing the contract.');
+		}		
+		
         $contract->update([
             'status' => 'finalized',
             'updated_by' => auth()->id(),
@@ -1255,6 +1292,349 @@ return redirect()->back()->with('error', 'Failed to send email: ' . $e->getMessa
             'path' => $pdfPath
         ]);
     }
-   
-   
+	   
+	   /**
+	 * Display the DRO form
+	 */
+	public function droForm($id)
+	{
+		$contract = Contract::with([
+			'subscriber.mobilityAccount.ivueAccount.customer',
+			'bellDevice'
+		])->findOrFail($id);
+		
+		// Check if DRO is required
+		if (!$contract->requiresDro()) {
+			return redirect()->route('contracts.view', $id)
+				->with('error', 'This contract does not require a DRO form.');
+		}
+		
+		return view('contracts.dro', compact('contract'));
+	}
+
+	/**
+	 * Show the DRO form signature page
+	 */
+	public function signDro($id)
+	{
+		$contract = Contract::with([
+			'subscriber.mobilityAccount.ivueAccount.customer',
+			'bellDevice'
+		])->findOrFail($id);
+		
+		if (!$contract->requiresDro()) {
+			return redirect()->route('contracts.view', $id)
+				->with('error', 'This contract does not require a DRO form.');
+		}
+		
+		if ($contract->dro_status !== 'pending') {
+			return redirect()->route('contracts.dro', $id)
+				->with('error', 'DRO form cannot be signed at this time.');
+		}
+		
+		return view('contracts.sign-dro', compact('contract'));
+	}
+
+	/**
+	 * Store the DRO signature
+	 */
+	public function storeDroSignature(Request $request, $id)
+	{
+		$contract = Contract::with('subscriber.mobilityAccount.ivueAccount.customer')->findOrFail($id);
+		
+		if ($contract->dro_status !== 'pending') {
+			Log::warning('DRO form cannot be signed - wrong status', [
+				'contract_id' => $id,
+				'current_status' => $contract->dro_status
+			]);
+			return redirect()->route('contracts.dro', $id)
+				->with('error', 'DRO form cannot be signed at this time.');
+		}
+		
+		$request->validate([
+			'signature' => 'required|string|regex:/^data:image\/png;base64,/',
+		], [
+			'signature.required' => 'Please provide a signature.',
+			'signature.regex' => 'Invalid signature format.',
+		]);
+		
+		try {
+			$signature = $request->signature;
+			Log::info('Received DRO signature data', ['contract_id' => $id]);
+			
+			$signaturePath = "signatures/dro_contract_{$contract->id}.png";
+			$signatureData = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $signature));
+			
+			if ($signatureData === false) {
+				Log::error('Failed to decode DRO signature data', ['contract_id' => $id]);
+				return redirect()->back()->with('error', 'Failed to process signature.');
+			}
+			
+			$stored = Storage::disk('public')->put($signaturePath, $signatureData);
+			if (!$stored) {
+				Log::error('Failed to store DRO signature file', ['contract_id' => $id]);
+				return redirect()->back()->with('error', 'Failed to save signature file.');
+			}
+			
+			Log::info('DRO signature file stored', ['contract_id' => $id, 'path' => $signaturePath]);
+			
+			$updated = $contract->update([
+				'dro_signature_path' => 'storage/' . $signaturePath,
+				'dro_status' => 'customer_signed',
+				'dro_signed_at' => now(),
+				'updated_by' => auth()->id(),
+			]);
+			
+			if (!$updated) {
+				Log::error('Failed to update contract with DRO signature', ['contract_id' => $id]);
+				return redirect()->back()->with('error', 'Failed to save signature to database.');
+			}
+			
+			$contract->refresh();
+			
+			Log::info('DRO form signed successfully', [
+				'contract_id' => $id,
+				'new_status' => $contract->dro_status,
+				'signature_path' => $contract->dro_signature_path,
+				'signed_at' => $contract->dro_signed_at
+			]);
+			
+			// Generate PDF
+			$this->generateDroPdf($contract);
+			
+			return redirect()->route('contracts.dro', $id)
+				->with('success', 'DRO form signed successfully');
+				
+		} catch (\Exception $e) {
+			Log::error('Error in storeDroSignature', ['contract_id' => $id, 'error' => $e->getMessage()]);
+			return redirect()->back()->with('error', 'Failed to save signature: ' . $e->getMessage());
+		}
+	}
+
+	/**
+	 * Show the CSR initials signature pad for DRO
+	 */
+	public function signCsrDro($id)
+	{
+		$contract = Contract::with([
+			'subscriber.mobilityAccount.ivueAccount.customer',
+			'bellDevice'
+		])->findOrFail($id);
+		
+		if (!$contract->requiresDro() || $contract->dro_status !== 'customer_signed') {
+			return redirect()->route('contracts.dro', $id)
+				->with('error', 'DRO form cannot be initialed at this time.');
+		}
+		
+		return view('contracts.sign-dro-csr', compact('contract'));
+	}
+
+	/**
+	 * Store the CSR initials for DRO
+	 */
+	public function storeCsrDroInitials(Request $request, $id)
+	{
+		$contract = Contract::with('subscriber.mobilityAccount.ivueAccount.customer')->findOrFail($id);
+		
+		if ($contract->dro_status !== 'customer_signed') {
+			return redirect()->route('contracts.dro', $id)
+				->with('error', 'DRO form cannot be initialed at this time.');
+		}
+		
+		$request->validate([
+			'initials' => 'required|string|regex:/^data:image\/png;base64,/',
+		], [
+			'initials.required' => 'Please provide initials.',
+			'initials.regex' => 'Invalid initials format.',
+		]);
+		
+		try {
+			$initials = $request->initials;
+			Log::info('Received CSR initials data for DRO', ['contract_id' => $id]);
+			
+			$initialsPath = "initials/dro_contract_{$contract->id}_csr.png";
+			$initialsData = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $initials));
+			
+			if ($initialsData === false) {
+				Log::error('Failed to decode CSR initials data for DRO', ['contract_id' => $id]);
+				return redirect()->back()->with('error', 'Failed to process initials.');
+			}
+			
+			$stored = Storage::disk('public')->put($initialsPath, $initialsData);
+			if (!$stored) {
+				Log::error('Failed to store CSR initials file for DRO', ['contract_id' => $id]);
+				return redirect()->back()->with('error', 'Failed to save initials file.');
+			}
+			
+			Log::info('CSR initials file stored for DRO', ['contract_id' => $id, 'path' => $initialsPath]);
+			
+			$contract->update([
+				'dro_csr_initials_path' => 'storage/' . $initialsPath,
+				'dro_status' => 'csr_initialed',
+				'dro_csr_initialed_at' => now(),
+				'updated_by' => auth()->id(),
+			]);
+			
+			$contract->refresh();
+			
+			// Regenerate PDF with initials
+			$this->generateDroPdf($contract);
+			
+			return redirect()->route('contracts.dro', $id)
+				->with('success', 'DRO form initialed successfully');
+		} catch (\Exception $e) {
+			Log::error('Error in storeCsrDroInitials', ['contract_id' => $id, 'error' => $e->getMessage()]);
+			return redirect()->back()->with('error', 'Failed to save initials: ' . $e->getMessage());
+		}
+	}
+
+	/**
+	 * Finalize the DRO form
+	 */
+	public function finalizeDro($id)
+	{
+		$contract = Contract::with([
+			'subscriber.mobilityAccount.ivueAccount.customer',
+			'bellDevice'
+		])->findOrFail($id);
+		
+		if ($contract->dro_status !== 'csr_initialed') {
+			return redirect()->route('contracts.dro', $id)
+				->with('error', 'DRO form must be initialed by CSR before finalizing.');
+		}
+		
+		$contract->update([
+			'dro_status' => 'finalized',
+			'updated_by' => auth()->id(),
+		]);
+		
+		// Regenerate PDF with initials
+		$this->generateDroPdf($contract);
+		
+		Log::info('DRO form finalized', ['contract_id' => $id]);
+		
+		// FTP to Vault
+		if (config('filesystems.disks.vault_ftp')) {
+			try {
+				$ftpService = new \App\Services\VaultFtpService();
+				$remoteFilename = $ftpService->getRemoteFilename($contract);
+				// Add _dro suffix
+				$remoteFilename = str_replace('.pdf', '_dro.pdf', $remoteFilename);
+				
+				$result = $ftpService->uploadToVault($contract->dro_pdf_path, $remoteFilename);
+				
+				if ($result['success']) {
+					Log::info('DRO form uploaded to vault', [
+						'contract_id' => $id,
+						'vault_filename' => $remoteFilename
+					]);
+				} else {
+					Log::warning('DRO form finalized but FTP upload failed', [
+						'contract_id' => $id,
+						'error' => $result['error']
+					]);
+				}
+			} catch (\Exception $e) {
+				Log::error('FTP upload exception for DRO form', [
+					'contract_id' => $id,
+					'error' => $e->getMessage()
+				]);
+			}
+		}
+		
+		return redirect()->route('contracts.dro', $id)
+			->with('success', 'DRO form finalized successfully.');
+	}
+
+	/**
+	 * Download the DRO form
+	 */
+	public function downloadDro($id)
+	{
+		$contract = Contract::with([
+			'subscriber.mobilityAccount.ivueAccount.customer',
+			'bellDevice'
+		])->findOrFail($id);
+		
+		if ($contract->dro_status !== 'finalized') {
+			return redirect()->back()->with('error', 'DRO form must be finalized to download.');
+		}
+		
+		if (!$contract->dro_pdf_path || !Storage::disk('public')->exists($contract->dro_pdf_path)) {
+			Log::error('DRO PDF not found', ['contract_id' => $id, 'path' => $contract->dro_pdf_path]);
+			return redirect()->back()->with('error', 'DRO PDF not found.');
+		}
+		
+		try {
+			$pdfContent = Storage::disk('public')->get($contract->dro_pdf_path);
+			$fileName = str_replace('.pdf', '_dro.pdf',
+				$contract->subscriber->last_name . '_' .
+				$contract->subscriber->first_name . '_' .
+				$contract->id . '.pdf'
+			);
+			
+			return response()->streamDownload(function () use ($pdfContent) {
+				echo $pdfContent;
+			}, $fileName, ['Content-Type' => 'application/pdf']);
+		} catch (\Exception $e) {
+			Log::error('DRO PDF download failed', [
+				'contract_id' => $id,
+				'error' => $e->getMessage()
+			]);
+			return redirect()->back()->with('error', 'Failed to download PDF: ' . $e->getMessage());
+		}
+	}
+
+	/**
+	 * Generate DRO PDF
+	 */
+	private function generateDroPdf($contract)
+	{
+		// Render the HTML from the PDF-specific view
+		$html = view('contracts.dro-pdf', [
+			'contract' => $contract
+		])->render();
+		
+		// Set up options
+		$options = new Options();
+		$options->set('isHtml5ParserEnabled', true);
+		$options->set('isRemoteEnabled', true);
+		$options->set('dpi', 150);
+		$options->set('defaultFont', 'sans-serif');
+		$options->set('memory_limit', '512M');
+		$options->set('chroot', base_path());
+		$options->set('isPhpEnabled', true);
+		$options->set('margin_top', 10);
+		$options->set('margin_bottom', 10);
+		$options->set('margin_left', 10);
+		$options->set('margin_right', 10);
+		
+		// First pass: Render to measure height
+		$dompdf = new Dompdf($options);
+		$dompdf->loadHtml($html);
+		$dompdf->setPaper('a4', 'portrait');
+		$dompdf->render();
+		
+		// Get the rendered height in points + buffer
+		$canvas = $dompdf->getCanvas();
+		$height = $canvas->get_height() + 80;
+		
+		// Second pass: Re-render with custom paper size
+		$dompdf = new Dompdf($options);
+		$dompdf->loadHtml($html);
+		$dompdf->setPaper([0, 0, 595, $height]);
+		$dompdf->render();
+		
+		// Save the PDF
+		$pdfPath = "contracts/dro_contract_{$contract->id}.pdf";
+		Storage::disk('public')->put($pdfPath, $dompdf->output());
+		$contract->update(['dro_pdf_path' => $pdfPath]);
+		
+		Log::info('DRO PDF generated with custom height', [
+			'contract_id' => $contract->id,
+			'calculated_height' => $height,
+			'path' => $pdfPath
+		]);
+	}
+	   
 }

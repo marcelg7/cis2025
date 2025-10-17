@@ -67,6 +67,18 @@ Route::middleware(['auth'])->group(function () {
 	Route::get('contracts/{id}/financing/csr-initial', [ContractController::class, 'signCsrFinancing'])->name('contracts.financing.csr-initial');
 	Route::post('contracts/{id}/financing/csr-initial', [ContractController::class, 'storeCsrFinancingInitials'])->name('contracts.financing.store-csr-initial');
 	
+	// DRO Form Routes
+	Route::get('/contracts/{contract}/dro', [ContractController::class, 'droForm'])->name('contracts.dro');
+	Route::get('/contracts/{contract}/dro/sign', [ContractController::class, 'signDro'])->name('contracts.dro.sign');
+	Route::post('/contracts/{contract}/dro/signature', [ContractController::class, 'storeDroSignature'])->name('contracts.dro.signature');
+	Route::post('/contracts/{contract}/dro/finalize', [ContractController::class, 'finalizeDro'])->name('contracts.dro.finalize');
+	Route::get('/contracts/{contract}/dro/download', [ContractController::class, 'downloadDro'])->name('contracts.dro.download');
+
+	// DRO CSR Initials
+	Route::get('contracts/{id}/dro/csr-initial', [ContractController::class, 'signCsrDro'])->name('contracts.dro.csr-initial');
+	Route::post('contracts/{id}/dro/csr-initial', [ContractController::class, 'storeCsrDroInitials'])->name('contracts.dro.store-csr-initial');	
+
+	
     // Bell Pricing Routes
     Route::get('/bell-pricing', [BellPricingController::class, 'index'])->name('bell-pricing.index');
     Route::get('/bell-pricing/upload', [BellPricingController::class, 'uploadForm'])->name('bell-pricing.upload');

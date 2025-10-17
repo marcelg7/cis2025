@@ -54,7 +54,13 @@ class Contract extends Model {
 			'financing_pdf_path',
 			'financing_csr_initials_path',
 			'financing_csr_initialed_at',	
-			'custom_device_name',			
+			'custom_device_name',	
+			'dro_status',
+			'dro_signature_path',
+			'dro_csr_initials_path',
+			'dro_signed_at',
+			'dro_csr_initialed_at',
+			'dro_pdf_path',			
     ];
 	
     // Add date casting
@@ -76,7 +82,9 @@ class Contract extends Model {
         'bell_dro_amount' => 'decimal:2',             
         'bell_plan_plus_device' => 'decimal:2',  
 		'rate_plan_price' => 'decimal:2',
-		'mobile_internet_price' => 'decimal:2',		
+		'mobile_internet_price' => 'decimal:2',
+		'dro_signed_at' => 'datetime',
+		'dro_csr_initialed_at' => 'datetime',		
     ];
 
 
@@ -164,6 +172,15 @@ class Contract extends Model {
 			$financedAmount = $this->getTotalFinancedAmount();
 			return $financedAmount > 0;
 		}
+		/**
+		 * Check if this contract requires a DRO form
+		 */
+		public function requiresDro(): bool
+		{
+			// Requires DRO form if bell_dro_amount > 0
+			return ($this->bell_dro_amount ?? 0) > 0;
+		}
+
 
 		/**
 		 * Get total financed amount

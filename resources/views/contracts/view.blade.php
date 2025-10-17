@@ -484,7 +484,28 @@
                         Financing Form (Finalized)
                     </a>
                 @endif
-            @endif                
+            @endif    
+
+			<!-- DRO Form Button -->
+			@if($contract->requiresDro())
+				<a href="{{ route('contracts.dro', $contract->id) }}" 
+				   class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white 
+				   {{ $contract->dro_status === 'finalized' ? 'bg-green-600 hover:bg-green-700' : 'bg-orange-600 hover:bg-orange-700' }}">
+					<svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+					</svg>
+					DRO Form
+					@if($contract->dro_status === 'pending')
+						<span class="ml-2 px-2 py-0.5 text-xs font-semibold rounded-full bg-white text-orange-600">Pending</span>
+					@elseif($contract->dro_status === 'customer_signed')
+						<span class="ml-2 px-2 py-0.5 text-xs font-semibold rounded-full bg-white text-blue-600">Needs CSR</span>
+					@elseif($contract->dro_status === 'csr_initialed')
+						<span class="ml-2 px-2 py-0.5 text-xs font-semibold rounded-full bg-white text-indigo-600">Ready</span>
+					@elseif($contract->dro_status === 'finalized')
+						<span class="ml-2 px-2 py-0.5 text-xs font-semibold rounded-full bg-white text-green-600">Complete</span>
+					@endif
+				</a>
+			@endif            
 
             @if($contract->ftp_to_vault)
                 <div class="inline-flex items-center px-4 py-2 text-sm text-green-700 bg-green-100 rounded-md">

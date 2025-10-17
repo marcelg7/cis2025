@@ -118,15 +118,30 @@ class ContractPdfService
         unlink($tempFile);
 
         // Add financing if applicable
-        $attachFinancing = false;
         if ($contract->requiresFinancing() &&
             $contract->financing_status === 'finalized' &&
             $contract->financing_pdf_path &&
             Storage::disk('public')->exists($contract->financing_pdf_path)) {
             
-            $attachFinancing = true;
+            Log::info('Adding financing PDF to merged document', ['contract_id' => $contract->id]);
             $financingPdfPath = storage_path('app/public/' . $contract->financing_pdf_path);
             $pageCount = $fpdi->setSourceFile($financingPdfPath);
+            for ($i = 1; $i <= $pageCount; $i++) {
+                $fpdi->AddPage();
+                $tplIdx = $fpdi->importPage($i);
+                $fpdi->useTemplate($tplIdx);
+            }
+        }
+
+        // NEW: Add DRO if applicable
+        if ($contract->requiresDro() &&
+            $contract->dro_status === 'finalized' &&
+            $contract->dro_pdf_path &&
+            Storage::disk('public')->exists($contract->dro_pdf_path)) {
+            
+            Log::info('Adding DRO PDF to merged document', ['contract_id' => $contract->id]);
+            $droPdfPath = storage_path('app/public/' . $contract->dro_pdf_path);
+            $pageCount = $fpdi->setSourceFile($droPdfPath);
             for ($i = 1; $i <= $pageCount; $i++) {
                 $fpdi->AddPage();
                 $tplIdx = $fpdi->importPage($i);
