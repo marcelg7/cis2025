@@ -14,6 +14,7 @@ use App\Http\Controllers\BellPricingController;
 use App\Http\Controllers\CellularPricingController;
 use App\Http\Controllers\RatePlanController;
 use App\Http\Controllers\MobileInternetPlanController;
+use App\Http\Controllers\ChangelogController;
 
 // Protected Routes (Require Authentication)
 Route::middleware(['auth'])->group(function () {
@@ -102,6 +103,7 @@ Route::middleware(['auth'])->group(function () {
     // Compare
     Route::get('/cellular-pricing/compare', [CellularPricingController::class, 'compare'])->name('cellular-pricing.compare');
 	
+	Route::middleware(['auth'])->get('/changelog', [ChangelogController::class, 'index'])->name('changelog');
 
 	// Admin-Only Routes
     Route::middleware([\App\Http\Middleware\Admin::class])->group(function () {
