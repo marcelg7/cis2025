@@ -1,5 +1,5 @@
 @extends('layouts.app')
-<!-- sign-financing.blade.php -->
+
 @section('content')
 <div class="max-w-4xl mx-auto sm:px-6 lg:px-8 py-6">
     <div class="mb-6">
@@ -33,7 +33,7 @@
                 
                 <div class="mb-6">
                     <label class="block text-sm font-medium text-gray-700 mb-2">Customer Signature</label>
-                    <div class="border-2 border-gray-300 rounded-lg bg-white">
+                    <div class="border border-gray-300 rounded-md bg-gray-50">
                         <canvas id="signature-pad" class="w-full" style="height: 200px; touch-action: none;"></canvas>
                     </div>
                     <div class="mt-2 flex justify-between items-center">
@@ -69,44 +69,41 @@
 
 <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
 <script>
-    const canvas = document.getElementById('signature-pad');
-    const signaturePad = new SignaturePad(canvas, {
-        backgroundColor: 'rgb(255, 255, 255)',
-        penColor: 'rgb(0, 0, 0)'
-    });
+    document.addEventListener('DOMContentLoaded', function() {
+        const canvas = document.getElementById('signature-pad');
+        const signaturePad = new SignaturePad(canvas, {
+            backgroundColor: 'rgb(249, 250, 251)',
+            penColor: 'rgb(0, 0, 0)'
+        });
 
-    // Resize canvas to fit container
-    function resizeCanvas() {
-        const ratio = Math.max(window.devicePixelRatio || 1, 1);
-        canvas.width = canvas.offsetWidth * ratio;
-        canvas.height = canvas.offsetHeight * ratio;
-        canvas.getContext('2d').scale(ratio, ratio);
-        signaturePad.clear();
-    }
-
-    window.addEventListener('resize', resizeCanvas);
-    resizeCanvas();
-
-    // Clear signature
-    document.getElementById('clear-signature').addEventListener('click', function() {
-        signaturePad.clear();
-    });
-
-    // Submit form
-    document.getElementById('signature-form').addEventListener('submit', function(e) {
-        e.preventDefault();
-
-        if (signaturePad.isEmpty()) {
-            alert('Please provide a signature before submitting.');
-            return;
+        function resizeCanvas() {
+            const ratio = Math.max(window.devicePixelRatio || 1, 1);
+            canvas.width = canvas.offsetWidth * ratio;
+            canvas.height = canvas.offsetHeight * ratio;
+            canvas.getContext('2d').scale(ratio, ratio);
+            signaturePad.clear();
         }
 
-        // Get signature as data URL
-        const dataURL = signaturePad.toDataURL('image/png');
-        document.getElementById('signature-data').value = dataURL;
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
 
-        // Submit form
-        this.submit();
+        document.getElementById('clear-signature').addEventListener('click', function() {
+            signaturePad.clear();
+        });
+
+        document.getElementById('signature-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            if (signaturePad.isEmpty()) {
+                alert('Please provide a signature before submitting.');
+                return;
+            }
+
+            const dataURL = signaturePad.toDataURL('image/png');
+            document.getElementById('signature-data').value = dataURL;
+
+            this.submit();
+        });
     });
 </script>
 @endsection
