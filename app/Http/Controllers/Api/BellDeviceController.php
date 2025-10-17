@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 
 class BellDeviceController extends Controller
 {
-    public function compatible(Request $request)
+public function compatible(Request $request)
     {
         $tier = $request->tier;
         $compatibleIds = BellDevice::whereHas('currentPricing', function ($q) use ($tier) {

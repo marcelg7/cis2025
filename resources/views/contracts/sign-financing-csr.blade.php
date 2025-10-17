@@ -1,5 +1,5 @@
 @extends('layouts.app')
-
+<!-- sign-financing-csr.blade.php -->
 @section('content')
 <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 py-6">
     <div class="bg-white shadow rounded-lg overflow-hidden">

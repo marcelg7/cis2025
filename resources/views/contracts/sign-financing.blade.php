@@ -1,5 +1,5 @@
 @extends('layouts.app')
-
+<!-- sign-financing.blade.php -->
 @section('content')
 <div class="max-w-4xl mx-auto sm:px-6 lg:px-8 py-6">
     <div class="mb-6">

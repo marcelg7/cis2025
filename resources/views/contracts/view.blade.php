@@ -125,68 +125,93 @@
 
         <hr class="border-gray-200">
 
-        <!-- Device Details -->
-        <div class="section px-6 py-4 bg-white border-b border-gray-200">
-            <h3 class="text-lg font-semibold text-gray-900">Device Details</h3>
-            @php
-                $deviceDisplayName = $contract->bell_device_id && $contract->bellDevice ? $contract->bellDevice->name : 'N/A';
-            @endphp
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
-                <div class="bg-gray-50 p-4 rounded-lg">
-                    <p class="text-sm text-gray-700"><span class="font-semibold">Model:</span> {{ $deviceDisplayName }}</p>
-                    @if($contract->bell_device_id && $contract->bellDevice)
-                        <div class="mt-3 p-3 bg-blue-50 border border-blue-200 rounded">
-                            <p class="text-xs font-semibold text-blue-900 mb-1">Bell Pricing Details</p>
-                            <p class="text-xs"><span class="font-semibold">Pricing Type:</span> {{ ucfirst($contract->bell_pricing_type ?? 'N/A') }}</p>
-                            <p class="text-xs"><span class="font-semibold">Plan Tier:</span> {{ $contract->bell_tier ?? 'N/A' }}</p>
-                            @if($contract->bell_dro_amount && $contract->bell_dro_amount > 0)
-                                <p class="text-xs"><span class="font-semibold">DRO Amount:</span> ${{ number_format($contract->bell_dro_amount, 2) }}</p>
-                            @endif
-                            @if($contract->bell_plan_cost)
-                                <p class="text-xs"><span class="font-semibold">Bell Plan Cost:</span> ${{ number_format($contract->bell_plan_cost, 2) }}</p>
-                            @endif
-                        </div>
-                    @endif
-                    <p class="mt-2 italic text-xs text-gray-600">All amounts are before taxes.</p>
-                    <p class="text-sm text-gray-700"><span class="font-semibold">Device Retail Price:</span> ${{ number_format($devicePrice, 2) }}</p>
-                    <p class="text-sm text-gray-700"><span class="font-semibold">Agreement Credit:</span> ${{ number_format($contract->agreement_credit_amount ?? 0, 2) }}</p>
-                    <p class="text-sm text-gray-700"><span class="font-semibold">Device Amount:</span> ${{ number_format($deviceAmount, 2) }}</p>
-                    <p class="text-sm text-gray-700"><span class="font-semibold">Up-front Payment Required:</span> ${{ number_format($contract->required_upfront_payment ?? 0, 2) }}</p>
-                    <p class="text-sm text-gray-700"><span class="font-semibold">Optional Up-front Payment:</span> ${{ number_format($contract->optional_down_payment ?? 0, 2) }}</p>
-                    <p class="text-sm text-gray-700"><span class="font-semibold">Total Financed Amount (before tax):</span> ${{ number_format($totalFinancedAmount, 2) }}</p>
-                    <p class="text-sm text-gray-700"><span class="font-semibold">Deferred Payment Amount:</span> ${{ number_format($contract->deferred_payment_amount ?? 0, 2) }}</p>
-                    <p class="text-sm text-gray-700"><span class="font-semibold">Amount for Monthly Payment Calculation:</span> ${{ number_format($totalFinancedAmount - ($contract->deferred_payment_amount ?? 0), 2) }}</p>
-                </div>
-                <div class="bg-gray-50 p-4 rounded-lg">
-                    <p class="text-lg font-semibold text-gray-900">Monthly Device Payment: ${{ number_format($monthlyDevicePayment, 2) }}</p>
-                    @if($contract->bell_device_id && $contract->bell_monthly_device_cost)
-                        <p class="text-xs text-gray-500 mt-1">(Bell Calculated: ${{ number_format($contract->bell_monthly_device_cost, 2) }})</p>
-                    @endif
-                    <p class="text-sm text-gray-700 mt-2"><span class="font-semibold">Commitment Period:</span> {{ $contract->commitmentPeriod->name ?? '2 Year Term Smart Pay' }}</p>
-                    <p class="text-sm text-gray-700"><span class="font-semibold">Remaining Device Balance:</span> ${{ number_format($totalFinancedAmount - ($contract->deferred_payment_amount ?? 0), 2) }}</p>
-                    <p class="text-sm text-gray-700"><span class="font-semibold">Start Date:</span> {{ $contract->start_date->format('M d, Y') }}</p>
-                    <p class="text-sm text-gray-700"><span class="font-semibold">End Date:</span> {{ $contract->end_date->format('M d, Y') }}</p>
-                    <p class="text-sm text-gray-700">Your service will continue month-to-month after this end date.</p>
-                    <p class="text-xs text-gray-600 mt-2">
-                        Early Cancellation Fee is the remaining balance of your device plus the full Deferred Return Option amount. In this case, your Buyout Cost would be ${{ number_format($monthlyDevicePayment, 2) }} per month left on the term plus the Device Return Option of ${{ number_format($contract->deferred_payment_amount ?? 0, 2) }}.<br>
-                        Fee will be $0 on {{ $contract->end_date->format('M d, Y') }} and will decrease each month by: ${{ number_format($monthlyReduction, 2) }}
-                    </p>
-                </div>
-            </div>
-        </div>
-        <hr class="border-gray-200">
+		<!-- Device Details -->
+		@if($contract->bell_pricing_type === 'byod')
+			<!-- BYOD Plan - Simplified Display -->
+			<div class="section px-6 py-4 bg-white border-b border-gray-200">
+				<h3 class="text-lg font-semibold text-gray-900">Device Details</h3>
+				<div class="bg-blue-50 border border-blue-200 rounded-lg p-6 mt-4">
+					<div class="flex items-start">
+						<div class="flex-shrink-0">
+							<svg class="h-6 w-6 text-blue-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+								<path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+							</svg>
+						</div>
+						<div class="ml-3">
+							<h4 class="text-md font-semibold text-blue-900">Bring Your Own Device (BYOD) Plan</h4>
+							<p class="mt-2 text-sm text-blue-800">
+								This is a Bring Your Own Device plan. The customer is using their own device. No device financing is required for this contract.
+							</p>
+						</div>
+					</div>
+				</div>
+			</div>
+		@else
+			<!-- Regular Device Details (SmartPay/DRO) -->
+			<div class="section px-6 py-4 bg-white border-b border-gray-200">
+				<h3 class="text-lg font-semibold text-gray-900">Device Details</h3>
+				@php
+					$deviceDisplayName = $contract->bell_device_id && $contract->bellDevice ? $contract->bellDevice->name : 'N/A';
+				@endphp
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+					<div class="bg-gray-50 p-4 rounded-lg">
+						<p class="text-sm text-gray-700"><span class="font-semibold">Model:</span> {{ $deviceDisplayName }}</p>
+						@if($contract->bell_device_id && $contract->bellDevice)
+							<div class="mt-3 p-3 bg-blue-50 border border-blue-200 rounded">
+								<p class="text-xs font-semibold text-blue-900 mb-1">Bell Pricing Details</p>
+								<p class="text-xs"><span class="font-semibold">Pricing Type:</span> {{ ucfirst($contract->bell_pricing_type ?? 'N/A') }}</p>
+								<p class="text-xs"><span class="font-semibold">Plan Tier:</span> {{ $contract->bell_tier ?? 'N/A' }}</p>
+								@if($contract->bell_dro_amount && $contract->bell_dro_amount > 0)
+									<p class="text-xs"><span class="font-semibold">DRO Amount:</span> ${{ number_format($contract->bell_dro_amount, 2) }}</p>
+								@endif
+								@if($contract->bell_plan_cost)
+									<p class="text-xs"><span class="font-semibold">Bell Plan Cost:</span> ${{ number_format($contract->bell_plan_cost, 2) }}</p>
+								@endif
+							</div>
+						@endif
+						<p class="mt-2 italic text-xs text-gray-600">All amounts are before taxes.</p>
+						<p class="text-sm text-gray-700"><span class="font-semibold">Device Retail Price:</span> ${{ number_format($devicePrice, 2) }}</p>
+						<p class="text-sm text-gray-700"><span class="font-semibold">Agreement Credit:</span> ${{ number_format($contract->agreement_credit_amount ?? 0, 2) }}</p>
+						<p class="text-sm text-gray-700"><span class="font-semibold">Device Amount:</span> ${{ number_format($deviceAmount, 2) }}</p>
+						<p class="text-sm text-gray-700"><span class="font-semibold">Up-front Payment Required:</span> ${{ number_format($contract->required_upfront_payment ?? 0, 2) }}</p>
+						<p class="text-sm text-gray-700"><span class="font-semibold">Optional Up-front Payment:</span> ${{ number_format($contract->optional_down_payment ?? 0, 2) }}</p>
+						<p class="text-sm text-gray-700"><span class="font-semibold">Total Financed Amount (before tax):</span> ${{ number_format($totalFinancedAmount, 2) }}</p>
+						<p class="text-sm text-gray-700"><span class="font-semibold">Deferred Payment Amount:</span> ${{ number_format($contract->deferred_payment_amount ?? 0, 2) }}</p>
+						<p class="text-sm text-gray-700"><span class="font-semibold">Amount for Monthly Payment Calculation:</span> ${{ number_format($totalFinancedAmount - ($contract->deferred_payment_amount ?? 0), 2) }}</p>
+					</div>
+					<div class="bg-gray-50 p-4 rounded-lg">
+						<p class="text-lg font-semibold text-gray-900">Monthly Device Payment: ${{ number_format($monthlyDevicePayment, 2) }}</p>
+						@if($contract->bell_device_id && $contract->bell_monthly_device_cost)
+							<p class="text-xs text-gray-500 mt-1">(Bell Calculated: ${{ number_format($contract->bell_monthly_device_cost, 2) }})</p>
+						@endif
+						<p class="text-sm text-gray-700 mt-2"><span class="font-semibold">Commitment Period:</span> {{ $contract->commitmentPeriod->name ?? '2 Year Term Smart Pay' }}</p>
+						<p class="text-sm text-gray-700"><span class="font-semibold">Remaining Device Balance:</span> ${{ number_format($totalFinancedAmount - ($contract->deferred_payment_amount ?? 0), 2) }}</p>
+						<p class="text-sm text-gray-700"><span class="font-semibold">Start Date:</span> {{ $contract->start_date->format('M d, Y') }}</p>
+						<p class="text-sm text-gray-700"><span class="font-semibold">End Date:</span> {{ $contract->end_date->format('M d, Y') }}</p>
+						<p class="text-sm text-gray-700">Your service will continue month-to-month after this end date.</p>
+						<p class="text-xs text-gray-600 mt-2">
+							Early Cancellation Fee is the remaining balance of your device plus the full Deferred Return Option amount. In this case, your Buyout Cost would be ${{ number_format($monthlyDevicePayment, 2) }} per month left on the term plus the Device Return Option of ${{ number_format($contract->deferred_payment_amount ?? 0, 2) }}.<br>
+							Fee will be $0 on {{ $contract->end_date->format('M d, Y') }} and will decrease each month by: ${{ number_format($monthlyReduction, 2) }}
+						</p>
+					</div>
+				</div>
+			</div>
+		@endif
+		<hr class="border-gray-200">
 
         @include('contracts.partials._cellular_pricing_display')
         <hr class="border-gray-200">
 
-        <!-- Return Policy -->
-        <div class="section px-6 py-4 bg-white border-b border-gray-200">
-            <h3 class="text-lg font-semibold text-gray-900">Return Policy</h3>
-            <p class="text-sm text-gray-600 prose prose-sm max-w-none">
-                Taxes not included. If you purchase a device from Hay which does not meet your needs, you may return the device if it is <strong>(a)</strong> returned within <strong>15</strong> calendar days of the commitment start date; <strong>(b)</strong> in "like new" condition with the original packaging, manuals, and accessories; and <strong>(c)</strong> returned with original receipt to the location. You are responsible for all service charges incurred prior to your return of the device. SIM Cards are not returnable. Postpaid Accounts: Hay will not accept devices with excessive usage in violation of our Responsible Use of Services Policy. Prepaid Accounts: The device has not exceeded <strong>30</strong> minutes of voice usage or <strong>50 MB</strong> of data usage. Funds added to your account are non-refundable. If you are a person with a disability, the same conditions apply; however, you may return your device within <strong>30</strong> calendar days of the commitment start date and, if in a Prepaid Account, double the corresponding permitted usage set out above.
-            </p>
-        </div>
-        <hr class="border-gray-200">
+		<!-- Return Policy -->
+		@if($contract->bell_pricing_type !== 'byod')
+			<div class="section px-6 py-4 bg-white border-b border-gray-200">
+				<h3 class="text-lg font-semibold text-gray-900">Return Policy</h3>
+				<p class="text-sm text-gray-600 prose prose-sm max-w-none">
+					Taxes not included. If you purchase a device from Hay which does not meet your needs, you may return the device if it is <strong>(a)</strong> returned within <strong>15</strong> calendar days of the commitment start date; <strong>(b)</strong> in "like new" condition with the original packaging, manuals, and accessories; and <strong>(c)</strong> returned with original receipt to the location. You are responsible for all service charges incurred prior to your return of the device. SIM Cards are not returnable. Postpaid Accounts: Hay will not accept devices with excessive usage in violation of our Responsible Use of Services Policy. Prepaid Accounts: The device has not exceeded <strong>30</strong> minutes of voice usage or <strong>50 MB</strong> of data usage. Funds added to your account are non-refundable. If you are a person with a disability, the same conditions apply; however, you may return your device within <strong>30</strong> calendar days of the commitment start date and, if in a Prepaid Account, double the corresponding permitted usage set out above.
+				</p>
+			</div>
+			<hr class="border-gray-200">
+		@endif
 
         <!-- Rate Plan Details -->
         <div class="section px-6 py-4 bg-white border-b border-gray-200">

@@ -1,4 +1,5 @@
 @extends('layouts.app')
+<!-- contracts/sign.blade.php -->
 @section('content')
     <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 py-6 px-2">
         <h1 class="text-2xl font-bold mb-4">Sign Contract #{{ $contract->id }}</h1>

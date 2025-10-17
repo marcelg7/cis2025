@@ -53,7 +53,8 @@ class Contract extends Model {
 			'financing_signed_at',
 			'financing_pdf_path',
 			'financing_csr_initials_path',
-			'financing_csr_initialed_at',			
+			'financing_csr_initialed_at',	
+			'custom_device_name',			
     ];
 	
     // Add date casting
