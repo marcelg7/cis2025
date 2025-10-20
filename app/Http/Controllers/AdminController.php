@@ -31,6 +31,17 @@ class AdminController extends Controller
         ));
     }
 
+	public function update(Request $request)
+	{
+		$request->validate([
+			'log_prune_days' => 'required|integer|min:30',
+		]);
+
+		Setting::updateOrCreate(['key' => 'log_prune_days'], ['value' => $request->log_prune_days]);
+		// ... other settings
+	}
+
+
     public function clearTestData(Request $request)
     {
         $dryRun = $request->input('dry_run', false);

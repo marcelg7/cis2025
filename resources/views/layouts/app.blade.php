@@ -33,7 +33,7 @@
                             <x-nav-link :href="route('contracts.index')" :active="request()->routeIs('contracts.*')">
                                 Contracts
                             </x-nav-link>
-                           
+                          
                             <!-- Bell Pricing Dropdown -->
                             <div class="relative" x-data="{ open: false }" @click.away="open = false">
                                 <button @click="open = !open"
@@ -43,7 +43,7 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                                     </svg>
                                 </button>
-                               
+                              
                                 <div x-show="open"
                                      x-transition:enter="transition ease-out duration-200"
                                      x-transition:enter-start="transform opacity-0 scale-95"
@@ -67,9 +67,9 @@
                                            class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 whitespace-nowrap {{ request()->routeIs('bell-pricing.compare') ? 'bg-gray-50' : '' }}">
                                             Compare Devices
                                         </a>
-                                       
+                                      
                                         <div class="border-t border-gray-200 my-1"></div>
-                                       
+                                      
                                         <div class="px-4 py-2 text-xs font-semibold text-gray-400 uppercase">Cellular Plans</div>
                                         <a href="{{ route('cellular-pricing.rate-plans') }}"
                                            class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 whitespace-nowrap {{ request()->routeIs('cellular-pricing.rate-plans*') ? 'bg-gray-50' : '' }}">
@@ -90,7 +90,7 @@
                                     </div>
                                 </div>
                             </div>
-                           
+                          
                             <x-nav-link href="https://hay.net" target="_blank" :active="false">
                                 Hay Website
                                 <x-icon-open />
@@ -144,18 +144,22 @@
                                         <a href="{{ route('commitment-periods.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                             Commitment Periods
                                         </a>
-										<a href="{{ route('terms-of-service.index') }}" 
-										   class="flex items-center px-4 py-2 text-sm font-medium {{ request()->routeIs('terms-of-service.*') ? 'bg-gray-100 text-gray-900' : 'text-gray-700 hover:bg-gray-50' }}">
-											<svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-											</svg>
-											Terms of Service
-										</a>										
+                                        <a href="{{ route('terms-of-service.index') }}"
+                                           class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                            Terms of Service
+                                        </a>
                                         <a href="{{ route('users.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                             Users
                                         </a>
                                         <a href="{{ route('changelog') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                             Changelog
+                                        </a>
+                                        <!-- Add Logs Links -->
+                                        <a href="{{ route('logs.all') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                            All Activity Logs
+                                        </a>
+                                        <a href="{{ route('admin.settings') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                            Admin Settings
                                         </a>
                                     </div>
                                 </div>
@@ -194,7 +198,7 @@
                     <x-responsive-nav-link :href="route('contracts.index')" :active="request()->routeIs('contracts.*')">
                         Contracts
                     </x-responsive-nav-link>
-                   
+                  
                     <!-- Bell Device Pricing -->
                     <div class="px-4 py-2 text-xs font-semibold text-gray-400 uppercase">Bell Device Pricing</div>
                     <x-responsive-nav-link :href="route('bell-pricing.index')" :active="request()->routeIs('bell-pricing.index')">
@@ -203,25 +207,25 @@
                     <x-responsive-nav-link :href="route('bell-pricing.upload')" :active="request()->routeIs('bell-pricing.upload')">
                         Upload Device Pricing
                     </x-responsive-nav-link>
-                    <x-responsive-nav-link :href="route('bell-pricing.compare')" :active="request()->routeIs('bell-pricing.compare')">
+                    <x-responsive-nav-link :href="route('bell-pricing.compare') " :active="request()->routeIs('bell-pricing.compare')">
                         Compare Devices
                     </x-responsive-nav-link>
-                   
+                  
                     <!-- Cellular Plans -->
                     <div class="px-4 py-2 text-xs font-semibold text-gray-400 uppercase mt-2">Cellular Plans</div>
                     <x-responsive-nav-link :href="route('cellular-pricing.rate-plans')" :active="request()->routeIs('cellular-pricing.rate-plans*')">
                         Rate Plans
                     </x-responsive-nav-link>
-                    <x-responsive-nav-link :href="route('cellular-pricing.mobile-internet')" :active="request()->routeIs('cellular-pricing.mobile-internet')">
+                    <x-responsive-nav-link :href="route('cellular-pricing.mobile-internet') " :active="request()->routeIs('cellular-pricing.mobile-internet')">
                         Mobile Internet
                     </x-responsive-nav-link>
-                    <x-responsive-nav-link :href="route('cellular-pricing.add-ons')" :active="request()->routeIs('cellular-pricing.add-ons')">
+                    <x-responsive-nav-link :href="route('cellular-pricing.add-ons') " :active="request()->routeIs('cellular-pricing.add-ons')">
                         Plan Add-Ons
                     </x-responsive-nav-link>
-                    <x-responsive-nav-link :href="route('cellular-pricing.upload')" :active="request()->routeIs('cellular-pricing.upload')">
+                    <x-responsive-nav-link :href="route('cellular-pricing.upload') " :active="request()->routeIs('cellular-pricing.upload')">
                         Upload Plan Pricing
                     </x-responsive-nav-link>
-                   
+                  
                     <x-responsive-nav-link href="https://hay.net" target="_blank" :active="false" class="flex items-center">
                         Hay Website
                         <x-icon-open />

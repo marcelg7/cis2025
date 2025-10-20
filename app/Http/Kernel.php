@@ -35,12 +35,10 @@ class Kernel extends HttpKernel
             \Illuminate\View\Middleware\ShareErrorsFromSession::class,
             \App\Http\Middleware\VerifyCsrfToken::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
-			\App\Http\Middleware\Admin::class,
-			\App\Http\Middleware\TrackActiveUsers::class,
-	        \App\Http\Middleware\CustomSessionLifetime::class,
-
+            \App\Http\Middleware\Admin::class,
+            \App\Http\Middleware\TrackActiveUsers::class,
+            \App\Http\Middleware\CustomSessionLifetime::class,
         ],
-
         'api' => [
             \Illuminate\Routing\Middleware\ThrottleRequests::class.':api',
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
@@ -49,6 +47,8 @@ class Kernel extends HttpKernel
 
     /**
      * The application's middleware aliases.
+     *
+     * These aliases may be used instead of class names to reference middleware.
      *
      * @var array<string, class-string|string>
      */
@@ -65,10 +65,11 @@ class Kernel extends HttpKernel
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
         'admin' => \App\Http\Middleware\Admin::class,
-		'role' => \App\Http\Middleware\CheckRole::class,
+        'role' => \App\Http\Middleware\CheckRole::class,
+        'permission' => \Spatie\Permission\Middlewares\PermissionMiddleware::class,
     ];
-	
-	/**
+
+    /**
      * Bootstrap the application for HTTP requests.
      */
     public function boot(): void

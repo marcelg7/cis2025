@@ -552,7 +552,9 @@ class ContractController extends Controller
                     'cost' => $fee['cost'],
                 ]);
             }
-        }
+        
+		}
+
         return redirect()->route('contracts.view', $contract->id)->with('success', 'Contract updated successfully.');
     }
     public function sign($id): \Illuminate\Contracts\View\View|\Illuminate\Http\RedirectResponse

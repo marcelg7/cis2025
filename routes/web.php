@@ -17,6 +17,8 @@ use App\Http\Controllers\RatePlanController;
 use App\Http\Controllers\MobileInternetPlanController;
 use App\Http\Controllers\ChangelogController;
 use App\Http\Controllers\TermsOfServiceController;
+use App\Http\Controllers\LogController;
+use App\Http\Controllers\SettingsController;
 
 
 // Protected Routes (Require Authentication)
@@ -133,8 +135,18 @@ Route::middleware(['auth'])->group(function () {
 		Route::post('/terms-of-service/{id}/activate', [TermsOfServiceController::class, 'activate'])->name('terms-of-service.activate');
 		Route::get('/terms-of-service/{id}/download', [TermsOfServiceController::class, 'download'])->name('terms-of-service.download');
 		Route::delete('/terms-of-service/{id}', [TermsOfServiceController::class, 'destroy'])->name('terms-of-service.destroy');
+		
+		// Settings Routes
+		Route::get('admin/settings', [SettingsController::class, 'edit'])->name('admin.settings');
+		Route::post('admin/settings', [SettingsController::class, 'update']);		
 	});
 	
+	// Activity Log
+	Route::middleware('auth')->group(function () {
+		Route::get('logs/my', [LogController::class, 'myLogs'])->name('logs.my');
+		Route::post('logs/request-review', [LogController::class, 'requestReview'])->name('logs.request-review');
+		Route::get('logs/all', [LogController::class, 'allLogs'])->name('logs.all')->middleware('permission:view_all_logs');		
+	});	
 	
 	Route::middleware(['auth'])->prefix('api')->group(function () {
 		// API endpoints for pricing lookups
