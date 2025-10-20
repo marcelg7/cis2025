@@ -20,157 +20,228 @@ use App\Http\Controllers\TermsOfServiceController;
 use App\Http\Controllers\LogController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\Auth\NewPasswordController;
+use App\Http\Controllers\RoleController;
+use App\Http\Controllers\PermissionController;
 
-// Protected Routes (Require Authentication)
-Route::middleware(['auth'])->group(function () {
-    // Customer Routes
-    Route::get('/customers', [CustomerController::class, 'index'])->name('customers.index');
-    Route::post('/customers/fetch', [CustomerController::class, 'fetch'])->name('customers.fetch');
-    Route::get('/customers/{customer}', [CustomerController::class, 'show'])->name('customers.show');
-    Route::get('/customers/{customer}/add-mobility', [CustomerController::class, 'addMobilityForm'])->name('customers.add-mobility');
-    Route::post('/customers/{customer}/add-mobility', [CustomerController::class, 'storeMobility'])->name('customers.store-mobility');
-    Route::get('/customers/{customer}/add-subscriber', [CustomerController::class, 'addSubscriberForm'])->name('customers.add-subscriber');
-    Route::post('/customers/{customer}/add-subscriber', [CustomerController::class, 'storeSubscriber'])->name('customers.store-subscriber');
-    Route::get('/change-password', function () {
-        return view('auth.change-password');
-    })->name('password.custom_change');
-    // Admin Routes
-    Route::get('/admin', [AdminController::class, 'index'])->name('admin.index');
-    Route::post('/admin/clear-test-data', [AdminController::class, 'clearTestData'])->name('admin.clear-test-data');
-    Route::post('/admin/seed-test-data', [AdminController::class, 'seedTestData'])->name('admin.seed-test-data');
-    // Settings Routes
+
+/*
+|--------------------------------------------------------------------------
+| Guest Routes (Unauthenticated)
+|--------------------------------------------------------------------------
+*/
+
+// Password Reset Routes (must be outside auth middleware)
+Route::middleware('guest')->group(function () {
+    Route::get('reset-password/{token}', [NewPasswordController::class, 'create'])
+        ->name('password.reset');
+    Route::post('reset-password', [NewPasswordController::class, 'store'])
+        ->name('password.store');
+});
+
+// Test Routes
+Route::get('/test-alpine', fn() => view('test-alpine'))->name('test.alpine');
+
+/*
+|--------------------------------------------------------------------------
+| Authenticated Routes
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware('admin')->group(function () {
+    
+    /*
+    |--------------------------------------------------------------------------
+    | Customer Management
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('customers')->name('customers.')->group(function () {
+        Route::get('/', [CustomerController::class, 'index'])->name('index');
+        Route::post('/fetch', [CustomerController::class, 'fetch'])->name('fetch');
+        Route::get('/{customer}', [CustomerController::class, 'show'])->name('show');
+        Route::get('/{customer}/add-mobility', [CustomerController::class, 'addMobilityForm'])->name('add-mobility');
+        Route::post('/{customer}/add-mobility', [CustomerController::class, 'storeMobility'])->name('store-mobility');
+        Route::get('/{customer}/add-subscriber', [CustomerController::class, 'addSubscriberForm'])->name('add-subscriber');
+        Route::post('/{customer}/add-subscriber', [CustomerController::class, 'storeSubscriber'])->name('store-subscriber');
+    });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Contract Management
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('contracts')->name('contracts.')->group(function () {
+        // List & View
+        Route::get('/', [ContractController::class, 'index'])->name('index');
+        Route::get('/{contract}/view', [ContractController::class, 'view'])->name('view');
+        
+        // Create & Update
+        Route::get('/{subscriber}/create', [ContractController::class, 'create'])->name('create');
+        Route::post('/{subscriber}', [ContractController::class, 'store'])->name('store');
+        Route::get('/{contract}/edit', [ContractController::class, 'edit'])->name('edit');
+        Route::put('/{contract}', [ContractController::class, 'update'])->name('update');
+        
+        // Signing & Finalization
+        Route::get('/{contract}/sign', [ContractController::class, 'sign'])->name('sign');
+        Route::post('/{contract}/sign', [ContractController::class, 'storeSignature'])->name('storeSignature');
+        Route::post('/{contract}/finalize', [ContractController::class, 'finalize'])->name('finalize');
+        Route::post('/{contract}/revision', [ContractController::class, 'createRevision'])->name('revision');
+        
+        // Export & Communication
+        Route::get('/{contract}/download', [ContractController::class, 'download'])->name('download');
+        Route::post('/{contract}/email', [ContractController::class, 'email'])->name('email');
+        Route::get('/{contract}/ftp', [ContractController::class, 'ftp'])->name('ftp');
+        
+        // Financing Form
+        Route::prefix('{contract}/financing')->name('financing.')->group(function () {
+            Route::get('/', [ContractController::class, 'financingForm'])->name('index');
+            Route::get('/sign', [ContractController::class, 'signFinancing'])->name('sign');
+            Route::post('/signature', [ContractController::class, 'storeFinancingSignature'])->name('signature');
+            Route::post('/finalize', [ContractController::class, 'finalizeFinancing'])->name('finalize');
+            Route::get('/download', [ContractController::class, 'downloadFinancing'])->name('download');
+            Route::get('/csr-initial', [ContractController::class, 'signCsrFinancing'])->name('csr-initial');
+            Route::post('/csr-initial', [ContractController::class, 'storeCsrFinancingInitials'])->name('store-csr-initial');
+        });
+        
+        // DRO Form
+        Route::prefix('{contract}/dro')->name('dro.')->group(function () {
+            Route::get('/', [ContractController::class, 'droForm'])->name('index');
+            Route::get('/sign', [ContractController::class, 'signDro'])->name('sign');
+            Route::post('/signature', [ContractController::class, 'storeDroSignature'])->name('signature');
+            Route::post('/finalize', [ContractController::class, 'finalizeDro'])->name('finalize');
+            Route::get('/download', [ContractController::class, 'downloadDro'])->name('download');
+            Route::get('/csr-initial', [ContractController::class, 'signCsrDro'])->name('csr-initial');
+            Route::post('/csr-initial', [ContractController::class, 'storeCsrDroInitials'])->name('store-csr-initial');
+        });
+    });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Pricing Management
+    |--------------------------------------------------------------------------
+    */
+    
+    // Bell Device Pricing
+    Route::prefix('bell-pricing')->name('bell-pricing.')->group(function () {
+        Route::get('/', [BellPricingController::class, 'index'])->name('index');
+        Route::get('/upload', [BellPricingController::class, 'uploadForm'])->name('upload')->middleware('permission:upload-device-pricing');
+        Route::post('/upload', [BellPricingController::class, 'upload'])->name('upload.store')->middleware('permission:upload-device-pricing');
+        Route::get('/compare', [BellPricingController::class, 'compare'])->name('compare');
+        Route::get('/{id}', [BellPricingController::class, 'show'])->name('show');
+        Route::get('/{id}/history', [BellPricingController::class, 'history'])->name('history');
+    });
+    
+    // Cellular Pricing
+    Route::prefix('cellular-pricing')->name('cellular-pricing.')->group(function () {
+        // Upload
+        Route::get('/upload', [CellularPricingController::class, 'upload'])->name('upload')->middleware('permission:upload-plan-pricing');
+        Route::post('/import', [CellularPricingController::class, 'import'])->name('import')->middleware('permission:upload-plan-pricing');
+        
+        // Browse
+        Route::get('/rate-plans', [CellularPricingController::class, 'ratePlans'])->name('rate-plans');
+        Route::get('/rate-plans/{id}', [CellularPricingController::class, 'ratePlanShow'])->name('rate-plan-show');
+        Route::get('/mobile-internet', [CellularPricingController::class, 'mobileInternet'])->name('mobile-internet');
+        Route::get('/add-ons', [CellularPricingController::class, 'addOns'])->name('add-ons');
+        Route::get('/compare', [CellularPricingController::class, 'compare'])->name('compare');
+        
+        // Edit Rate Plans
+        Route::get('/rate-plans/{ratePlan}/edit', [RatePlanController::class, 'edit'])->name('rate-plans.edit');
+        Route::put('/rate-plans/{ratePlan}', [RatePlanController::class, 'update'])->name('rate-plans.update');
+        
+        // Edit Mobile Internet Plans
+        Route::get('/mobile-internet/{mobileInternetPlan}', [MobileInternetPlanController::class, 'show'])->name('mobile-internet.show');
+        Route::get('/mobile-internet/{mobileInternetPlan}/edit', [MobileInternetPlanController::class, 'edit'])->name('mobile-internet.edit');
+        Route::put('/mobile-internet/{mobileInternetPlan}', [MobileInternetPlanController::class, 'update'])->name('mobile-internet.update');
+    });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Activity Logs
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('logs')->name('logs.')->group(function () {
+        Route::get('/my', [LogController::class, 'myLogs'])->name('my');
+        Route::post('/request-review', [LogController::class, 'requestReview'])->name('request-review');
+        Route::get('/all', [LogController::class, 'allLogs'])
+            ->name('all')
+            ->middleware('permission:view_all_logs');
+    });
+
+    /*
+    |--------------------------------------------------------------------------
+    | User Settings & Utilities
+    |--------------------------------------------------------------------------
+    */
     Route::get('/settings', [UserSettingsController::class, 'edit'])->name('users.settings.edit');
     Route::patch('/settings', [UserSettingsController::class, 'update'])->name('users.settings.update');
+    Route::get('/change-password', fn() => view('auth.change-password'))->name('password.custom_change');
+    Route::get('/search', [SearchController::class, 'search'])->name('search');
+    Route::get('/changelog', [ChangelogController::class, 'index'])->name('changelog');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Mobile & Test Routes
+    |--------------------------------------------------------------------------
+    */
     Route::get('/mobile/devices', [MobileController::class, 'devices'])->name('mobile.devices');
     Route::get('/test-wp', [MobileController::class, 'testWordpress'])->name('test.wordpress');
-    // Search Route
-    Route::get('/search', [SearchController::class, 'search'])->name('search');
-    // Contract Routes
-    Route::get('/contracts', [ContractController::class, 'index'])->name('contracts.index');
-    Route::get('/contracts/{subscriber}/create', [ContractController::class, 'create'])->name('contracts.create');
-    Route::post('/contracts/{subscriber}', [ContractController::class, 'store'])->name('contracts.store');
-    Route::get('/contracts/{contract}/view', [ContractController::class, 'view'])->name('contracts.view');
-    Route::get('/contracts/{contract}/edit', [ContractController::class, 'edit'])->name('contracts.edit');
-    Route::put('/contracts/{contract}', [ContractController::class, 'update'])->name('contracts.update');
-    Route::get('/contracts/{contract}/sign', [ContractController::class, 'sign'])->name('contracts.sign');
-    Route::post('/contracts/{contract}/sign', [ContractController::class, 'storeSignature'])->name('contracts.storeSignature');
-    Route::post('/contracts/{contract}/finalize', [ContractController::class, 'finalize'])->name('contracts.finalize');
-    Route::post('/contracts/{contract}/revision', [ContractController::class, 'createRevision'])->name('contracts.revision');
-    Route::get('/contracts/{contract}/download', [ContractController::class, 'download'])->name('contracts.download');
-    Route::post('/contracts/{contract}/email', [ContractController::class, 'email'])->name('contracts.email');
-    Route::get('/contracts/{contract}/ftp', [ContractController::class, 'ftp'])->name('contracts.ftp');
-		
-	// Financing Form Routes
-	Route::get('/contracts/{contract}/financing', [ContractController::class, 'financingForm'])->name('contracts.financing');
-	Route::get('/contracts/{contract}/financing/sign', [ContractController::class, 'signFinancing'])->name('contracts.financing.sign');
-	Route::post('/contracts/{contract}/financing/signature', [ContractController::class, 'storeFinancingSignature'])->name('contracts.financing.signature');
-	Route::post('/contracts/{contract}/financing/finalize', [ContractController::class, 'finalizeFinancing'])->name('contracts.financing.finalize');
-	Route::get('/contracts/{contract}/financing/download', [ContractController::class, 'downloadFinancing'])->name('contracts.financing.download');
-	
-	// Financing CSR Initials
-	Route::get('contracts/{id}/financing/csr-initial', [ContractController::class, 'signCsrFinancing'])->name('contracts.financing.csr-initial');
-	Route::post('contracts/{id}/financing/csr-initial', [ContractController::class, 'storeCsrFinancingInitials'])->name('contracts.financing.store-csr-initial');
-	
-	// DRO Form Routes
-	Route::get('/contracts/{contract}/dro', [ContractController::class, 'droForm'])->name('contracts.dro');
-	Route::get('/contracts/{contract}/dro/sign', [ContractController::class, 'signDro'])->name('contracts.dro.sign');
-	Route::post('/contracts/{contract}/dro/signature', [ContractController::class, 'storeDroSignature'])->name('contracts.dro.signature');
-	Route::post('/contracts/{contract}/dro/finalize', [ContractController::class, 'finalizeDro'])->name('contracts.dro.finalize');
-	Route::get('/contracts/{contract}/dro/download', [ContractController::class, 'downloadDro'])->name('contracts.dro.download');
 
-	// DRO CSR Initials
-	Route::get('contracts/{id}/dro/csr-initial', [ContractController::class, 'signCsrDro'])->name('contracts.dro.csr-initial');
-	Route::post('contracts/{id}/dro/csr-initial', [ContractController::class, 'storeCsrDroInitials'])->name('contracts.dro.store-csr-initial');	
+    /*
+    |--------------------------------------------------------------------------
+    | API Routes (Authenticated)
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('api')->group(function () {
+        // Cellular Pricing API
+        Route::get('/cellular-pricing/rate-plan', [CellularPricingController::class, 'getPricing']);
+        Route::get('/cellular-pricing/mobile-internet', [CellularPricingController::class, 'getMobileInternetPricing']);
+        Route::get('/cellular-pricing/add-on', [CellularPricingController::class, 'getAddOnPricing']);
+        
+        // Bell Pricing API
+        Route::get('/bell-pricing', [BellPricingController::class, 'getPricing'])->name('api.bell-pricing');
+        Route::get('/bell-pricing/device', [BellPricingController::class, 'getDevicePricing'])->name('api.bell-pricing.device');
+        
+        // Bell Device Compatibility
+        Route::get('/bell-devices/compatible', [BellDeviceController::class, 'compatible']);
+    });
 
-	
-    // Bell Pricing Routes
-    Route::get('/bell-pricing', [BellPricingController::class, 'index'])->name('bell-pricing.index');
-    Route::get('/bell-pricing/upload', [BellPricingController::class, 'uploadForm'])->name('bell-pricing.upload');
-    Route::post('/bell-pricing/upload', [BellPricingController::class, 'upload'])->name('bell-pricing.upload.store');
-    Route::get('/bell-pricing/{id}', [BellPricingController::class, 'show'])->name('bell-pricing.show');
-    Route::get('/bell-pricing/{id}/history', [BellPricingController::class, 'history'])->name('bell-pricing.history');
-    Route::get('/bell-pricing-compare', [BellPricingController::class, 'compare'])->name('bell-pricing.compare');
-    
-    // API endpoints for Bell Pricing
-    Route::get('/api/bell-pricing', [BellPricingController::class, 'getPricing'])->name('api.bell-pricing');
-    Route::get('/api/bell-pricing/device', [BellPricingController::class, 'getDevicePricing'])->name('api.bell-pricing.device');
-
-
-		
-	// Rate Plans - Edit Routes
-	Route::get('/cellular-pricing/rate-plans/{ratePlan}/edit', [RatePlanController::class, 'edit'])->name('cellular-pricing.rate-plans.edit');
-	Route::put('/cellular-pricing/rate-plans/{ratePlan}', [RatePlanController::class, 'update'])->name('cellular-pricing.rate-plans.update');
-
-	// Mobile Internet Plans - Edit Routes
-	Route::get('/cellular-pricing/mobile-internet/{mobileInternetPlan}', [MobileInternetPlanController::class, 'show'])->name('cellular-pricing.mobile-internet.show');
-	Route::get('/cellular-pricing/mobile-internet/{mobileInternetPlan}/edit', [MobileInternetPlanController::class, 'edit'])->name('cellular-pricing.mobile-internet.edit');
-	Route::put('/cellular-pricing/mobile-internet/{mobileInternetPlan}', [MobileInternetPlanController::class, 'update'])->name('cellular-pricing.mobile-internet.update');
-	
-
-	
-	// Cellular Pricing Routes
-    // Upload interface
-    Route::get('/cellular-pricing/upload', [CellularPricingController::class, 'upload'])->name('cellular-pricing.upload');
-    Route::post('/cellular-pricing/import', [CellularPricingController::class, 'import'])->name('cellular-pricing.import');
-    // Browse interfaces
-    Route::get('/cellular-pricing/rate-plans', [CellularPricingController::class, 'ratePlans'])->name('cellular-pricing.rate-plans');
-    Route::get('/cellular-pricing/rate-plans/{id}', [CellularPricingController::class, 'ratePlanShow'])->name('cellular-pricing.rate-plan-show');
-    Route::get('/cellular-pricing/mobile-internet', [CellularPricingController::class, 'mobileInternet'])->name('cellular-pricing.mobile-internet');
-    Route::get('/cellular-pricing/add-ons', [CellularPricingController::class, 'addOns'])->name('cellular-pricing.add-ons');
-    // Compare
-    Route::get('/cellular-pricing/compare', [CellularPricingController::class, 'compare'])->name('cellular-pricing.compare');
-	
-	Route::middleware(['auth'])->get('/changelog', [ChangelogController::class, 'index'])->name('changelog');
-
-	// Admin-Only Routes
-	Route::middleware([\App\Http\Middleware\Admin::class])->group(function () {
-		Route::resource('activity-types', ActivityTypeController::class);
-		Route::resource('commitment-periods', CommitmentPeriodController::class);
-		Route::resource('users', UserController::class);
-		
-		// NEW: Terms of Service Management
-		Route::get('/terms-of-service', [TermsOfServiceController::class, 'index'])->name('terms-of-service.index');
-		Route::get('/terms-of-service/create', [TermsOfServiceController::class, 'create'])->name('terms-of-service.create');
-		Route::post('/terms-of-service', [TermsOfServiceController::class, 'store'])->name('terms-of-service.store');
-		Route::post('/terms-of-service/{id}/activate', [TermsOfServiceController::class, 'activate'])->name('terms-of-service.activate');
-		Route::get('/terms-of-service/{id}/download', [TermsOfServiceController::class, 'download'])->name('terms-of-service.download');
-		Route::delete('/terms-of-service/{id}', [TermsOfServiceController::class, 'destroy'])->name('terms-of-service.destroy');
-		
-		// Settings Routes
-		Route::get('admin/settings', [SettingsController::class, 'edit'])->name('admin.settings');
-		Route::post('admin/settings', [SettingsController::class, 'update']);		
-	});
-	
-	// Activity Log
-	Route::middleware('auth')->group(function () {
-		Route::get('logs/my', [LogController::class, 'myLogs'])->name('logs.my');
-		Route::post('logs/request-review', [LogController::class, 'requestReview'])->name('logs.request-review');
-		Route::get('logs/all', [LogController::class, 'allLogs'])->name('logs.all')->middleware('permission:view_all_logs');		
-	});	
-	
-	Route::middleware(['auth'])->prefix('api')->group(function () {
-		// API endpoints for pricing lookups
-		Route::get('/cellular-pricing/rate-plan', [CellularPricingController::class, 'getPricing']);
-		Route::get('/cellular-pricing/mobile-internet', [CellularPricingController::class, 'getMobileInternetPricing']);
-		Route::get('/cellular-pricing/add-on', [CellularPricingController::class, 'getAddOnPricing']);
-		// API endpoints for Bell Pricing
-		Route::get('/api/bell-pricing', [BellPricingController::class, 'getPricing'])->name('api.bell-pricing');
-		Route::get('/api/bell-pricing/device', [BellPricingController::class, 'getDevicePricing'])->name('api.bell-pricing.device');
-		// API endpoints for Bell Device Compatibility
-		Route::get('/bell-devices/compatible', [BellDeviceController::class, 'compatible']);
-	
-	});
-	
+    /*
+    |--------------------------------------------------------------------------
+    | Admin-Only Routes
+    |--------------------------------------------------------------------------
+    */
+    Route::middleware('admin')->group(function () {
+        // Admin Dashboard & Data Management
+        Route::prefix('admin')->name('admin.')->group(function () {
+            Route::get('/', [AdminController::class, 'index'])->name('index');
+            Route::post('/clear-test-data', [AdminController::class, 'clearTestData'])->name('clear-test-data');
+            Route::post('/seed-test-data', [AdminController::class, 'seedTestData'])->name('seed-test-data');
+            Route::get('/settings', [SettingsController::class, 'edit'])->name('settings');
+            Route::post('/settings', [SettingsController::class, 'update']);
+        });
+        
+        // Resource Controllers
+        Route::resource('activity-types', ActivityTypeController::class);
+        Route::resource('commitment-periods', CommitmentPeriodController::class);
+        Route::resource('users', UserController::class);
+		// Roles and Permissions
+		Route::resource('roles', RoleController::class);
+		Route::resource('permissions', PermissionController::class);		
+        
+        // Terms of Service Management
+        Route::prefix('terms-of-service')->name('terms-of-service.')->group(function () {
+            Route::get('/', [TermsOfServiceController::class, 'index'])->name('index')->middleware('permission:manage-terms-of-service');
+            Route::get('/create', [TermsOfServiceController::class, 'create'])->name('create')->middleware('permission:manage-terms-of-service');
+            Route::post('/', [TermsOfServiceController::class, 'store'])->name('store')->middleware('permission:manage-terms-of-service');
+            Route::post('/{id}/activate', [TermsOfServiceController::class, 'activate'])->name('activate')->middleware('permission:manage-terms-of-service');
+            Route::get('/{id}/download', [TermsOfServiceController::class, 'download'])->name('download')->middleware('permission:manage-terms-of-service');
+            Route::delete('/{id}', [TermsOfServiceController::class, 'destroy'])->name('destroy')->middleware('permission:manage-terms-of-service');
+        });
+    });
 });
-Route::get('/test-alpine', fn() => view('test-alpine'))->name('test.alpine');
-// Ensure auth routes are included
-require base_path('routes/auth.php');
-	
-	// Password reset (for setup and resets)
-	Route::get('reset-password/{token}', [NewPasswordController::class, 'create'])
-		->middleware('guest')
-		->name('password.reset');
 
-	Route::post('reset-password', [NewPasswordController::class, 'store'])
-		->middleware('guest')
-		->name('password.store');
+/*
+|--------------------------------------------------------------------------
+| Auth Routes
+|--------------------------------------------------------------------------
+*/
+require base_path('routes/auth.php');

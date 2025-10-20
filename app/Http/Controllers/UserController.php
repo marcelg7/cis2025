@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\View\View;
+use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
 {
@@ -23,7 +24,8 @@ class UserController extends Controller
 
     public function create(): View
     {
-        return view('users.create');
+        $roles = Role::pluck('name', 'name');
+        return view('users.create', compact('roles'));
     }
 
     public function store(Request $request)
@@ -31,17 +33,16 @@ class UserController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
-            'role' => 'required|in:user,admin',
+            'role' => 'required|exists:roles,name',
         ]);
 
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
-            'role' => $request->role,
-            // No password here
         ]);
 
-        // Send setup email using reset mechanism
+        $user->assignRole($request->role);
+
         $status = Password::sendResetLink($request->only('email'));
 
         return $status === Password::RESET_LINK_SENT
@@ -51,7 +52,8 @@ class UserController extends Controller
 
     public function edit(User $user): View
     {
-        return view('users.edit', compact('user'));
+        $roles = Role::pluck('name', 'name');
+        return view('users.edit', compact('user', 'roles'));
     }
 
     public function update(Request $request, User $user)
@@ -59,16 +61,17 @@ class UserController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
-            'role' => 'required|in:user,admin',
+            'role' => 'required|exists:roles,name',
             'password' => 'nullable|string|min:8|confirmed',
         ]);
 
         $user->update([
             'name' => $request->name,
             'email' => $request->email,
-            'role' => $request->role,
             'password' => $request->password ? Hash::make($request->password) : $user->password,
         ]);
+
+        $user->syncRoles($request->role);
 
         return redirect()->route('users.index')->with('success', 'User updated successfully.');
     }

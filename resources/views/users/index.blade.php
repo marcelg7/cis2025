@@ -14,7 +14,7 @@
                     <tr>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Roles</th> <!-- Updated header -->
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                     </tr>
                 </thead>
@@ -23,15 +23,15 @@
                         <tr>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $user->name }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $user->email }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ ucfirst($user->role) }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $user->getRoleNames()->implode(', ') ?: 'No roles assigned' }}</td> <!-- Updated to show Spatie roles -->
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                 <x-warning-link href="{{ route('users.edit', $user->id) }}">
-									<x-icon-edit></x-icon-edit>							
-								</x-warning-link>
+                                    <x-icon-edit></x-icon-edit>
+                                </x-warning-link>
                                 <form action="{{ route('users.destroy', $user->id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure?')">
                                     @csrf
                                     @method('DELETE')
-									<x-danger-submit-button><x-icon-delete></x-icon-delete></x-danger-submit-button>
+                                    <x-danger-submit-button><x-icon-delete></x-icon-delete></x-danger-submit-button>
                                 </form>
                             </td>
                         </tr>

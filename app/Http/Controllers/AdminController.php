@@ -11,7 +11,7 @@ class AdminController extends Controller
     public function __construct()
     {
         $this->middleware('auth');
-        $this->middleware(\App\Http\Middleware\CheckRole::class . ':admin'); // Explicit class with parameter
+        $this->middleware(\App\Http\Middleware\Admin::class . ':admin'); // Explicit class with parameter
     }
 
     public function index()

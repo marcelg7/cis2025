@@ -22,8 +22,9 @@
             <div>
                 <label for="role" class="block text-sm font-medium text-gray-700">Role</label>
                 <select name="role" id="role" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required>
-                    <option value="user" {{ old('role') === 'user' ? 'selected' : '' }}>User</option>
-                    <option value="admin" {{ old('role') === 'admin' ? 'selected' : '' }}>Admin</option>
+                    @foreach ($roles as $role)
+                        <option value="{{ $role }}" {{ old('role') === $role ? 'selected' : '' }}>{{ ucfirst($role) }}</option>
+                    @endforeach
                 </select>
                 @error('role')
                     <p class="mt-2 text-sm text-red-600">{{ $message }}</p>

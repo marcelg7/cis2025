@@ -33,7 +33,7 @@
                             <x-nav-link :href="route('contracts.index')" :active="request()->routeIs('contracts.*')">
                                 Contracts
                             </x-nav-link>
-                         
+                        
                             <!-- Bell Pricing Dropdown -->
                             <div class="relative" x-data="{ open: false }" @click.away="open = false">
                                 <button @click="open = !open"
@@ -43,7 +43,7 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                                     </svg>
                                 </button>
-                             
+                            
                                 <div x-show="open"
                                      x-transition:enter="transition ease-out duration-200"
                                      x-transition:enter-start="transform opacity-0 scale-95"
@@ -59,17 +59,19 @@
                                            class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 whitespace-nowrap {{ request()->routeIs('bell-pricing.index') ? 'bg-gray-50' : '' }}">
                                             Browse Devices
                                         </a>
-                                        <a href="{{ route('bell-pricing.upload') }}"
-                                           class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 whitespace-nowrap {{ request()->routeIs('bell-pricing.upload') ? 'bg-gray-50' : '' }}">
-                                            Upload Device Pricing
-                                        </a>
+                                        @can('upload-device-pricing')
+                                            <a href="{{ route('bell-pricing.upload') }}"
+                                               class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 whitespace-nowrap {{ request()->routeIs('bell-pricing.upload') ? 'bg-gray-50' : '' }}">
+                                                Upload Device Pricing
+                                            </a>
+                                        @endcan
                                         <a href="{{ route('bell-pricing.compare') }}"
                                            class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 whitespace-nowrap {{ request()->routeIs('bell-pricing.compare') ? 'bg-gray-50' : '' }}">
                                             Compare Devices
                                         </a>
-                                     
+                                    
                                         <div class="border-t border-gray-200 my-1"></div>
-                                     
+                                    
                                         <div class="px-4 py-2 text-xs font-semibold text-gray-400 uppercase">Cellular Plans</div>
                                         <a href="{{ route('cellular-pricing.rate-plans') }}"
                                            class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 whitespace-nowrap {{ request()->routeIs('cellular-pricing.rate-plans*') ? 'bg-gray-50' : '' }}">
@@ -83,14 +85,16 @@
                                            class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 whitespace-nowrap {{ request()->routeIs('cellular-pricing.add-ons') ? 'bg-gray-50' : '' }}">
                                             Plan Add-Ons
                                         </a>
-                                        <a href="{{ route('cellular-pricing.upload') }}"
-                                           class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 whitespace-nowrap {{ request()->routeIs('cellular-pricing.upload') ? 'bg-gray-50' : '' }}">
-                                            Upload Plan Pricing
-                                        </a>
+                                        @can('upload-plan-pricing')
+                                            <a href="{{ route('cellular-pricing.upload') }}"
+                                               class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 whitespace-nowrap {{ request()->routeIs('cellular-pricing.upload') ? 'bg-gray-50' : '' }}">
+                                                Upload Plan Pricing
+                                            </a>
+                                        @endcan
                                     </div>
                                 </div>
                             </div>
-                         
+                        
                             <x-nav-link href="https://hay.net" target="_blank" :active="false">
                                 Hay Website
                                 <x-icon-open />
@@ -133,41 +137,51 @@
                                     style="display: none;"
                                 >
                                     <div class="rounded-md ring-1 ring-black ring-opacity-5 py-1 bg-white">
-                                        <!-- NEW: Grouped Administration section (only for admins) -->
-                                        @if (auth()->check() && auth()->user()->role === 'admin')
-                                            <div class="px-4 py-2 text-xs font-semibold text-gray-400 uppercase">Administration</div>
-                                            <a href="{{ route('admin.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                                Test Data Management
-                                            </a>
-                                            <a href="{{ route('admin.settings') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                                Settings
-                                            </a>
-                                            <div class="border-t border-gray-200 my-1"></div>
-                                        @endif
-                                        <!-- NEW: Added headers for other groups to improve overall menu organization -->
-                                        <div class="px-4 py-2 text-xs font-semibold text-gray-400 uppercase">Configuration</div>
-                                        <a href="{{ route('activity-types.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                            Activity Types
-                                        </a>
-                                        <a href="{{ route('commitment-periods.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                            Commitment Periods
-                                        </a>
-                                        <a href="{{ route('terms-of-service.index') }}"
-                                           class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                            Terms of Service
-                                        </a>
-                                        <div class="border-t border-gray-200 my-1"></div>
-                                        <div class="px-4 py-2 text-xs font-semibold text-gray-400 uppercase">Users & Logs</div>
-                                        <a href="{{ route('users.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                            Users
-                                        </a>
-                                        <a href="{{ route('logs.all') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                            All Activity Logs
-                                        </a>
-                                        <div class="border-t border-gray-200 my-1"></div>
-                                        <a href="{{ route('changelog') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                            Changelog
-                                        </a>
+										@hasrole('admin')
+											<div class="px-4 py-2 text-xs font-semibold text-gray-400 uppercase">Administration</div>
+											<a href="{{ route('admin.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+												Test Data Management
+											</a>
+											<a href="{{ route('admin.settings') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+												Settings
+											</a>
+											<a href="{{ route('roles.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+												Manage Roles
+											</a>
+											<a href="{{ route('permissions.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+												Manage Permissions
+											</a>
+											<div class="border-t border-gray-200 my-1"></div>
+										@endhasrole
+										<div class="px-4 py-2 text-xs font-semibold text-gray-400 uppercase">Configuration</div>
+										<a href="{{ route('activity-types.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+											Activity Types
+										</a>
+										<a href="{{ route('commitment-periods.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+											Commitment Periods
+										</a>
+										<a href="{{ route('terms-of-service.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+											Terms of Service
+										</a>
+										<div class="border-t border-gray-200 my-1"></div>
+										<div class="px-4 py-2 text-xs font-semibold text-gray-400 uppercase">Users & Logs</div>
+										@can('manage-users')
+											<a href="{{ route('users.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+												Users
+											</a>
+										@endcan
+										<a href="{{ route('logs.my') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+											My Activity Logs
+										</a>
+										@can('view_all_logs')
+											<a href="{{ route('logs.all') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+												All Activity Logs
+											</a>
+										@endcan
+										<div class="border-t border-gray-200 my-1"></div>
+										<a href="{{ route('changelog') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+											Changelog
+										</a>
                                     </div>
                                 </div>
                             </div>
@@ -205,19 +219,21 @@
                     <x-responsive-nav-link :href="route('contracts.index')" :active="request()->routeIs('contracts.*')">
                         Contracts
                     </x-responsive-nav-link>
-                 
+                
                     <!-- Bell Device Pricing -->
                     <div class="px-4 py-2 text-xs font-semibold text-gray-400 uppercase">Bell Device Pricing</div>
                     <x-responsive-nav-link :href="route('bell-pricing.index')" :active="request()->routeIs('bell-pricing.index')">
                         Browse Devices
                     </x-responsive-nav-link>
-                    <x-responsive-nav-link :href="route('bell-pricing.upload')" :active="request()->routeIs('bell-pricing.upload')">
-                        Upload Device Pricing
-                    </x-responsive-nav-link>
+                    @can('upload-device-pricing')
+                        <x-responsive-nav-link :href="route('bell-pricing.upload')" :active="request()->routeIs('bell-pricing.upload')">
+                            Upload Device Pricing
+                        </x-responsive-nav-link>
+                    @endcan
                     <x-responsive-nav-link :href="route('bell-pricing.compare') " :active="request()->routeIs('bell-pricing.compare')">
                         Compare Devices
                     </x-responsive-nav-link>
-                 
+                
                     <!-- Cellular Plans -->
                     <div class="px-4 py-2 text-xs font-semibold text-gray-400 uppercase mt-2">Cellular Plans</div>
                     <x-responsive-nav-link :href="route('cellular-pricing.rate-plans')" :active="request()->routeIs('cellular-pricing.rate-plans*')">
@@ -229,10 +245,12 @@
                     <x-responsive-nav-link :href="route('cellular-pricing.add-ons') " :active="request()->routeIs('cellular-pricing.add-ons')">
                         Plan Add-Ons
                     </x-responsive-nav-link>
-                    <x-responsive-nav-link :href="route('cellular-pricing.upload') " :active="request()->routeIs('cellular-pricing.upload')">
-                        Upload Plan Pricing
-                    </x-responsive-nav-link>
-                 
+                    @can('upload-plan-pricing')
+                        <x-responsive-nav-link :href="route('cellular-pricing.upload') " :active="request()->routeIs('cellular-pricing.upload')">
+                            Upload Plan Pricing
+                        </x-responsive-nav-link>
+                    @endcan
+                
                     <x-responsive-nav-link href="https://hay.net" target="_blank" :active="false" class="flex items-center">
                         Hay Website
                         <x-icon-open />
@@ -259,17 +277,22 @@
                             </div>
                         </div>
                         <div class="mt-3 space-y-1">
-                            <!-- NEW: Added grouped admin links to mobile menu for consistency (mirrors desktop) -->
-                            @if (auth()->check() && auth()->user()->role === 'admin')
-                                <div class="px-4 py-2 text-xs font-semibold text-gray-400 uppercase">Administration</div>
-                                <x-responsive-nav-link :href="route('admin.index')" :active="request()->routeIs('admin.index')">
-                                    Test Data Management
-                                </x-responsive-nav-link>
-                                <x-responsive-nav-link :href="route('admin.settings')" :active="request()->routeIs('admin.settings')">
-                                    Settings
-                                </x-responsive-nav-link>
-                                <div class="border-t border-gray-200 my-1 mx-4"></div>
-                            @endif
+							@hasrole('admin')
+								<div class="px-4 py-2 text-xs font-semibold text-gray-400 uppercase">Administration</div>
+								<a href="{{ route('admin.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+									Test Data Management
+								</a>
+								<a href="{{ route('admin.settings') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+									Settings
+								</a>
+								<a href="{{ route('roles.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+									Manage Roles
+								</a>
+								<a href="{{ route('permissions.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+									Manage Permissions
+								</a>
+								<div class="border-t border-gray-200 my-1"></div>
+							@endhasrole
                             <div class="px-4 py-2 text-xs font-semibold text-gray-400 uppercase">Configuration</div>
                             <x-responsive-nav-link :href="route('activity-types.index')" :active="request()->routeIs('activity-types.*')">
                                 Activity Types
@@ -281,13 +304,20 @@
                                 Terms of Service
                             </x-responsive-nav-link>
                             <div class="border-t border-gray-200 my-1 mx-4"></div>
-                            <div class="px-4 py-2 text-xs font-semibold text-gray-400 uppercase">Users & Logs</div>
-                            <x-responsive-nav-link :href="route('users.index')" :active="request()->routeIs('users.*')">
-                                Users
-                            </x-responsive-nav-link>
-                            <x-responsive-nav-link :href="route('logs.all')" :active="request()->routeIs('logs.all')">
-                                All Activity Logs
-                            </x-responsive-nav-link>
+							<div class="px-4 py-2 text-xs font-semibold text-gray-400 uppercase">Users & Logs</div>
+							@can('manage-users')
+								<x-responsive-nav-link :href="route('users.index')" :active="request()->routeIs('users.*')">
+									Users
+								</x-responsive-nav-link>
+							@endcan
+							<x-responsive-nav-link :href="route('logs.my')" :active="request()->routeIs('logs.my')">
+								My Activity Logs
+							</x-responsive-nav-link>
+							@can('view-all-logs')
+								<x-responsive-nav-link :href="route('logs.all')" :active="request()->routeIs('logs.all')">
+									All Activity Logs
+								</x-responsive-nav-link>
+							@endcan
                             <div class="border-t border-gray-200 my-1 mx-4"></div>
                             <x-responsive-nav-link :href="route('changelog')" :active="request()->routeIs('changelog')">
                                 Changelog

@@ -58,6 +58,6 @@ class DatabaseSeeder extends Seeder
         ];
         DB::table('commitment_periods')->insertOrIgnore($commitmentPeriods);
 
-
+		$this->call(PermissionSeeder::class);
     }
 }
