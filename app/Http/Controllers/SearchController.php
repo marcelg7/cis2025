@@ -6,8 +6,14 @@ use App\Models\Customer;
 use App\Models\ActivityType;
 use App\Models\CommitmentPeriod;
 use App\Models\Contract;
+use App\Models\Subscriber;
+use App\Models\User;
+use App\Models\BellDevice;
+use App\Models\RatePlan;
+use App\Models\MobileInternetPlan;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Illuminate\Support\Facades\DB;
 
 class SearchController extends Controller
 {
@@ -15,38 +21,178 @@ class SearchController extends Controller
     {
         $query = $request->input('query');
 
+		// If the parameter doesn't exist at all (first visit), default to true
+		// If it exists (form was submitted), use its value
+		$includeTest = $request->has('submitted') 
+			? $request->boolean('include_test') 
+			: true;
+        
         // Initialize all result categories to empty collections
         $results = [
             'customers' => collect(),
+            'subscribers' => collect(),
+            'contracts' => collect(),
+            'bell_devices' => collect(),
+            'rate_plans' => collect(),
+            'mobile_internet_plans' => collect(),
+            'users' => collect(),
             'activity_types' => collect(),
             'commitment_periods' => collect(),
-            'contracts' => collect()
         ];
 
-        if ($query) {
+        if ($query && strlen($query) >= 2) { // Minimum 2 characters
+            
+            // Normalize phone number for searching (remove all non-numeric characters)
+            $normalizedPhone = preg_replace('/[^0-9]/', '', $query);
+            $isPhoneSearch = strlen($normalizedPhone) >= 7; // At least 7 digits suggests phone search
+            
             // Search Customers
-            $results['customers'] = Customer::where('ivue_customer_number', 'LIKE', "%{$query}%")
-                ->orWhere('display_name', 'LIKE', "%{$query}%")
-                ->orWhere('email', 'LIKE', "%{$query}%")
+            $customersQuery = Customer::where(function($q) use ($query) {
+                $q->where('ivue_customer_number', 'LIKE', "%{$query}%")
+                  ->orWhere('display_name', 'LIKE', "%{$query}%")
+                  ->orWhere('first_name', 'LIKE', "%{$query}%")
+                  ->orWhere('last_name', 'LIKE', "%{$query}%")
+                  ->orWhere('email', 'LIKE', "%{$query}%")
+                  ->orWhere('address', 'LIKE', "%{$query}%")
+                  ->orWhere('city', 'LIKE', "%{$query}%")
+                  ->orWhere('zip_code', 'LIKE', "%{$query}%");
+            });
+            
+            if (!$includeTest) {
+                $customersQuery->where('is_test', 0);
+            }
+            
+            $results['customers'] = $customersQuery->limit(10)->get();
+
+            // Search Subscribers - IMPROVED PHONE SEARCH
+            $subscribersQuery = Subscriber::where(function($q) use ($query, $normalizedPhone, $isPhoneSearch) {
+                // Always search by original query
+                $q->where('mobile_number', 'LIKE', "%{$query}%")
+                  ->orWhere('first_name', 'LIKE', "%{$query}%")
+                  ->orWhere('last_name', 'LIKE', "%{$query}%");
+                
+                // If it looks like a phone number, search by digits only
+                if ($isPhoneSearch) {
+                    // Strip all formatting: dashes, spaces, parentheses, periods
+                    $q->orWhere(DB::raw("REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(mobile_number, '-', ''), ' ', ''), '(', ''), ')', ''), '.', '')"), 'LIKE', "%{$normalizedPhone}%");
+                }
+            });
+            
+            if (!$includeTest) {
+                $subscribersQuery->where('is_test', 0);
+            }
+            
+            $results['subscribers'] = $subscribersQuery
+                ->with('mobilityAccount.ivueAccount.customer')
+                ->limit(10)
                 ->get();
 
-            // Search Activity Types
-            $results['activity_types'] = ActivityType::where('name', 'LIKE', "%{$query}%")
+            // Search Contracts - IMPROVED PHONE SEARCH
+            $contractsQuery = Contract::where(function($q) use ($query, $normalizedPhone, $isPhoneSearch) {
+                // Search by contract ID
+                if (is_numeric($query)) {
+                    $q->where('id', $query);
+                }
+                
+                // Search by subscriber mobile number
+                $q->orWhereHas('subscriber', function ($subQ) use ($query, $normalizedPhone, $isPhoneSearch) {
+                    $subQ->where('mobile_number', 'LIKE', "%{$query}%")
+                         ->orWhere('first_name', 'LIKE', "%{$query}%")
+                         ->orWhere('last_name', 'LIKE', "%{$query}%");
+                    
+                    // If it looks like a phone number, search by digits only
+                    if ($isPhoneSearch) {
+                        $subQ->orWhere(DB::raw("REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(mobile_number, '-', ''), ' ', ''), '(', ''), ')', ''), '.', '')"), 'LIKE', "%{$normalizedPhone}%");
+                    }
+                });
+                
+                // Search by customer name
+                $q->orWhereHas('subscriber.mobilityAccount.ivueAccount.customer', function ($custQ) use ($query) {
+                    $custQ->where('display_name', 'LIKE', "%{$query}%")
+                          ->orWhere('ivue_customer_number', 'LIKE', "%{$query}%");
+                });
+            });
+            
+            if (!$includeTest) {
+                $contractsQuery->where('is_test', 0);
+            }
+            
+            $results['contracts'] = $contractsQuery
+                ->with('subscriber.mobilityAccount.ivueAccount.customer', 'bellDevice')
+                ->orderBy('created_at', 'desc')
+                ->limit(10)
                 ->get();
 
-            // Search Commitment Periods
-            $results['commitment_periods'] = CommitmentPeriod::where('name', 'LIKE', "%{$query}%")
-                ->get();
+            // Search Bell Devices
+            $bellDevicesQuery = BellDevice::where(function($q) use ($query) {
+                $q->where('name', 'LIKE', "%{$query}%")
+                  ->orWhere('manufacturer', 'LIKE', "%{$query}%")
+                  ->orWhere('model', 'LIKE', "%{$query}%");
+            })
+            ->where('is_active', 1);
+            
+            if (!$includeTest) {
+                $bellDevicesQuery->where('is_test', 0);
+            }
+            
+            $results['bell_devices'] = $bellDevicesQuery->limit(10)->get();
 
-            // Search Contracts (by ID or subscriber mobile number)
-            $results['contracts'] = Contract::where('id', 'LIKE', "%{$query}%")
-                ->orWhereHas('subscriber', function ($q) use ($query) {
-                    $q->where('mobile_number', 'LIKE', "%{$query}%");
+            // Search Rate Plans
+            $ratePlansQuery = RatePlan::where(function($q) use ($query) {
+                $q->where('plan_name', 'LIKE', "%{$query}%")
+                  ->orWhere('soc_code', 'LIKE', "%{$query}%");
+            })
+            ->where('is_current', 1)
+            ->where('is_active', 1);
+            
+            if (!$includeTest) {
+                $ratePlansQuery->where('is_test', 0);
+            }
+            
+            $results['rate_plans'] = $ratePlansQuery->limit(10)->get();
+
+            // Search Mobile Internet Plans
+            $mobileInternetQuery = MobileInternetPlan::where(function($q) use ($query) {
+                $q->where('plan_name', 'LIKE', "%{$query}%")
+                  ->orWhere('soc_code', 'LIKE', "%{$query}%");
+            })
+            ->where('is_current', 1)
+            ->where('is_active', 1);
+            
+            if (!$includeTest) {
+                $mobileInternetQuery->where('is_test', 0);
+            }
+            
+            $results['mobile_internet_plans'] = $mobileInternetQuery->limit(10)->get();
+
+            // Search Users (if admin)
+            if (auth()->user()->hasRole('admin')) {
+                $results['users'] = User::where(function($q) use ($query) {
+                    $q->where('name', 'LIKE', "%{$query}%")
+                      ->orWhere('email', 'LIKE', "%{$query}%");
                 })
-                ->with('subscriber')
+                ->limit(10)
                 ->get();
+            }
+
+            // Search Activity Types (if admin)
+            if (auth()->user()->hasRole('admin')) {
+                $results['activity_types'] = ActivityType::where('name', 'LIKE', "%{$query}%")
+                    ->limit(10)
+                    ->get();
+            }
+
+            // Search Commitment Periods (if admin)
+            if (auth()->user()->hasRole('admin')) {
+                $results['commitment_periods'] = CommitmentPeriod::where('name', 'LIKE', "%{$query}%")
+                    ->limit(10)
+                    ->get();
+            }
         }
 
-        return view('search.results', compact('results', 'query'));
+        // Count total results
+        $totalResults = collect($results)->sum(fn($collection) => $collection->count());
+
+        return view('search.results', compact('results', 'query', 'totalResults', 'includeTest'));
     }
 }

@@ -43,11 +43,11 @@ Route::get('/test-alpine', fn() => view('test-alpine'))->name('test.alpine');
 
 /*
 |--------------------------------------------------------------------------
-| Authenticated Routes
+| Authenticated Routes (ALL authenticated users)
 |--------------------------------------------------------------------------
 */
 
-Route::middleware('admin')->group(function () {
+Route::middleware('auth')->group(function () {  // CHANGED FROM 'admin' to 'auth'
     
     /*
     |--------------------------------------------------------------------------
@@ -223,18 +223,18 @@ Route::middleware('admin')->group(function () {
         Route::resource('activity-types', ActivityTypeController::class);
         Route::resource('commitment-periods', CommitmentPeriodController::class);
         Route::resource('users', UserController::class);
-		// Roles and Permissions
-		Route::resource('roles', RoleController::class);
-		Route::resource('permissions', PermissionController::class);		
+        // Roles and Permissions
+        Route::resource('roles', RoleController::class);
+        Route::resource('permissions', PermissionController::class);		
         
         // Terms of Service Management
         Route::prefix('terms-of-service')->name('terms-of-service.')->group(function () {
-            Route::get('/', [TermsOfServiceController::class, 'index'])->name('index')->middleware('permission:manage-terms-of-service');
-            Route::get('/create', [TermsOfServiceController::class, 'create'])->name('create')->middleware('permission:manage-terms-of-service');
-            Route::post('/', [TermsOfServiceController::class, 'store'])->name('store')->middleware('permission:manage-terms-of-service');
-            Route::post('/{id}/activate', [TermsOfServiceController::class, 'activate'])->name('activate')->middleware('permission:manage-terms-of-service');
-            Route::get('/{id}/download', [TermsOfServiceController::class, 'download'])->name('download')->middleware('permission:manage-terms-of-service');
-            Route::delete('/{id}', [TermsOfServiceController::class, 'destroy'])->name('destroy')->middleware('permission:manage-terms-of-service');
+            Route::get('/', [TermsOfServiceController::class, 'index'])->name('index');
+            Route::get('/create', [TermsOfServiceController::class, 'create'])->name('create');
+            Route::post('/', [TermsOfServiceController::class, 'store'])->name('store');
+            Route::post('/{id}/activate', [TermsOfServiceController::class, 'activate'])->name('activate');
+            Route::get('/{id}/download', [TermsOfServiceController::class, 'download'])->name('download');
+            Route::delete('/{id}', [TermsOfServiceController::class, 'destroy'])->name('destroy');
         });
     });
 });
