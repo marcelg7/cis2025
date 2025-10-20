@@ -5,13 +5,13 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Password;
 use Illuminate\View\View;
-use Illuminate\Routing\Controller as BaseController; 
 
 class UserController extends Controller
 {
     public function __construct()
-    { 
+    {
         $this->middleware('auth');
     }
 
@@ -31,18 +31,22 @@ class UserController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8|confirmed',
             'role' => 'required|in:user,admin',
         ]);
 
-        User::create([
+        $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
-            'password' => Hash::make($request->password),
             'role' => $request->role,
+            // No password here
         ]);
 
-        return redirect()->route('users.index')->with('success', 'User created successfully.');
+        // Send setup email using reset mechanism
+        $status = Password::sendResetLink($request->only('email'));
+
+        return $status === Password::RESET_LINK_SENT
+            ? redirect()->route('users.index')->with('success', 'User created and setup email sent!')
+            : back()->withInput()->with('error', 'Failed to send setup email.');
     }
 
     public function edit(User $user): View

@@ -39,8 +39,7 @@
         </div>
         <div class="mt-4 flex space-x-4">
             <a href="{{ route('customers.index') }}" class="text-indigo-600 hover:text-indigo-900">Back to Customers</a>
-            <a href="{{ route('devices.index') }}" class="text-indigo-600 hover:text-indigo-900">Go to Devices</a>
-            <a href="{{ route('plans.index') }}" class="text-indigo-600 hover:text-indigo-900">Go to Plans</a>
+
         </div>
     </div>
 @endsection

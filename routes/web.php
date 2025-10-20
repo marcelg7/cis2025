@@ -19,7 +19,7 @@ use App\Http\Controllers\ChangelogController;
 use App\Http\Controllers\TermsOfServiceController;
 use App\Http\Controllers\LogController;
 use App\Http\Controllers\SettingsController;
-
+use App\Http\Controllers\Auth\NewPasswordController;
 
 // Protected Routes (Require Authentication)
 Route::middleware(['auth'])->group(function () {
@@ -165,3 +165,12 @@ Route::middleware(['auth'])->group(function () {
 Route::get('/test-alpine', fn() => view('test-alpine'))->name('test.alpine');
 // Ensure auth routes are included
 require base_path('routes/auth.php');
+	
+	// Password reset (for setup and resets)
+	Route::get('reset-password/{token}', [NewPasswordController::class, 'create'])
+		->middleware('guest')
+		->name('password.reset');
+
+	Route::post('reset-password', [NewPasswordController::class, 'store'])
+		->middleware('guest')
+		->name('password.store');
