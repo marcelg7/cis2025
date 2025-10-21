@@ -13,7 +13,7 @@
                 </div>
             @endif
             
-            <form method="POST" action="{{ route('password.update') }}">
+            <form method="POST" action="{{ route('password.custom_update') }}">
                 @csrf
                 
                 <div class="mb-4">

@@ -62,6 +62,7 @@ class Contract extends Model
         'dro_signed_at',
         'dro_csr_initialed_at',
         'dro_pdf_path',
+		'imei',
     ];
 
     // Add date casting

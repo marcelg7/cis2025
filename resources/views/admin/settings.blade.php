@@ -92,6 +92,80 @@
                 @enderror
             </div>
 
+			<!-- Default Connection Fee -->
+			<div>
+				<label for="default_connection_fee" class="block text-sm font-semibold text-gray-700 mb-2">
+					Default Connection Fee
+				</label>
+				<div class="relative">
+					<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+						<span class="text-gray-500 text-sm">$</span>
+					</div>
+					<input 
+						type="number" 
+						id="default_connection_fee"
+						name="default_connection_fee" 
+						value="{{ old('default_connection_fee', $connectionFee) }}" 
+						min="0"
+						max="500"
+						step="0.01"
+						required
+						class="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors @error('default_connection_fee') border-red-500 @enderror"
+						placeholder="80.00"
+					>
+				</div>
+				<p class="mt-2 text-sm text-gray-500">
+					<svg class="inline w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+						<path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+					</svg>
+					This fee will be automatically added to new contracts
+				</p>
+				@error('default_connection_fee')
+					<p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+				@enderror
+			</div>
+
+			<!-- Show Development Info Toggle -->
+			<div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
+				<div class="flex items-center justify-between">
+					<div class="flex-grow">
+						<label for="show_development_info" class="block text-sm font-semibold text-gray-700 mb-1 cursor-pointer">
+							Show Development Information
+						</label>
+						<p class="text-sm text-gray-500">
+							<svg class="inline w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+								<path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+							</svg>
+							Display detailed calculation breakdowns and development information on contract views
+						</p>
+					</div>
+					<div class="ml-6 flex-shrink-0">
+						<!-- Toggle Switch -->
+						<label for="show_development_info" class="relative inline-flex items-center cursor-pointer">
+							<input 
+								type="checkbox" 
+								name="show_development_info" 
+								id="show_development_info"
+								value="1"
+								{{ $showDevInfo === 'true' ? 'checked' : '' }}
+								class="sr-only peer"
+							>
+							<div class="w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-blue-600"></div>
+							<span class="ms-3 text-sm font-medium text-gray-900" id="toggle-label">
+								{{ $showDevInfo === 'true' ? 'ON' : 'OFF' }}
+							</span>
+						</label>
+					</div>
+				</div>
+			</div>
+
+			<script>
+			// Update label text when toggle changes
+			document.getElementById('show_development_info').addEventListener('change', function() {
+				document.getElementById('toggle-label').textContent = this.checked ? 'ON' : 'OFF';
+			});
+			</script>
+
             <!-- Form Actions -->
             <div class="flex items-center justify-between pt-4 border-t border-gray-200">
                 <a href="{{ url('/customers') }}" class="text-sm text-gray-600 hover:text-gray-800 transition-colors">

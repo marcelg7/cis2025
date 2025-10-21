@@ -87,7 +87,7 @@
                     <h3 class="text-sm font-medium text-blue-900 mb-2">Current Bell Device</h3>
                     <div class="text-sm text-blue-800">
                         <p><strong>Device:</strong> {{ $contract->bellDevice->name ?? 'Unknown' }}</p>
-                        <p><strong>Pricing Type:</strong> {{ ucfirst($contract->bell_pricing_type ?? 'N/A') }}</p>
+						<p><strong>Pricing Type:</strong> {{ $contract->bell_pricing_type === 'dro' ? 'DRO' : ucfirst($contract->bell_pricing_type ?? 'N/A') }}</p>
                         <p><strong>Tier:</strong> {{ $contract->bell_tier ?? 'N/A' }}</p>
                         <p><strong>Retail Price:</strong> ${{ number_format($contract->bell_retail_price ?? 0, 2) }}</p>
                         <p><strong>Monthly Device Cost:</strong> ${{ number_format($contract->bell_monthly_device_cost ?? 0, 2) }}</p>
@@ -206,15 +206,22 @@
                 </div>
             </div>
             
-            <div class="mt-4 grid grid-cols-1 gap-y-6 sm:grid-cols-2 sm:gap-x-4" id="agreement-credit-section">
-                <div>
-                    <label for="agreement_credit_amount" class="block text-sm font-medium text-gray-700">Agreement Credit Amount ($)</label>
-                    <input type="number" name="agreement_credit_amount" id="agreement_credit_amount" step="0.01" value="{{ old('agreement_credit_amount', $contract->agreement_credit_amount) }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm total-input" required>
-                    @error('agreement_credit_amount')
-                        <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                    @enderror
-                </div>
-            </div>
+			<div class="mt-4 grid grid-cols-1 gap-y-6 sm:grid-cols-2 sm:gap-x-4" id="agreement-credit-section">
+				<div>
+					<label for="agreement_credit_amount" class="block text-sm font-medium text-gray-700">Agreement Credit Amount ($)</label>
+					<input type="number" name="agreement_credit_amount" id="agreement_credit_amount" step="0.01" value="{{ old('agreement_credit_amount', $contract->agreement_credit_amount) }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm total-input" required>
+					@error('agreement_credit_amount')
+						<p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+					@enderror
+				</div>
+				<div>
+					<label for="imei" class="block text-sm font-medium text-gray-700">IMEI Number</label>
+					<input type="text" name="imei" id="imei" value="{{ old('imei', $contract->imei) }}" maxlength="20" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="Enter 15-digit IMEI">
+					@error('imei')
+						<p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+					@enderror
+				</div>
+			</div>
         </div>
         
         <div>
@@ -357,11 +364,12 @@
         </div>
         
         <!-- Dynamic Total Calculator -->
-        <div class="bg-gray-50 border border-gray-200 rounded-lg p-6 mt-4">
-            <h2 class="text-lg font-medium text-gray-900 mb-4">Estimated Total Cost</h2>
-            <div class="text-2xl font-bold text-indigo-600" id="total-cost">$0.00</div>
-            <p class="text-sm text-gray-500 mt-2">This is a real-time estimate based on current selections (device, plan, add-ons, fees, financing, credits). Final total may vary.</p>
-        </div>
+		<!-- Dynamic Total Calculator -->
+		<div class="bg-gray-50 border border-gray-200 rounded-lg p-6 mt-4">
+			<h2 class="text-lg font-medium text-gray-900 mb-4">Estimated Monthly Cost</h2>
+			<div class="text-2xl font-bold text-indigo-600" id="total-cost">$0.00</div>
+			<p class="text-sm text-gray-500 mt-2">This is a real-time estimate of your monthly service cost (device payment + plan + add-ons). One-time fees and upfront payments are not included in this monthly estimate.</p>
+		</div>
         
         <div class="flex justify-end">
             <a href="{{ route('contracts.view', $contract->id) }}" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 mr-4">
@@ -375,6 +383,8 @@
 </div>
 
 <script>
+const DEFAULT_CONNECTION_FEE = {{ $defaultConnectionFee ?? 80 }};
+
 let addOnCount = {{ $contract->addOns->count() }};
 let feeCount = {{ $contract->oneTimeFees->count() }};
 let currentPricingData = null;

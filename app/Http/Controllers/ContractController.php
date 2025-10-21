@@ -102,6 +102,7 @@ class ContractController extends Controller
 		}
 		
 		$defaultFirstBillDate = Carbon::now()->addMonth()->startOfMonth();
+		$defaultConnectionFee = \App\Helpers\SettingsHelper::get('default_connection_fee', 80);
 	   
 		return view('contracts.create', compact(
 			'customers',
@@ -115,7 +116,8 @@ class ContractController extends Controller
 			'subscriber',
 			'tiers',
 			'defaultFirstBillDate',
-			'deviceTiers'
+			'deviceTiers',
+			'defaultConnectionFee'
 		));
 	}
 	
@@ -141,13 +143,14 @@ class ContractController extends Controller
 			'deferred_payment_amount' => 'nullable|numeric|min:0',
 			'commitment_period_id' => 'required|exists:commitment_periods,id',
 			'first_bill_date' => 'required|date',
+			'imei' => 'nullable|string|max:20',
 			'add_ons' => 'nullable|array',
 			'add_ons.*.name' => 'required|string|max:100',
 			'add_ons.*.code' => 'nullable|string|max:50',
 			'add_ons.*.cost' => 'required|numeric',
 			'one_time_fees' => 'nullable|array',
 			'one_time_fees.*.name' => 'required|string|max:100',
-			'one_time_fees.*.cost' => 'required|numeric',
+			'one_time_fees.*.cost' => 'required|numeric', // REMOVED min:0 to allow negative
 			'rate_plan_id' => 'nullable|exists:rate_plans,id',
 			'mobile_internet_plan_id' => 'nullable|exists:mobile_internet_plans,id',
 			'rate_plan_price' => 'nullable|numeric|min:0',
@@ -156,7 +159,6 @@ class ContractController extends Controller
 			'custom_device_name' => 'nullable|string|max:255',
 		]);
         
-		// Debug: Log what we're receiving
 		\Log::info('Contract Store - Add-ons received:', [
 			'add_ons' => $request->input('add_ons'),
 			'has_add_ons' => $request->has('add_ons'),
@@ -211,6 +213,7 @@ class ContractController extends Controller
             'deferred_payment_amount' => $request->deferred_payment_amount,
             'commitment_period_id' => $request->commitment_period_id,
             'first_bill_date' => $request->first_bill_date,
+			'imei' => $request->imei,
             'status' => 'draft',
             'updated_by' => auth()->id(),
             'rate_plan_id' => $request->rate_plan_id,
@@ -260,15 +263,45 @@ class ContractController extends Controller
         
         $contract->load('addOns', 'oneTimeFees', 'subscriber.mobilityAccount.ivueAccount.customer', 'activityType', 'commitmentPeriod', 'ratePlan', 'mobileInternetPlan', 'bellDevice');
         
+        // CALCULATE ALL REQUIRED VARIABLES
         $devicePrice = $contract->bell_retail_price ?? $contract->device_price ?? 0;
         $deviceAmount = $devicePrice - ($contract->agreement_credit_amount ?? 0);
-        $totalFinancedAmount = $deviceAmount - ($contract->required_upfront_payment ?? 0) - ($contract->optional_down_payment ?? 0);
-        $monthlyDevicePayment = ($totalFinancedAmount - ($contract->deferred_payment_amount ?? 0)) / 24;
+        $requiredUpfront = $contract->required_upfront_payment ?? 0;
+        $optionalUpfront = $contract->optional_down_payment ?? 0;
+        $deferredPayment = $contract->deferred_payment_amount ?? 0;
+        
+        $totalFinancedAmount = $deviceAmount - $requiredUpfront - $optionalUpfront;
+        $remainingBalance = $totalFinancedAmount - $deferredPayment;
+        $monthlyDevicePayment = $remainingBalance / 24;
         $earlyCancellationFee = $totalFinancedAmount + ($contract->bell_dro_amount ?? 0);
         $monthlyReduction = $monthlyDevicePayment;
+        
+        // Calculate buyout cost using CSR's formula
+        $buyoutCost = ($devicePrice - $deferredPayment) / 24;
+        
+        // Get and format the cancellation policy
+        $cancellationPolicy = '';
+        if ($contract->commitmentPeriod && $contract->commitmentPeriod->cancellation_policy) {
+            $cancellationPolicy = str_replace(
+                ['{balance}', '{monthly_reduction}', '{start_date}', '{end_date}', '{buyout_cost}', '{device_return_option}'],
+                [
+                    number_format($remainingBalance, 2),
+                    number_format($buyoutCost, 2),
+                    $contract->start_date->format('M d, Y'),
+                    $contract->end_date->format('M d, Y'),
+                    number_format($buyoutCost, 2),
+                    number_format($deferredPayment, 2)
+                ],
+                $contract->commitmentPeriod->cancellation_policy
+            );
+        }
+        
         $totalAddOnCost = $contract->addOns->sum('cost') ?? 0;
         $totalOneTimeFeeCost = $contract->oneTimeFees->sum('cost') ?? 0;
-        $totalCost = ($totalAddOnCost + ($contract->rate_plan_price ?? $contract->bell_plan_cost ?? 0) + $monthlyDevicePayment) * 24 + $totalOneTimeFeeCost;
+        $totalCost = $deviceAmount + 
+                     (($contract->rate_plan_price ?? $contract->bell_plan_cost ?? 0) * 24) + 
+                     ($totalAddOnCost * 24) + 
+                     $totalOneTimeFeeCost;
         
         $config = HTMLPurifier_Config::createDefault();
         $config->set('Core.Encoding', 'UTF-8');
@@ -298,7 +331,9 @@ class ContractController extends Controller
             'totalFinancedAmount',
             'monthlyDevicePayment',
             'earlyCancellationFee',
-            'monthlyReduction'
+            'monthlyReduction',
+            'buyoutCost',
+            'cancellationPolicy'
         ))
             ->setPaper('a4', 'portrait')
             ->setOptions([
@@ -360,6 +395,11 @@ class ContractController extends Controller
 			$deviceTiers[$device->id] = array_unique($availableTiers);
 		}
 	   
+
+		$defaultConnectionFee = \App\Helpers\SettingsHelper::get('default_connection_fee', 80);
+
+
+	   
 		return view('contracts.edit', compact(
 			'contract',
 			'customers',
@@ -371,7 +411,8 @@ class ContractController extends Controller
 			'mobileInternetPlans',
 			'planAddOns',
 			'tiers',
-			'deviceTiers'
+			'deviceTiers',
+			'defaultConnectionFee'
 		));
 	}
 	   
@@ -397,13 +438,14 @@ class ContractController extends Controller
 			'deferred_payment_amount' => 'nullable|numeric|min:0',
 			'commitment_period_id' => 'required|exists:commitment_periods,id',
 			'first_bill_date' => 'required|date|after_or_equal:start_date',
+			'imei' => 'nullable|string|max:20',
 			'add_ons' => 'nullable|array',
 			'add_ons.*.name' => 'required|string|max:255',
 			'add_ons.*.code' => 'required|string|max:255',
-			'add_ons.*.cost' => 'required|numeric|min:0',
+			'add_ons.*.cost' => 'required|numeric',
 			'one_time_fees' => 'nullable|array',
 			'one_time_fees.*.name' => 'required|string|max:255',
-			'one_time_fees.*.cost' => 'required|numeric|min:0',
+			'one_time_fees.*.cost' => 'required|numeric', // REMOVED min:0 to allow negative
 			'rate_plan_id' => 'nullable|exists:rate_plans,id',
 			'mobile_internet_plan_id' => 'nullable|exists:mobile_internet_plans,id',
 			'rate_plan_price' => 'nullable|numeric|min:0',
@@ -463,6 +505,7 @@ class ContractController extends Controller
 			'deferred_payment_amount' => $request->deferred_payment_amount,
 			'commitment_period_id' => $request->commitment_period_id,
 			'first_bill_date' => $request->first_bill_date,
+			'imei' => $request->imei,
 			'updated_by' => auth()->id(),
 			'rate_plan_id' => $request->rate_plan_id,
 			'mobile_internet_plan_id' => $request->mobile_internet_plan_id,
@@ -534,112 +577,159 @@ class ContractController extends Controller
         return view('contracts.sign', compact('contract'));
     }
 	
-    public function storeSignature(Request $request, $id)
-    {
-        $contract = Contract::with('subscriber.mobilityAccount.ivueAccount.customer')->findOrFail($id);
-        
-        if ($contract->status !== 'draft') {
-            Log::warning('Contract cannot be signed due to status in storeSignature', ['contract_id' => $id, 'status' => $contract->status]);
-            return redirect()->route('contracts.view', $id)->with('error', 'Contract cannot be signed.');
-        }
-        
-        $request->validate([
-            'signature' => 'required|string|regex:/^data:image\/png;base64,/',
-        ], [
-            'signature.required' => 'Please provide a signature.',
-            'signature.regex' => 'Invalid signature format.',
-        ]);
-        
-        try {
-            $signature = $request->signature;
-            Log::info('Received signature data', ['contract_id' => $id]);
-            
-            $signaturePath = "signatures/contract_{$contract->id}.png";
-            $signatureData = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $signature));
-            
-            if ($signatureData === false) {
-                Log::error('Failed to decode signature data', ['contract_id' => $id]);
-                return redirect()->back()->with('error', 'Failed to process signature.');
-            }
-            
-            $stored = Storage::disk('public')->put($signaturePath, $signatureData);
-            if (!$stored) {
-                Log::error('Failed to store signature file', ['contract_id' => $id]);
-                return redirect()->back()->with('error', 'Failed to save signature file.');
-            }
-            
-            Log::info('Signature file stored', ['contract_id' => $id, 'path' => $signaturePath]);
-            
-            $contract->update([
-                'signature_path' => 'storage/' . $signaturePath,
-                'status' => 'signed',
-                'updated_by' => auth()->id(),
-            ]);
-            
-            $contract->refresh();
-            Log::info('Contract status after update', ['contract_id' => $id, 'status' => $contract->status]);
-            
-            $contract->load('addOns', 'oneTimeFees', 'subscriber.mobilityAccount.ivueAccount.customer', 'activityType', 'commitmentPeriod');
-            
-            $devicePrice = $contract->bell_retail_price ?? $contract->device_price ?? 0;
-            $deviceAmount = $devicePrice - ($contract->agreement_credit_amount ?? 0);
-            $totalFinancedAmount = $deviceAmount - ($contract->required_upfront_payment ?? 0) - ($contract->optional_down_payment ?? 0);
-            $monthlyDevicePayment = ($totalFinancedAmount - ($contract->deferred_payment_amount ?? 0)) / 24;
-            $earlyCancellationFee = $totalFinancedAmount + ($contract->bell_dro_amount ?? 0);
-            $monthlyReduction = $monthlyDevicePayment;
-            $totalAddOnCost = $contract->addOns->sum('cost');
-            $totalOneTimeFeeCost = $contract->oneTimeFees->sum('cost');
-            $totalFinancingCost = ($contract->required_upfront_payment ?? 0) + ($contract->optional_down_payment ?? 0) + ($contract->deferred_payment_amount ?? 0);
-            $totalCost = ($contract->device_price ?? 0) + $totalAddOnCost + $totalOneTimeFeeCost + $totalFinancingCost;
-            
-            $pdf = Pdf::loadView('contracts.view', compact(
-                'contract',
-                'totalAddOnCost',
-                'totalOneTimeFeeCost',
-                'totalFinancingCost',
-                'totalCost',
-                'devicePrice',
-                'deviceAmount',
-                'totalFinancedAmount',
-                'monthlyDevicePayment',
-                'earlyCancellationFee',
-                'monthlyReduction'
-            ))
-                ->setPaper('a4', 'portrait')
-                ->setOptions([
-                    'isHtml5ParserEnabled' => true,
-                    'isRemoteEnabled' => true,
-                    'dpi' => 150,
-                    'defaultFont' => 'sans-serif',
-                    'memory_limit' => '512M',
-                    'chroot' => base_path(),
-                    'isPhpEnabled' => true,
-                    'margin_top' => 10,
-                    'margin_bottom' => 10,
-                    'margin_left' => 10,
-                    'margin_right' => 10,
-                ]);
-            
-            $pdfPath = "contracts/contract_{$contract->id}.pdf";
-            Storage::disk('public')->put($pdfPath, $pdf->output());
-            $contract->update(['pdf_path' => $pdfPath]);
-            
-            Log::info('PDF regenerated with signature', ['contract_id' => $id, 'pdf_path' => $pdfPath]);
-            
-            return redirect()->route('contracts.view', $id)->with('success', 'Contract signed successfully');
-        } catch (\Exception $e) {
-            Log::error('Error in storeSignature', ['contract_id' => $id, 'error' => $e->getMessage()]);
-            return redirect()->back()->with('error', 'Failed to save signature: ' . $e->getMessage());
-        }
-    }
+	public function storeSignature(Request $request, $id)
+	{
+		$contract = Contract::with('subscriber.mobilityAccount.ivueAccount.customer')->findOrFail($id);
+		
+		if ($contract->status !== 'draft') {
+			Log::warning('Contract cannot be signed due to status in storeSignature', ['contract_id' => $id, 'status' => $contract->status]);
+			return redirect()->route('contracts.view', $id)->with('error', 'Contract cannot be signed.');
+		}
+		
+		$request->validate([
+			'signature' => 'required|string|regex:/^data:image\/png;base64,/',
+		], [
+			'signature.required' => 'Please provide a signature.',
+			'signature.regex' => 'Invalid signature format.',
+		]);
+		
+		try {
+			$signature = $request->signature;
+			Log::info('Received signature data', ['contract_id' => $id]);
+			
+			$signaturePath = "signatures/contract_{$contract->id}.png";
+			$signatureData = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $signature));
+			
+			if ($signatureData === false) {
+				Log::error('Failed to decode signature data', ['contract_id' => $id]);
+				return redirect()->back()->with('error', 'Failed to process signature.');
+			}
+			
+			$stored = Storage::disk('public')->put($signaturePath, $signatureData);
+			if (!$stored) {
+				Log::error('Failed to store signature file', ['contract_id' => $id]);
+				return redirect()->back()->with('error', 'Failed to save signature file.');
+			}
+			
+			Log::info('Signature file stored', ['contract_id' => $id, 'path' => $signaturePath]);
+			
+			$contract->update([
+				'signature_path' => 'storage/' . $signaturePath,
+				'status' => 'signed',
+				'updated_by' => auth()->id(),
+			]);
+			
+			$contract->refresh();
+			Log::info('Contract status after update', ['contract_id' => $id, 'status' => $contract->status]);
+			
+			$contract->load('addOns', 'oneTimeFees', 'subscriber.mobilityAccount.ivueAccount.customer', 'activityType', 'commitmentPeriod', 'ratePlan', 'mobileInternetPlan', 'bellDevice');
+			
+			// CALCULATE ALL REQUIRED VARIABLES
+			$devicePrice = $contract->bell_retail_price ?? $contract->device_price ?? 0;
+			$deviceAmount = $devicePrice - ($contract->agreement_credit_amount ?? 0);
+			$requiredUpfront = $contract->required_upfront_payment ?? 0;
+			$optionalUpfront = $contract->optional_down_payment ?? 0;
+			$deferredPayment = $contract->deferred_payment_amount ?? 0;
+			
+			$totalFinancedAmount = $deviceAmount - $requiredUpfront - $optionalUpfront;
+			$remainingBalance = $totalFinancedAmount - $deferredPayment;
+			$monthlyDevicePayment = $remainingBalance / 24;
+			$earlyCancellationFee = $totalFinancedAmount + ($contract->bell_dro_amount ?? 0);
+			$monthlyReduction = $monthlyDevicePayment;
+			
+			// Calculate buyout cost using CSR's formula
+			$buyoutCost = ($devicePrice - $deferredPayment) / 24;
+			
+			// Get and format the cancellation policy
+			$cancellationPolicy = '';
+			if ($contract->commitmentPeriod && $contract->commitmentPeriod->cancellation_policy) {
+				$cancellationPolicy = str_replace(
+					['{balance}', '{monthly_reduction}', '{start_date}', '{end_date}', '{buyout_cost}', '{device_return_option}'],
+					[
+						number_format($remainingBalance, 2),
+						number_format($buyoutCost, 2),
+						$contract->start_date->format('M d, Y'),
+						$contract->end_date->format('M d, Y'),
+						number_format($buyoutCost, 2),
+						number_format($deferredPayment, 2)
+					],
+					$contract->commitmentPeriod->cancellation_policy
+				);
+			}
+			
+			$totalAddOnCost = $contract->addOns->sum('cost');
+			$totalOneTimeFeeCost = $contract->oneTimeFees->sum('cost');
+			$totalCost = $deviceAmount + 
+						 (($contract->rate_plan_price ?? $contract->bell_plan_cost ?? 0) * 24) + 
+						 ($totalAddOnCost * 24) + 
+						 $totalOneTimeFeeCost;
+			
+			$config = HTMLPurifier_Config::createDefault();
+			$config->set('Core.Encoding', 'UTF-8');
+			$config->set('HTML.Doctype', 'HTML 4.01 Transitional');
+			$config->set('HTML.Allowed', 'p,strong,em,ul,ol,li,a[href|title],br,div[class],span[class],table,tr,td,th,hr');
+			$config->set('AutoFormat.AutoParagraph', true);
+			$config->set('AutoFormat.Linkify', true);
+			$config->set('URI.AllowedSchemes', ['http' => true, 'https' => true, 'mailto' => true, 'ftp' => true]);
+			$config->set('Cache.SerializerPath', storage_path('htmlpurifier'));
+			$purifier = new HTMLPurifier($config);
+			
+			if ($contract->ratePlan && $contract->ratePlan->features) {
+				$contract->ratePlan->features = $purifier->purify($contract->ratePlan->features);
+			}
+			if ($contract->mobileInternetPlan && $contract->mobileInternetPlan->description) {
+				$contract->mobileInternetPlan->description = $purifier->purify($contract->mobileInternetPlan->description);
+			}
+			
+			$pdf = Pdf::loadView('contracts.view', compact(
+				'contract',
+				'totalAddOnCost',
+				'totalOneTimeFeeCost',
+				'totalCost',
+				'devicePrice',
+				'deviceAmount',
+				'totalFinancedAmount',
+				'monthlyDevicePayment',
+				'earlyCancellationFee',
+				'monthlyReduction',
+				'buyoutCost',
+				'cancellationPolicy'
+			))
+				->setPaper('a4', 'portrait')
+				->setOptions([
+					'isHtml5ParserEnabled' => true,
+					'isRemoteEnabled' => true,
+					'dpi' => 150,
+					'defaultFont' => 'sans-serif',
+					'memory_limit' => '512M',
+					'chroot' => base_path(),
+					'isPhpEnabled' => true,
+					'margin_top' => 10,
+					'margin_bottom' => 10,
+					'margin_left' => 10,
+					'margin_right' => 10,
+				]);
+			
+			$pdfPath = "contracts/contract_{$contract->id}.pdf";
+			Storage::disk('public')->put($pdfPath, $pdf->output());
+			$contract->update(['pdf_path' => $pdfPath]);
+			
+			Log::info('PDF regenerated with signature', ['contract_id' => $id, 'pdf_path' => $pdfPath]);
+			
+			return redirect()->route('contracts.view', $id)->with('success', 'Contract signed successfully');
+		} catch (\Exception $e) {
+			Log::error('Error in storeSignature', ['contract_id' => $id, 'error' => $e->getMessage()]);
+			return redirect()->back()->with('error', 'Failed to save signature: ' . $e->getMessage());
+		}
+	}
    
-    public function finalize($id)
-    {
-        $contract = Contract::with('subscriber.mobilityAccount.ivueAccount.customer')->findOrFail($id);
-        
-        if ($contract->status !== 'signed') {
-            return redirect()->route('contracts.view', $id)->with('error', 'Contract must be signed before finalizing.');
-        }
+	public function finalize($id)
+	{
+		$contract = Contract::with('subscriber.mobilityAccount.ivueAccount.customer')->findOrFail($id);
+		
+		if ($contract->status !== 'signed') {
+			return redirect()->route('contracts.view', $id)->with('error', 'Contract must be signed before finalizing.');
+		}
 
 		if ($contract->requiresFinancing() && $contract->financing_status !== 'finalized') {
 			return redirect()->route('contracts.view', $id)
@@ -651,73 +741,104 @@ class ContractController extends Controller
 				->with('error', 'DRO form must be completed and finalized before finalizing the contract.');
 		}		
 		
-        $contract->update([
-            'status' => 'finalized',
-            'updated_by' => auth()->id(),
-        ]);
-        
-        $contract->load('addOns', 'oneTimeFees', 'subscriber.mobilityAccount.ivueAccount.customer', 'activityType', 'commitmentPeriod', 'ratePlan', 'mobileInternetPlan', 'bellDevice');
-        
-        $devicePrice = $contract->bell_retail_price ?? $contract->device_price ?? 0;
-        $deviceAmount = $devicePrice - ($contract->agreement_credit_amount ?? 0);
-        $totalFinancedAmount = $deviceAmount - ($contract->required_upfront_payment ?? 0) - ($contract->optional_down_payment ?? 0);
-        $monthlyDevicePayment = ($totalFinancedAmount - ($contract->deferred_payment_amount ?? 0)) / 24;
-        $earlyCancellationFee = $totalFinancedAmount + ($contract->bell_dro_amount ?? 0);
-        $monthlyReduction = $monthlyDevicePayment;
-        $totalAddOnCost = $contract->addOns->sum('cost') ?? 0;
-        $totalOneTimeFeeCost = $contract->oneTimeFees->sum('cost') ?? 0;
-        $totalCost = ($totalAddOnCost + ($contract->rate_plan_price ?? $contract->bell_plan_cost ?? 0) + $monthlyDevicePayment) * 24 + $totalOneTimeFeeCost;
-        
-        $config = HTMLPurifier_Config::createDefault();
-        $config->set('Core.Encoding', 'UTF-8');
-        $config->set('HTML.Doctype', 'HTML 4.01 Transitional');
-        $config->set('HTML.Allowed', 'p,strong,em,ul,ol,li,a[href|title],br,div[class],span[class],table,tr,td,th,hr');
-        $config->set('AutoFormat.AutoParagraph', true);
-        $config->set('AutoFormat.Linkify', true);
-        $config->set('URI.AllowedSchemes', ['http' => true, 'https' => true, 'mailto' => true, 'ftp' => true]);
-        $config->set('Cache.SerializerPath', storage_path('htmlpurifier'));
-        $purifier = new HTMLPurifier($config);
-        
-        if ($contract->ratePlan && $contract->ratePlan->features) {
-            $contract->ratePlan->features = $purifier->purify($contract->ratePlan->features);
-        }
-        
-        if ($contract->mobileInternetPlan && $contract->mobileInternetPlan->description) {
-            $contract->mobileInternetPlan->description = $purifier->purify($contract->mobileInternetPlan->description);
-        }
-        
-        $pdf = Pdf::loadView('contracts.view', compact(
-            'contract',
-            'totalAddOnCost',
-            'totalOneTimeFeeCost',
-            'totalCost',
-            'devicePrice',
-            'deviceAmount',
-            'totalFinancedAmount',
-            'monthlyDevicePayment',
-            'earlyCancellationFee',
-            'monthlyReduction'
-        ))
-            ->setPaper('a4', 'portrait')
-            ->setOptions([
-                'isHtml5ParserEnabled' => true,
-                'isRemoteEnabled' => true,
-                'dpi' => 150,
-                'defaultFont' => 'sans-serif',
-                'memory_limit' => '512M',
-                'chroot' => base_path(),
-                'isPhpEnabled' => true,
-                'margin_top' => 10,
-                'margin_bottom' => 10,
-                'margin_left' => 10,
-                'margin_right' => 10,
-            ]);
-        
-        $pdfPath = "contracts/contract_{$contract->id}.pdf";
-        Storage::disk('public')->put($pdfPath, $pdf->output());
-        $contract->update(['pdf_path' => $pdfPath]);
-        
-        Log::info('PDF generated for finalized contract', ['contract_id' => $id, 'pdf_path' => $pdfPath]);
+		$contract->update([
+			'status' => 'finalized',
+			'updated_by' => auth()->id(),
+		]);
+		
+		$contract->load('addOns', 'oneTimeFees', 'subscriber.mobilityAccount.ivueAccount.customer', 'activityType', 'commitmentPeriod', 'ratePlan', 'mobileInternetPlan', 'bellDevice');
+		
+		// CALCULATE ALL REQUIRED VARIABLES
+		$devicePrice = $contract->bell_retail_price ?? $contract->device_price ?? 0;
+		$deviceAmount = $devicePrice - ($contract->agreement_credit_amount ?? 0);
+		$requiredUpfront = $contract->required_upfront_payment ?? 0;
+		$optionalUpfront = $contract->optional_down_payment ?? 0;
+		$deferredPayment = $contract->deferred_payment_amount ?? 0;
+		
+		$totalFinancedAmount = $deviceAmount - $requiredUpfront - $optionalUpfront;
+		$remainingBalance = $totalFinancedAmount - $deferredPayment;
+		$monthlyDevicePayment = $remainingBalance / 24;
+		$earlyCancellationFee = $totalFinancedAmount + ($contract->bell_dro_amount ?? 0);
+		$monthlyReduction = $monthlyDevicePayment;
+		
+		// Calculate buyout cost using CSR's formula
+		$buyoutCost = ($devicePrice - $deferredPayment) / 24;
+		
+		// Get and format the cancellation policy
+		$cancellationPolicy = '';
+		if ($contract->commitmentPeriod && $contract->commitmentPeriod->cancellation_policy) {
+			$cancellationPolicy = str_replace(
+				['{balance}', '{monthly_reduction}', '{start_date}', '{end_date}', '{buyout_cost}', '{device_return_option}'],
+				[
+					number_format($remainingBalance, 2),
+					number_format($buyoutCost, 2),
+					$contract->start_date->format('M d, Y'),
+					$contract->end_date->format('M d, Y'),
+					number_format($buyoutCost, 2),
+					number_format($deferredPayment, 2)
+				],
+				$contract->commitmentPeriod->cancellation_policy
+			);
+		}
+		
+		$totalAddOnCost = $contract->addOns->sum('cost') ?? 0;
+		$totalOneTimeFeeCost = $contract->oneTimeFees->sum('cost') ?? 0;
+		$totalCost = $deviceAmount + 
+					 (($contract->rate_plan_price ?? $contract->bell_plan_cost ?? 0) * 24) + 
+					 ($totalAddOnCost * 24) + 
+					 $totalOneTimeFeeCost;
+		
+		$config = HTMLPurifier_Config::createDefault();
+		$config->set('Core.Encoding', 'UTF-8');
+		$config->set('HTML.Doctype', 'HTML 4.01 Transitional');
+		$config->set('HTML.Allowed', 'p,strong,em,ul,ol,li,a[href|title],br,div[class],span[class],table,tr,td,th,hr');
+		$config->set('AutoFormat.AutoParagraph', true);
+		$config->set('AutoFormat.Linkify', true);
+		$config->set('URI.AllowedSchemes', ['http' => true, 'https' => true, 'mailto' => true, 'ftp' => true]);
+		$config->set('Cache.SerializerPath', storage_path('htmlpurifier'));
+		$purifier = new HTMLPurifier($config);
+		
+		if ($contract->ratePlan && $contract->ratePlan->features) {
+			$contract->ratePlan->features = $purifier->purify($contract->ratePlan->features);
+		}
+		if ($contract->mobileInternetPlan && $contract->mobileInternetPlan->description) {
+			$contract->mobileInternetPlan->description = $purifier->purify($contract->mobileInternetPlan->description);
+		}
+		
+		$pdf = Pdf::loadView('contracts.view', compact(
+			'contract',
+			'totalAddOnCost',
+			'totalOneTimeFeeCost',
+			'totalCost',
+			'devicePrice',
+			'deviceAmount',
+			'totalFinancedAmount',
+			'monthlyDevicePayment',
+			'earlyCancellationFee',
+			'monthlyReduction',
+			'buyoutCost',
+			'cancellationPolicy'
+		))
+			->setPaper('a4', 'portrait')
+			->setOptions([
+				'isHtml5ParserEnabled' => true,
+				'isRemoteEnabled' => true,
+				'dpi' => 150,
+				'defaultFont' => 'sans-serif',
+				'memory_limit' => '512M',
+				'chroot' => base_path(),
+				'isPhpEnabled' => true,
+				'margin_top' => 10,
+				'margin_bottom' => 10,
+				'margin_left' => 10,
+				'margin_right' => 10,
+			]);
+		
+		$pdfPath = "contracts/contract_{$contract->id}.pdf";
+		Storage::disk('public')->put($pdfPath, $pdf->output());
+		$contract->update(['pdf_path' => $pdfPath]);
+		
+		Log::info('PDF generated for finalized contract', ['contract_id' => $id, 'pdf_path' => $pdfPath]);
         
         // FTP Upload to Vault
         $ftpService = new VaultFtpService();
@@ -814,7 +935,6 @@ class ContractController extends Controller
        
         $ftpService = new VaultFtpService();
         
-        // Check if test mode
         if ($ftpService->isTestMode()) {
             return redirect()->back()->with('info', 'Vault is in test mode. FTP uploads are simulated. Set VAULT_TEST_MODE=false in .env to enable real uploads.');
         }
@@ -830,7 +950,6 @@ class ContractController extends Controller
                 'ftp_error' => null
             ]);
             
-            // Cleanup files after successful manual upload
             $cleanupService = new ContractFileCleanupService();
             if ($cleanupService->canCleanup($contract)) {
                 $cleanupResult = $cleanupService->cleanupContractFiles($contract);
@@ -880,63 +999,103 @@ class ContractController extends Controller
         }
     }
 	
-    public function view($id)
-    {
-        Log::debug('Starting ContractController@view', ['id' => $id]);
-        
-        $contract = Contract::with([
-            'ratePlan',
-            'mobileInternetPlan',
-            'addOns',
-            'oneTimeFees',
-            'subscriber.mobilityAccount.ivueAccount.customer',
-            'activityType',
-            'commitmentPeriod',
-            'bellDevice'
-        ])->findOrFail($id);
-        
-        $config = HTMLPurifier_Config::createDefault();
-        $config->set('Core.Encoding', 'UTF-8');
-        $config->set('HTML.Doctype', 'HTML 4.01 Transitional');
-        $config->set('HTML.Allowed', 'p,strong,em,ul,ol,li,a[href|title],br,div[class],span[class],table,tr,td,th,hr');
-        $config->set('AutoFormat.AutoParagraph', true);
-        $config->set('AutoFormat.Linkify', true);
-        $config->set('URI.AllowedSchemes', ['http' => true, 'https' => true, 'mailto' => true, 'ftp' => true]);
-        $config->set('Cache.SerializerPath', storage_path('htmlpurifier'));
-        $purifier = new HTMLPurifier($config);
-        
-        if ($contract->ratePlan && $contract->ratePlan->features) {
-            $contract->ratePlan->features = $purifier->purify($contract->ratePlan->features);
-        }
-        
-        if ($contract->mobileInternetPlan && $contract->mobileInternetPlan->description) {
-            $contract->mobileInternetPlan->description = $purifier->purify($contract->mobileInternetPlan->description);
-        }
-        
-        $devicePrice = $contract->bell_retail_price ?? $contract->device_price ?? 0;
-        $deviceAmount = $devicePrice - ($contract->agreement_credit_amount ?? 0);
-        $totalFinancedAmount = $deviceAmount - ($contract->required_upfront_payment ?? 0) - ($contract->optional_down_payment ?? 0);
-        $monthlyDevicePayment = ($totalFinancedAmount - ($contract->deferred_payment_amount ?? 0)) / 24;
-        $earlyCancellationFee = $totalFinancedAmount + ($contract->bell_dro_amount ?? 0);
-        $monthlyReduction = $monthlyDevicePayment;
-        $totalAddOnCost = $contract->addOns->sum('cost') ?? 0;
-        $totalOneTimeFeeCost = $contract->oneTimeFees->sum('cost') ?? 0;
-        $totalCost = ($totalAddOnCost + ($contract->rate_plan_price ?? $contract->bell_plan_cost ?? 0) + $monthlyDevicePayment) * 24 + $totalOneTimeFeeCost;
-       
-        return view('contracts.view', compact(
-            'contract',
-            'totalAddOnCost',
-            'totalOneTimeFeeCost',
-            'totalCost',
-            'devicePrice',
-            'deviceAmount',
-            'totalFinancedAmount',
-            'monthlyDevicePayment',
-            'earlyCancellationFee',
-            'monthlyReduction'
-        ));
-    }
-
+	public function view($id)
+	{
+		Log::debug('Starting ContractController@view', ['id' => $id]);
+		
+		$contract = Contract::with([
+			'ratePlan',
+			'mobileInternetPlan',
+			'addOns',
+			'oneTimeFees',
+			'subscriber.mobilityAccount.ivueAccount.customer',
+			'activityType',
+			'commitmentPeriod',
+			'bellDevice'
+		])->findOrFail($id);
+		
+		$config = HTMLPurifier_Config::createDefault();
+		$config->set('Core.Encoding', 'UTF-8');
+		$config->set('HTML.Doctype', 'HTML 4.01 Transitional');
+		$config->set('HTML.Allowed', 'p,strong,em,ul,ol,li,a[href|title],br,div[class],span[class],table,tr,td,th,hr');
+		$config->set('AutoFormat.AutoParagraph', true);
+		$config->set('AutoFormat.Linkify', true);
+		$config->set('URI.AllowedSchemes', ['http' => true, 'https' => true, 'mailto' => true, 'ftp' => true]);
+		$config->set('Cache.SerializerPath', storage_path('htmlpurifier'));
+		$purifier = new HTMLPurifier($config);
+		
+		if ($contract->ratePlan && $contract->ratePlan->features) {
+			$contract->ratePlan->features = $purifier->purify($contract->ratePlan->features);
+		}
+		
+		if ($contract->mobileInternetPlan && $contract->mobileInternetPlan->description) {
+			$contract->mobileInternetPlan->description = $purifier->purify($contract->mobileInternetPlan->description);
+		}
+		
+		// Financial calculations - DEFINE ALL VARIABLES FIRST
+		$devicePrice = $contract->bell_retail_price ?? $contract->device_price ?? 0;
+		$deviceAmount = $devicePrice - ($contract->agreement_credit_amount ?? 0);
+		$requiredUpfront = $contract->required_upfront_payment ?? 0;
+		$optionalUpfront = $contract->optional_down_payment ?? 0;
+		$deferredPayment = $contract->deferred_payment_amount ?? 0;
+		
+		$totalFinancedAmount = $deviceAmount - $requiredUpfront - $optionalUpfront;
+		$remainingBalance = $totalFinancedAmount - $deferredPayment;
+		$monthlyDevicePayment = $remainingBalance / 24;
+		$earlyCancellationFee = $totalFinancedAmount + ($contract->bell_dro_amount ?? 0);
+		$monthlyReduction = $monthlyDevicePayment;
+		
+		// Calculate buyout cost using CSR's formula
+		$buyoutCost = ($devicePrice - $deferredPayment) / 24;
+		
+		// Get and format the cancellation policy from CommitmentPeriod
+		$cancellationPolicy = '';
+		if ($contract->commitmentPeriod && $contract->commitmentPeriod->cancellation_policy) {
+			$cancellationPolicy = str_replace(
+				[
+					'{balance}',
+					'{monthly_reduction}',
+					'{start_date}',
+					'{end_date}',
+					'{buyout_cost}',
+					'{device_return_option}'
+				],
+				[
+					number_format($remainingBalance, 2),
+					number_format($buyoutCost, 2),
+					$contract->start_date->format('M d, Y'),
+					$contract->end_date->format('M d, Y'),
+					number_format($buyoutCost, 2),
+					number_format($deferredPayment, 2)
+				],
+				$contract->commitmentPeriod->cancellation_policy
+			);
+		}
+		
+		$totalAddOnCost = $contract->addOns->sum('cost') ?? 0;
+		$totalOneTimeFeeCost = $contract->oneTimeFees->sum('cost') ?? 0;
+		$minimumMonthlyCharge = ($contract->rate_plan_price ?? $contract->bell_plan_cost ?? 0) + $monthlyDevicePayment;
+		$totalCost = $deviceAmount + 
+					 (($contract->rate_plan_price ?? $contract->bell_plan_cost ?? 0) * 24) + 
+					 ($totalAddOnCost * 24) + 
+					 $totalOneTimeFeeCost;		
+		
+		return view('contracts.view', compact(
+			'contract',
+			'totalAddOnCost',
+			'totalOneTimeFeeCost',
+			'totalCost',
+			'devicePrice',
+			'deviceAmount',
+			'totalFinancedAmount',
+			'monthlyDevicePayment',
+			'earlyCancellationFee',
+			'monthlyReduction',
+			'buyoutCost',
+			'cancellationPolicy'	
+		));
+	}
+    
     public function email($id)
     {
         $contract = Contract::with('subscriber.mobilityAccount.ivueAccount.customer')->findOrFail($id);
@@ -980,7 +1139,8 @@ class ContractController extends Controller
         return BellPricing::getPricing($deviceId, $tier);
     }
    
-    // FINANCING FORM METHODS
+    // FINANCING AND DRO METHODS REMAIN UNCHANGED...
+    // (Including all the financing and DRO methods from your original file)
     
     public function financingForm($id)
     {
@@ -1098,7 +1258,6 @@ class ContractController extends Controller
         
         Log::info('Financing form finalized', ['contract_id' => $id]);
         
-        // FTP to Vault
         $ftpService = new VaultFtpService();
         $remoteFilename = $ftpService->getRemoteFilename($contract);
         $remoteFilename = str_replace('.pdf', '_financing.pdf', $remoteFilename);
@@ -1112,10 +1271,8 @@ class ContractController extends Controller
                 'test_mode' => $result['test_mode'] ?? false
             ]);
             
-            // Cleanup financing files after successful upload
             $cleanupService = new ContractFileCleanupService();
             if ($cleanupService->canCleanup($contract)) {
-                // Only cleanup financing-specific files
                 $deletedFiles = [];
                 
                 if ($contract->financing_pdf_path && Storage::disk('public')->exists($contract->financing_pdf_path)) {
@@ -1274,8 +1431,6 @@ class ContractController extends Controller
         Log::info('Financing PDF generated', ['contract_id' => $contract->id, 'path' => $pdfPath]);
     }
 	   
-    // DRO FORM METHODS
-	   
 	public function droForm($id)
 	{
 		$contract = Contract::with([
@@ -1432,7 +1587,6 @@ class ContractController extends Controller
 		
 		Log::info('DRO form finalized', ['contract_id' => $id]);
 		
-		// FTP to Vault
 		$ftpService = new VaultFtpService();
 		$remoteFilename = $ftpService->getRemoteFilename($contract);
 		$remoteFilename = str_replace('.pdf', '_dro.pdf', $remoteFilename);
@@ -1446,7 +1600,6 @@ class ContractController extends Controller
 				'test_mode' => $result['test_mode'] ?? false
 			]);
 			
-			// Cleanup DRO files after successful upload
 			$cleanupService = new ContractFileCleanupService();
 			if ($cleanupService->canCleanup($contract)) {
 				$deletedFiles = [];

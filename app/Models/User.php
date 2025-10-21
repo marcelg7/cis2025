@@ -18,7 +18,11 @@ class User extends Authenticatable implements MustVerifyEmail
         'name',
         'email',
         'password',
-        'role', // Added for mass assignment
+        'role',
+		'component_styles',
+		'session_lifetime',
+		'theme',                    
+		'show_development_info',    
     ];
 
     protected $hidden = [
@@ -29,6 +33,8 @@ class User extends Authenticatable implements MustVerifyEmail
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
+		'component_styles' => 'array',
+		'show_development_info' => 'boolean',
     ];
 
     // Customize password reset email to distinguish new user setup

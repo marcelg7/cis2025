@@ -4,7 +4,123 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Hay Contract Information System WCOC</title>
+    <title>{{ config('app.name', 'Laravel') }}</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.bunny.net">
+    <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
+
+    <!-- Theme CSS Variables -->
+    <style>
+        {!! $themeCss ?? '' !!}
+        
+        /* Apply theme colors to common elements */
+        body {
+            background-color: var(--color-background);
+            color: var(--color-text);
+        }
+        
+        .bg-primary {
+            background-color: var(--color-primary) !important;
+        }
+        
+        .bg-primary:hover {
+            background-color: var(--color-primary-hover) !important;
+        }
+        
+        .text-primary {
+            color: var(--color-primary) !important;
+        }
+        
+        .border-primary {
+            border-color: var(--color-primary) !important;
+        }
+        
+        .bg-surface {
+            background-color: var(--color-surface);
+        }
+        
+        /* Buttons with theme colors */
+        .btn-primary {
+            background-color: var(--color-primary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--color-primary-hover);
+        }
+        
+        .btn-secondary {
+            background-color: var(--color-secondary);
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background-color: var(--color-secondary-hover);
+        }
+        
+        /* Links */
+        a.text-indigo-600, a.text-blue-600 {
+            color: var(--color-primary) !important;
+        }
+        
+        a.text-indigo-600:hover, a.text-blue-600:hover {
+            color: var(--color-primary-hover) !important;
+        }
+        
+        /* Indigo/Blue button overrides */
+        .bg-indigo-600 {
+            background-color: var(--color-primary) !important;
+        }
+        
+        .bg-indigo-700, .hover\:bg-indigo-700:hover {
+            background-color: var(--color-primary-hover) !important;
+        }
+        
+        .bg-blue-600 {
+            background-color: var(--color-primary) !important;
+        }
+        
+        .bg-blue-700, .hover\:bg-blue-700:hover {
+            background-color: var(--color-primary-hover) !important;
+        }
+        
+        /* Focus rings */
+        .focus\:ring-indigo-500:focus {
+            --tw-ring-color: var(--color-primary) !important;
+        }
+        
+        .focus\:border-indigo-500:focus {
+            border-color: var(--color-primary) !important;
+        }
+        
+        /* Text colors */
+        .text-indigo-600 {
+            color: var(--color-primary) !important;
+        }
+        
+        /* Border colors */
+        .border-indigo-600 {
+            border-color: var(--color-primary) !important;
+        }
+        
+        /* Background light */
+        .bg-indigo-50 {
+            background-color: var(--color-primary-light) !important;
+        }
+        
+        /* Success/Warning/Danger stay consistent or use theme */
+        .bg-green-600 {
+            background-color: var(--color-success) !important;
+        }
+        
+        .bg-yellow-600, .bg-orange-600 {
+            background-color: var(--color-warning) !important;
+        }
+        
+        .bg-red-600 {
+            background-color: var(--color-danger) !important;
+        }
+    </style>
     @vite(['resources/css/app.css', 'resources/css/app2.css', 'resources/js/app.js'])
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.2.0/dist/signature_pad.umd.min.js"></script>
     <style>
@@ -215,7 +331,7 @@
                                      style="display: none;">
                                     <div class="rounded-md ring-1 ring-black ring-opacity-5 py-1">
                                         <a href="{{ route('users.settings.edit') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                            Settings
+                                            User Settings
                                         </a>
                                         <a href="{{ route('password.custom_change') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                             Change Password
@@ -359,7 +475,7 @@
                             <div class="border-t border-gray-200 my-1 mx-4"></div>
                             
                             <x-responsive-nav-link :href="route('users.settings.edit')" :active="request()->routeIs('users.settings.edit')">
-                                Settings
+                                User Settings
                             </x-responsive-nav-link>
                             <x-responsive-nav-link :href="route('password.custom_change')" :active="request()->routeIs('password.custom_change')">
                                 Change Password

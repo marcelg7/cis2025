@@ -121,10 +121,10 @@
             </div>
 
             <div class="mb-6">
-                <h3 class="text-lg font-bold mb-2">AGREEMENT DETAILS</h3>
-                <p class="text-sm"><b>Effective Date:</b> {{ $contract->start_date->format('F d, Y') }}</p>
-                <p class="text-sm"><b>Device Description:</b> {{ $contract->bellDevice ? $contract->bellDevice->name : 'N/A' }}</p>
-                <p class="text-sm"><b>Device IMEI:</b> {{ $contract->imei ?? 'To be provided' }}</p>
+				<h3 class="text-lg font-bold mb-2">AGREEMENT DETAILS</h3>
+				<p class="text-sm"><b>Effective Date:</b> {{ $contract->start_date->format('F d, Y') }}</p>
+				<p class="text-sm"><b>Device Description:</b> {{ $contract->bellDevice ? $contract->bellDevice->name : 'N/A' }}</p>
+				<p class="text-sm"><b>Device IMEI:</b> {{ $contract->imei ?? 'To be provided' }}</p>
                 
                 <div class="mt-4">
                     <p class="text-sm font-bold">Device Return or Deferred Payment</p>

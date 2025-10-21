@@ -184,6 +184,13 @@
 							<p class="mt-2 text-sm text-red-600">{{ $message }}</p>
 						@enderror
 					</div>
+					<div>
+						<label for="imei" class="block text-sm font-medium text-gray-700">IMEI Number</label>
+						<input type="text" name="imei" id="imei" value="{{ old('imei') }}" maxlength="20" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="Enter 15-digit IMEI">
+						@error('imei')
+							<p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+						@enderror
+					</div>
 				</div>
 			</div>
            
@@ -333,12 +340,11 @@
             </div>
            
             <!-- Dynamic Total Calculator -->
-            <div class="bg-gray-50 border border-gray-200 rounded-lg p-6 mt-4">
-                <h2 class="text-lg font-medium text-gray-900 mb-4">Estimated Total Cost</h2>
-                <div class="text-2xl font-bold text-indigo-600" id="total-cost">$0.00</div>
-                <p class="text-sm text-gray-500 mt-2">This is a real-time estimate based on current selections (device, plan, add-ons, fees, financing, credits). Final total may vary.</p>
-            </div>
-          
+			<div class="bg-gray-50 border border-gray-200 rounded-lg p-6 mt-4">
+				<h2 class="text-lg font-medium text-gray-900 mb-4">Estimated Monthly Cost</h2>
+				<div class="text-2xl font-bold text-indigo-600" id="total-cost">$0.00</div>
+				<p class="text-sm text-gray-500 mt-2">This is a real-time estimate of your monthly service cost (device payment + plan + add-ons). One-time fees and upfront payments are not included in this monthly estimate.</p>
+			</div>
             <div class="flex justify-end">
                 <a href="{{ route('customers.show', $subscriber->mobilityAccount->ivueAccount->customer_id) }}" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 mr-4">
                     Cancel
@@ -351,6 +357,10 @@
     </div>
   
 <script>
+
+	const DEFAULT_CONNECTION_FEE = {{ $defaultConnectionFee ?? 80 }};
+
+
     let addOnCount = {{ count(old('add_ons', [])) }};
     let feeCount = {{ count(old('one_time_fees', [])) }};
     let currentPricingData = null;
@@ -493,32 +503,32 @@ function addAddOn() {
             }
         }
       
-        const activityTypeSelect = document.getElementById('activity_type_id');
-        if (activityTypeSelect) {
-            activityTypeSelect.addEventListener('change', function() {
-                const selectedOption = this.options[this.selectedIndex];
-                const activityName = selectedOption.textContent.trim();
-              
-                if (activityName === 'New Postpaid Activation') {
-                    const existingFees = Array.from(document.querySelectorAll('[name^="one_time_fees"][name$="[name]"]'))
-                        .map(input => input.value.trim());
-                  
-                    if (!existingFees.includes('Connection Fee')) {
-                        addFeeWithDefaults('Connection Fee', 75);
-                    }
-                }
-            });
-          
-            const currentSelection = activityTypeSelect.options[activityTypeSelect.selectedIndex];
-            if (currentSelection && currentSelection.textContent.trim() === 'New Postpaid Activation') {
-                const existingFees = Array.from(document.querySelectorAll('[name^="one_time_fees"][name$="[name]"]'))
-                    .map(input => input.value.trim());
-              
-                if (!existingFees.includes('Connection Fee')) {
-                    addFeeWithDefaults('Connection Fee', 75);
-                }
-            }
-        }
+		const activityTypeSelect = document.getElementById('activity_type_id');
+		if (activityTypeSelect) {
+			activityTypeSelect.addEventListener('change', function() {
+				const selectedOption = this.options[this.selectedIndex];
+				const activityName = selectedOption.textContent.trim();
+			  
+				if (activityName === 'New Postpaid Activation') {
+					const existingFees = Array.from(document.querySelectorAll('[name^="one_time_fees"][name$="[name]"]'))
+						.map(input => input.value.trim());
+				  
+					if (!existingFees.includes('Connection Fee')) {
+						addFeeWithDefaults('Connection Fee', DEFAULT_CONNECTION_FEE); // ← CHANGED from 75
+					}
+				}
+			});
+		  
+			const currentSelection = activityTypeSelect.options[activityTypeSelect.selectedIndex];
+			if (currentSelection && currentSelection.textContent.trim() === 'New Postpaid Activation') {
+				const existingFees = Array.from(document.querySelectorAll('[name^="one_time_fees"][name$="[name]"]'))
+					.map(input => input.value.trim());
+			  
+				if (!existingFees.includes('Connection Fee')) {
+					addFeeWithDefaults('Connection Fee', DEFAULT_CONNECTION_FEE); // ← CHANGED from 75
+				}
+			}
+		}
       
         deviceSelect.addEventListener('change', function() {
             const selectedOption = this.options[this.selectedIndex];

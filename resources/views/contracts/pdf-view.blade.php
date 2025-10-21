@@ -13,7 +13,7 @@
         <p><strong>Critical Information Summary</strong></p>
         <p>Wireless Mobility Agreement</p>
     </div>
-    <div style="clear: both; height: 0;"></div> <!-- No extra space -->
+    <div style="clear: both; height: 0;"></div>
 </div>
 <div class="footer">
     <p style="font-size: 7pt;">Hay Communications | www.hay.net | {{ $contract->location === 'zurich' ? '519-236-4333' : ($contract->location === 'exeter' ? '519-235-1234' : '519-238-5678') }}</p>
@@ -72,47 +72,67 @@
     <hr style="margin: 0; border-color: #ccc;">
 
     <!-- Device Details -->
-    <div style="padding: 0;">
-        <h3 style="font-size: 10pt; margin: 0;">Device Details</h3>
-        @php
-            $deviceDisplayName = $contract->bell_device_id && $contract->bellDevice ? $contract->bellDevice->name : 'N/A';
-        @endphp
-        <div style="font-size: 7pt; color: #333; line-height: 1.0;">
-            <div style="float: left; width: 48%; margin-right: 2%;">
-                <p><strong>Model:</strong> {{ $deviceDisplayName }}</p>
-                @if($contract->bell_device_id && $contract->bellDevice)
-                    <p style="margin-top: 0;"><strong>Pricing Type:</strong> {{ ucfirst($contract->bell_pricing_type ?? 'N/A') }}</p>
-                    <p><strong>Plan Tier:</strong> {{ $contract->bell_tier ?? 'N/A' }}</p>
-                    @if($contract->bell_dro_amount && $contract->bell_dro_amount > 0)
-                        <p><strong>DRO Amount:</strong> ${{ number_format($contract->bell_dro_amount, 2) }}</p>
-                    @endif
-                @endif
-                <p style="font-style: italic; font-size: 6pt; margin-top: 0;">All amounts are before taxes.</p>
-                <p><strong>Device Retail Price:</strong> ${{ number_format($devicePrice, 2) }}</p>
-                <p><strong>Agreement Credit:</strong> ${{ number_format($contract->agreement_credit_amount ?? 0, 2) }}</p>
-                <p><strong>Device Amount:</strong> ${{ number_format($deviceAmount, 2) }}</p>
-                <p><strong>Up-front Payment Required:</strong> ${{ number_format($contract->required_upfront_payment ?? 0, 2) }}</p>
-                <p><strong>Optional Up-front Payment:</strong> ${{ number_format($contract->optional_down_payment ?? 0, 2) }}</p>
-                <p><strong>Total Financed Amount:</strong> ${{ number_format($totalFinancedAmount, 2) }}</p>
-                <p><strong>Deferred Payment Amount:</strong> ${{ number_format($contract->deferred_payment_amount ?? 0, 2) }}</p>
+    @if($contract->bell_pricing_type === 'byod')
+        <!-- BYOD Plan - Simplified Display -->
+        <div style="padding: 0;">
+            <h3 style="font-size: 10pt; margin: 0;">Device Details</h3>
+            <div style="font-size: 7pt; color: #333; background: #e3f2fd; border: 1px solid #90caf9; padding: 3mm; margin-top: 2mm;">
+                <p style="font-weight: bold; margin: 0;">Bring Your Own Device (BYOD) Plan</p>
+                <p style="margin: 2mm 0 0 0;">This is a Bring Your Own Device plan. The customer is using their own device. No device financing is required for this contract.</p>
             </div>
-            <div style="float: left; width: 48%;">
-                <p><strong>Monthly Device Payment:</strong> ${{ number_format($monthlyDevicePayment, 2) }}</p>
-                @if($contract->bell_device_id && $contract->bell_monthly_device_cost)
-                    <p style="font-size: 6pt; color: #666;">(Bell Calculated: ${{ number_format($contract->bell_monthly_device_cost, 2) }})</p>
-                @endif
-                <p><strong>Commitment Period:</strong> {{ $contract->commitmentPeriod->name ?? '2 Year Term Smart Pay' }}</p>
-                <p><strong>Remaining Device Balance:</strong> ${{ number_format($totalFinancedAmount - ($contract->deferred_payment_amount ?? 0), 2) }}</p>
-                <p><strong>Start Date:</strong> {{ $contract->start_date->format('M d, Y') }}</p>
-                <p><strong>End Date:</strong> {{ $contract->end_date->format('M d, Y') }}</p>
-                <p style="font-size: 6pt; margin-top: 0;">
-                    Early Cancellation Fee: ${{ number_format($monthlyDevicePayment, 2) }} per month left plus Device Return Option of ${{ number_format($contract->deferred_payment_amount ?? 0, 2) }}.<br>
-                    Fee will be $0 on {{ $contract->end_date->format('M d, Y') }}; decreases monthly by: ${{ number_format($monthlyReduction, 2) }}
-                </p>
-            </div>
-            <div style="clear: both;"></div>
         </div>
-    </div>
+    @else
+        <!-- Regular Device Details (SmartPay/DRO) -->
+        <div style="padding: 0;">
+            <h3 style="font-size: 10pt; margin: 0;">Device Details</h3>
+            @php
+                $deviceDisplayName = $contract->bell_device_id && $contract->bellDevice ? $contract->bellDevice->name : 'N/A';
+            @endphp
+            <div style="font-size: 7pt; color: #333; line-height: 1.0;">
+                <div style="float: left; width: 48%; margin-right: 2%;">
+                    <p><strong>Model:</strong> {{ $deviceDisplayName }}</p>
+                    
+                    <!-- IMEI Display -->
+                    @if($contract->imei)
+                        <p><strong>IMEI:</strong> {{ $contract->imei }}</p>
+                    @endif
+                    
+                    @if($contract->bell_device_id && $contract->bellDevice)
+                        <p style="margin-top: 0;"><strong>Pricing Type:</strong> {{ $contract->bell_pricing_type === 'dro' ? 'DRO' : ucfirst($contract->bell_pricing_type ?? 'N/A') }}</p>
+                        <p><strong>Plan Tier:</strong> {{ $contract->bell_tier ?? 'N/A' }}</p>
+                        @if($contract->bell_dro_amount && $contract->bell_dro_amount > 0)
+                            <p><strong>DRO Amount:</strong> ${{ number_format($contract->bell_dro_amount, 2) }}</p>
+                        @endif
+                    @endif
+                    <p style="font-style: italic; font-size: 6pt; margin-top: 0;">All amounts are before taxes.</p>
+                    <p><strong>Device Retail Price:</strong> ${{ number_format($devicePrice, 2) }}</p>
+                    <p><strong>Agreement Credit:</strong> ${{ number_format($contract->agreement_credit_amount ?? 0, 2) }}</p>
+                    <!-- REMOVED: Device Amount line -->
+                    <p><strong>Total Financed Amount (before tax):</strong> ${{ number_format($totalFinancedAmount, 2) }}</p>
+                    <p><strong>Up-front Payment Required:</strong> ${{ number_format($contract->required_upfront_payment ?? 0, 2) }}</p>
+                    <p><strong>Optional Up-front Payment:</strong> ${{ number_format($contract->optional_down_payment ?? 0, 2) }}</p>
+                    <p><strong>Deferred Payment Amount:</strong> ${{ number_format($contract->deferred_payment_amount ?? 0, 2) }}</p>
+                    <p><strong>Remaining Device Balance:</strong> ${{ number_format($totalFinancedAmount - ($contract->deferred_payment_amount ?? 0), 2) }}</p>
+                </div>
+                <div style="float: left; width: 48%;">
+                    <p><strong>Monthly Device Payment:</strong> ${{ number_format($monthlyDevicePayment, 2) }}</p>
+                    @if($contract->bell_device_id && $contract->bell_monthly_device_cost)
+                        <p style="font-size: 6pt; color: #666;">(Bell Calculated: ${{ number_format($contract->bell_monthly_device_cost, 2) }})</p>
+                    @endif
+
+                    <p style="font-size: 6pt; margin-top: 0;">
+						@if($cancellationPolicy)
+							{!! nl2br(e($cancellationPolicy)) !!}
+						@else
+							Early Cancellation Fee: ${{ number_format($buyoutCost, 2) }} per month left plus Device Return Option of ${{ number_format($contract->deferred_payment_amount ?? 0, 2) }}.<br>
+							Fee will be $0 on {{ $contract->end_date->format('M d, Y') }}; decreases monthly by: ${{ number_format($buyoutCost, 2) }}
+						@endif
+											</p>
+                </div>
+                <div style="clear: both;"></div>
+            </div>
+        </div>
+    @endif
     <hr style="margin: 0; border-color: #ccc;">
 
     <!-- Cellular Pricing -->
@@ -120,7 +140,7 @@
         <h3 style="font-size: 10pt; margin: 0;">Cellular Pricing</h3>
         <div style="font-size: 7pt; color: #333; line-height: 1.0;">
             <p><strong>Rate Plan</strong></p>
-            <p>{{ $contract->bell_pricing_type ?? 'SMARTPAY' }} {{ $contract->bell_tier ?? 'Lite' }}</p>
+            <p>{{ $contract->bell_pricing_type === 'dro' ? 'DRO' : strtoupper($contract->bell_pricing_type ?? 'SMARTPAY') }} {{ $contract->bell_tier ?? 'Lite' }}</p>
             <p>{{ $contract->commitmentPeriod->name ?? '2yr 60GB Lite' }}</p>
             <p><strong>SOC:</strong> {{ $contract->ratePlan->soc ?? 'BRPT00142' }}</p>
             <p>{{ $contract->ratePlan->data ?? '60GB' }}</p>
@@ -131,13 +151,15 @@
     <hr style="margin: 0; border-color: #ccc;">
 
     <!-- Return Policy -->
-    <div style="padding: 0; font-size: 6pt; color: #333; background: #fff; border-bottom: 1px solid #ccc;">
-        <h3 style="font-size: 8pt; margin: 0;">Return Policy</h3>
-        <p style="line-height: 1.0;">
-            Taxes not included. If you purchase a device from Hay which does not meet your needs, you may return the device if it is (a) returned within 15 calendar days of the commitment start date; (b) in "like new" condition with the original packaging, manuals, and accessories; and (c) returned with original receipt to the location. You are responsible for all service charges incurred prior to your return of the device. SIM Cards are not returnable. Postpaid Accounts: Hay will not accept devices with excessive usage in violation of our Responsible Use of Services Policy. Prepaid Accounts: The device has not exceeded 30 minutes of voice usage or 50 MB of data usage. Funds added to your account are non-refundable. If you are a person with a disability, the same conditions apply; however, you may return your device within 30 calendar days of the commitment start date and, if in a Prepaid Account, double the corresponding permitted usage set out above.
-        </p>
-    </div>
-    <hr style="margin: 0; border-color: #ccc;">
+    @if($contract->bell_pricing_type !== 'byod')
+        <div style="padding: 0; font-size: 6pt; color: #333; background: #fff; border-bottom: 1px solid #ccc;">
+            <h3 style="font-size: 8pt; margin: 0;">Return Policy</h3>
+            <p style="line-height: 1.0;">
+                Taxes not included. If you purchase a device from Hay which does not meet your needs, you may return the device if it is (a) returned within 15 calendar days of the commitment start date; (b) in "like new" condition with the original packaging, manuals, and accessories; and (c) returned with original receipt to the location. You are responsible for all service charges incurred prior to your return of the device. SIM Cards are not returnable. Postpaid Accounts: Hay will not accept devices with excessive usage in violation of our Responsible Use of Services Policy. Prepaid Accounts: The device has not exceeded 30 minutes of voice usage or 50 MB of data usage. Funds added to your account are non-refundable. If you are a person with a disability, the same conditions apply; however, you may return your device within 30 calendar days of the commitment start date and, if in a Prepaid Account, double the corresponding permitted usage set out above.
+            </p>
+        </div>
+        <hr style="margin: 0; border-color: #ccc;">
+    @endif
 
     <!-- Rate Plan Details -->
     <div style="padding: 0; background: #fff; border-bottom: 1px solid #ccc;">
@@ -181,17 +203,7 @@
     </div>
     <hr style="margin: 0; border-color: #ccc;">
 
-    <!-- Total Monthly Charges -->
-    <div style="padding: 0; background: #fff; border-bottom: 1px solid #ccc;">
-        <h3 style="font-size: 8pt; margin: 0;">Total Monthly Charges</h3>
-        <div style="font-size: 8pt; font-weight: bold; color: #333;">
-            <p>Total Monthly Charges: ${{ number_format($minimumMonthlyCharge + $totalAddOnCost, 2) }}</p>
-            <p style="font-size: 6pt; font-weight: normal; margin: 0;">(Taxes and additional usage charges are extra.)</p>
-        </div>
-    </div>
-    <hr style="margin: 0; border-color: #ccc;">
-
-    <!-- Add-ons -->
+    <!-- Add-ons (MOVED BEFORE Total Monthly Charges) -->
     @if($contract->addOns->count())
         <div style="padding: 0; background: #fff; border-bottom: 1px solid #ccc;">
             <h3 style="font-size: 8pt; margin: 0;">Add-ons</h3>
@@ -204,6 +216,16 @@
         </div>
         <hr style="margin: 0; border-color: #ccc;">
     @endif
+
+    <!-- Total Monthly Charges (MOVED AFTER Add-ons) -->
+    <div style="padding: 0; background: #fff; border-bottom: 1px solid #ccc;">
+        <h3 style="font-size: 8pt; margin: 0;">Total Monthly Charges</h3>
+        <div style="font-size: 8pt; font-weight: bold; color: #333;">
+            <p>Total Monthly Charges: ${{ number_format($minimumMonthlyCharge + $totalAddOnCost, 2) }}</p>
+            <p style="font-size: 6pt; font-weight: normal; margin: 0;">(Taxes and additional usage charges are extra.)</p>
+        </div>
+    </div>
+    <hr style="margin: 0; border-color: #ccc;">
 
     <!-- One-Time Fees -->
     @if($contract->oneTimeFees->count())
@@ -219,20 +241,22 @@
         <hr style="margin: 0; border-color: #ccc;">
     @endif
 
-    <!-- One-Time Charges -->
+    <!-- One-Time Charges (UPDATED CALCULATION) -->
     <div style="padding: 0; background: #fff; border-bottom: 1px solid #ccc;">
         <h3 style="font-size: 8pt; margin: 0;">One-Time Charges</h3>
         @php
-            $subtotal = $deviceAmount + ($contract->required_upfront_payment ?? 0) + ($contract->optional_down_payment ?? 0);
+            // Updated: One-time fees + upfront payments
+            $subtotal = $totalOneTimeFeeCost + ($contract->required_upfront_payment ?? 0) + ($contract->optional_down_payment ?? 0);
             $taxes = $subtotal * 0.13;
             $total = $subtotal + $taxes;
         @endphp
         <div style="font-size: 6pt; color: #333; line-height: 1.0;">
             <div style="float: left; width: 48%; margin-right: 2%;">
+                <p><strong>One-Time Fees:</strong> ${{ number_format($totalOneTimeFeeCost, 2) }}</p>
                 <p><strong>Up-front Payment Requirement:</strong> ${{ number_format($contract->required_upfront_payment ?? 0, 2) }}</p>
                 <p><strong>Optional Up-front Payment:</strong> ${{ number_format($contract->optional_down_payment ?? 0, 2) }}</p>
             </div>
-            <div style="float: left; width: 48%;">
+            <div style="float: left; width: 48%; text-align: right;">
                 <p><strong>Subtotal:</strong> ${{ number_format($subtotal, 2) }}</p>
                 <p><strong>Taxes (13% HST):</strong> ${{ number_format($taxes, 2) }}</p>
                 <p><strong>Total:</strong> ${{ number_format($total, 2) }}</p>

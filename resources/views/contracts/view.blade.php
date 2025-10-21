@@ -1,7 +1,3 @@
-@php
-    // Removed dynamic layout - this is now web-only, always use layouts.app
-@endphp
-
 @extends('layouts.app')
 
 @section('content')
@@ -125,79 +121,91 @@
 
         <hr class="border-gray-200">
 
-		<!-- Device Details -->
-		@if($contract->bell_pricing_type === 'byod')
-			<!-- BYOD Plan - Simplified Display -->
-			<div class="section px-6 py-4 bg-white border-b border-gray-200">
-				<h3 class="text-lg font-semibold text-gray-900">Device Details</h3>
-				<div class="bg-blue-50 border border-blue-200 rounded-lg p-6 mt-4">
-					<div class="flex items-start">
-						<div class="flex-shrink-0">
-							<svg class="h-6 w-6 text-blue-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-								<path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
-							</svg>
-						</div>
-						<div class="ml-3">
-							<h4 class="text-md font-semibold text-blue-900">Bring Your Own Device (BYOD) Plan</h4>
-							<p class="mt-2 text-sm text-blue-800">
-								This is a Bring Your Own Device plan. The customer is using their own device. No device financing is required for this contract.
-							</p>
-						</div>
-					</div>
-				</div>
-			</div>
-		@else
-			<!-- Regular Device Details (SmartPay/DRO) -->
-			<div class="section px-6 py-4 bg-white border-b border-gray-200">
-				<h3 class="text-lg font-semibold text-gray-900">Device Details</h3>
-				@php
-					$deviceDisplayName = $contract->bell_device_id && $contract->bellDevice ? $contract->bellDevice->name : 'N/A';
-				@endphp
-				<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
-					<div class="bg-gray-50 p-4 rounded-lg">
-						<p class="text-sm text-gray-700"><span class="font-semibold">Model:</span> {{ $deviceDisplayName }}</p>
-						@if($contract->bell_device_id && $contract->bellDevice)
-							<div class="mt-3 p-3 bg-blue-50 border border-blue-200 rounded">
-								<p class="text-xs font-semibold text-blue-900 mb-1">Bell Pricing Details</p>
-								<p class="text-xs"><span class="font-semibold">Pricing Type:</span> {{ ucfirst($contract->bell_pricing_type ?? 'N/A') }}</p>
-								<p class="text-xs"><span class="font-semibold">Plan Tier:</span> {{ $contract->bell_tier ?? 'N/A' }}</p>
-								@if($contract->bell_dro_amount && $contract->bell_dro_amount > 0)
-									<p class="text-xs"><span class="font-semibold">DRO Amount:</span> ${{ number_format($contract->bell_dro_amount, 2) }}</p>
-								@endif
-								@if($contract->bell_plan_cost)
-									<p class="text-xs"><span class="font-semibold">Bell Plan Cost:</span> ${{ number_format($contract->bell_plan_cost, 2) }}</p>
-								@endif
-							</div>
-						@endif
-						<p class="mt-2 italic text-xs text-gray-600">All amounts are before taxes.</p>
-						<p class="text-sm text-gray-700"><span class="font-semibold">Device Retail Price:</span> ${{ number_format($devicePrice, 2) }}</p>
-						<p class="text-sm text-gray-700"><span class="font-semibold">Agreement Credit:</span> ${{ number_format($contract->agreement_credit_amount ?? 0, 2) }}</p>
-						<p class="text-sm text-gray-700"><span class="font-semibold">Device Amount:</span> ${{ number_format($deviceAmount, 2) }}</p>
-						<p class="text-sm text-gray-700"><span class="font-semibold">Up-front Payment Required:</span> ${{ number_format($contract->required_upfront_payment ?? 0, 2) }}</p>
-						<p class="text-sm text-gray-700"><span class="font-semibold">Optional Up-front Payment:</span> ${{ number_format($contract->optional_down_payment ?? 0, 2) }}</p>
-						<p class="text-sm text-gray-700"><span class="font-semibold">Total Financed Amount (before tax):</span> ${{ number_format($totalFinancedAmount, 2) }}</p>
-						<p class="text-sm text-gray-700"><span class="font-semibold">Deferred Payment Amount:</span> ${{ number_format($contract->deferred_payment_amount ?? 0, 2) }}</p>
-						<p class="text-sm text-gray-700"><span class="font-semibold">Amount for Monthly Payment Calculation:</span> ${{ number_format($totalFinancedAmount - ($contract->deferred_payment_amount ?? 0), 2) }}</p>
-					</div>
-					<div class="bg-gray-50 p-4 rounded-lg">
-						<p class="text-lg font-semibold text-gray-900">Monthly Device Payment: ${{ number_format($monthlyDevicePayment, 2) }}</p>
-						@if($contract->bell_device_id && $contract->bell_monthly_device_cost)
-							<p class="text-xs text-gray-500 mt-1">(Bell Calculated: ${{ number_format($contract->bell_monthly_device_cost, 2) }})</p>
-						@endif
-						<p class="text-sm text-gray-700 mt-2"><span class="font-semibold">Commitment Period:</span> {{ $contract->commitmentPeriod->name ?? '2 Year Term Smart Pay' }}</p>
-						<p class="text-sm text-gray-700"><span class="font-semibold">Remaining Device Balance:</span> ${{ number_format($totalFinancedAmount - ($contract->deferred_payment_amount ?? 0), 2) }}</p>
-						<p class="text-sm text-gray-700"><span class="font-semibold">Start Date:</span> {{ $contract->start_date->format('M d, Y') }}</p>
-						<p class="text-sm text-gray-700"><span class="font-semibold">End Date:</span> {{ $contract->end_date->format('M d, Y') }}</p>
-						<p class="text-sm text-gray-700">Your service will continue month-to-month after this end date.</p>
-						<p class="text-xs text-gray-600 mt-2">
-							Early Cancellation Fee is the remaining balance of your device plus the full Deferred Return Option amount. In this case, your Buyout Cost would be ${{ number_format($monthlyDevicePayment, 2) }} per month left on the term plus the Device Return Option of ${{ number_format($contract->deferred_payment_amount ?? 0, 2) }}.<br>
-							Fee will be $0 on {{ $contract->end_date->format('M d, Y') }} and will decrease each month by: ${{ number_format($monthlyReduction, 2) }}
-						</p>
-					</div>
-				</div>
-			</div>
-		@endif
-		<hr class="border-gray-200">
+<!-- Device Details -->
+@if($contract->bell_pricing_type === 'byod')
+    <!-- BYOD Plan - Simplified Display -->
+    <div class="section px-6 py-4 bg-white border-b border-gray-200">
+        <h3 class="text-lg font-semibold text-gray-900">Device Details</h3>
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-6 mt-4">
+            <div class="flex items-start">
+                <div class="flex-shrink-0">
+                    <svg class="h-6 w-6 text-blue-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <h4 class="text-md font-semibold text-blue-900">Bring Your Own Device (BYOD) Plan</h4>
+                    <p class="mt-2 text-sm text-blue-800">
+                        This is a Bring Your Own Device plan. The customer is using their own device. No device financing is required for this contract.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+@else
+    <!-- Regular Device Details (SmartPay/DRO) - TWO COLUMNS -->
+    <div class="section px-6 py-4 bg-white border-b border-gray-200">
+        <h3 class="text-lg font-semibold text-gray-900">Device Details</h3>
+        @php
+            $deviceDisplayName = $contract->bell_device_id && $contract->bellDevice ? $contract->bellDevice->name : 'N/A';
+        @endphp
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+            <!-- LEFT COLUMN: Device & Pricing Info -->
+            <div class="bg-gray-50 p-4 rounded-lg">
+                <p class="text-sm text-gray-700"><span class="font-semibold">Model:</span> {{ $deviceDisplayName }}</p>
+                
+                @if($contract->imei)
+                    <p class="text-sm text-gray-700 mt-2"><span class="font-semibold">IMEI:</span> {{ $contract->imei }}</p>
+                @endif
+                
+                @if($contract->bell_device_id && $contract->bellDevice)
+                    <div class="mt-3 p-3 bg-blue-50 border border-blue-200 rounded">
+                        <p class="text-xs font-semibold text-blue-900 mb-1">Bell Pricing Details</p>
+                        <p class="text-xs"><span class="font-semibold">Pricing Type:</span> {{ $contract->bell_pricing_type === 'dro' ? 'DRO' : ucfirst($contract->bell_pricing_type ?? 'N/A') }}</p>
+                        <p class="text-xs"><span class="font-semibold">Plan Tier:</span> {{ $contract->bell_tier ?? 'N/A' }}</p>
+                        @if($contract->bell_dro_amount && $contract->bell_dro_amount > 0)
+                            <p class="text-xs"><span class="font-semibold">DRO Amount:</span> ${{ number_format($contract->bell_dro_amount, 2) }}</p>
+                        @endif
+                        @if($contract->bell_plan_cost)
+                            <p class="text-xs"><span class="font-semibold">Bell Plan Cost:</span> ${{ number_format($contract->bell_plan_cost, 2) }}</p>
+                        @endif
+                    </div>
+                @endif
+                
+                <p class="mt-2 italic text-xs text-gray-600">All amounts are before taxes.</p>
+                <p class="text-sm text-gray-700 mt-2"><span class="font-semibold">Device Retail Price:</span> ${{ number_format($devicePrice, 2) }}</p>
+                <p class="text-sm text-gray-700"><span class="font-semibold">Agreement Credit:</span> ${{ number_format($contract->agreement_credit_amount ?? 0, 2) }}</p>
+                <p class="text-sm text-gray-700"><span class="font-semibold">Total Financed Amount:</span> ${{ number_format($totalFinancedAmount, 2) }}</p>
+                <p class="text-sm text-gray-700"><span class="font-semibold">Up-front Payment Required:</span> ${{ number_format($contract->required_upfront_payment ?? 0, 2) }}</p>
+                <p class="text-sm text-gray-700"><span class="font-semibold">Optional Up-front Payment:</span> ${{ number_format($contract->optional_down_payment ?? 0, 2) }}</p>
+                <p class="text-sm text-gray-700"><span class="font-semibold">Deferred Payment Amount:</span> ${{ number_format($contract->deferred_payment_amount ?? 0, 2) }}</p>
+                <p class="text-sm text-gray-700"><span class="font-semibold">Remaining Device Balance:</span> ${{ number_format($totalFinancedAmount - ($contract->deferred_payment_amount ?? 0), 2) }}</p>
+            </div>
+            
+            <!-- RIGHT COLUMN: Payment & Term Info -->
+            <div class="bg-gray-50 p-4 rounded-lg">
+                <p class="text-lg font-semibold text-gray-900">Monthly Device Payment: ${{ number_format($monthlyDevicePayment, 2) }}</p>
+                @if($contract->bell_device_id && $contract->bell_monthly_device_cost)
+                    <p class="text-xs text-gray-500 mt-1">(Bell Calculated: ${{ number_format($contract->bell_monthly_device_cost, 2) }})</p>
+                @endif
+                <p class="text-sm text-gray-700 mt-2"><span class="font-semibold">Commitment Period:</span> {{ $contract->commitmentPeriod->name ?? '2 Year Term Smart Pay' }}</p>
+                
+                <div class="mt-3 p-3 bg-yellow-50 border-l-4 border-yellow-400 rounded-r">
+                    <p class="text-xs font-semibold text-gray-900 mb-1">Early Cancellation Policy</p>
+                    <p class="text-xs text-gray-700 leading-relaxed">
+                        @if($cancellationPolicy)
+                            {!! nl2br(e($cancellationPolicy)) !!}
+                        @else
+                            Early Cancellation Fee: ${{ number_format($monthlyDevicePayment, 2) }} per month left plus Device Return Option of ${{ number_format($contract->deferred_payment_amount ?? 0, 2) }}.<br>
+                            Fee will be $0 on {{ $contract->end_date->format('M d, Y') }}; decreases monthly by: ${{ number_format($monthlyDevicePayment, 2) }}
+                        @endif
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+@endif
+<hr class="border-gray-200">
 
         @include('contracts.partials._cellular_pricing_display')
         <hr class="border-gray-200">
@@ -273,6 +281,21 @@
             <p class="text-lg font-semibold text-gray-900">Minimum Monthly Charge: ${{ number_format($minimumMonthlyCharge, 2) }}</p>
         </div>
         <hr class="border-gray-200">
+		
+		
+        <!-- Add-ons -->
+        @if($contract->addOns->count())
+            <div class="section px-6 py-4 bg-white border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900">Add-ons</h3>
+                <ul class="list-disc pl-6 text-sm text-gray-700 mt-2">
+                    @foreach($contract->addOns as $addOn)
+                        <li>{{ $addOn->name }} ({{ $addOn->code }}): ${{ number_format($addOn->cost, 2) }}</li>
+                    @endforeach
+                </ul>
+                <p class="text-sm font-semibold text-gray-700 mt-2">Total Add-on Cost: ${{ number_format($totalAddOnCost, 2) }}</p>
+            </div>
+            <hr class="border-gray-200">
+        @endif		
 
         <!-- Total Monthly Charges -->
         <div class="section px-6 py-4 bg-white border-b border-gray-200">
@@ -289,19 +312,7 @@
         </div>
         <hr class="border-gray-200">
 
-        <!-- Add-ons -->
-        @if($contract->addOns->count())
-            <div class="section px-6 py-4 bg-white border-b border-gray-200">
-                <h3 class="text-lg font-semibold text-gray-900">Add-ons</h3>
-                <ul class="list-disc pl-6 text-sm text-gray-700 mt-2">
-                    @foreach($contract->addOns as $addOn)
-                        <li>{{ $addOn->name }} ({{ $addOn->code }}): ${{ number_format($addOn->cost, 2) }}</li>
-                    @endforeach
-                </ul>
-                <p class="text-sm font-semibold text-gray-700 mt-2">Total Add-on Cost: ${{ number_format($totalAddOnCost, 2) }}</p>
-            </div>
-            <hr class="border-gray-200">
-        @endif
+
 
         <!-- One-Time Fees -->
         @if($contract->oneTimeFees->count())
@@ -317,49 +328,314 @@
             <hr class="border-gray-200">
         @endif
 
-        <!-- One-Time Charges -->
-        <div class="section px-6 py-4 bg-white border-b border-gray-200">
-            <h3 class="text-lg font-semibold text-gray-900">One-Time Charges</h3>
-            @php
-                $subtotal = $deviceAmount + ($contract->required_upfront_payment ?? 0) + ($contract->optional_down_payment ?? 0);
-                $taxes = $subtotal * 0.13;
-                $total = $subtotal + $taxes;
-            @endphp
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
-                <div class="bg-gray-50 p-4 rounded-lg">
-                    <p class="text-sm text-gray-700"><span class="font-semibold">Up-front Payment Requirement:</span> ${{ number_format($contract->required_upfront_payment ?? 0, 2) }}</p>
-                    <p class="text-sm text-gray-700"><span class="font-semibold">Optional Up-front Payment:</span> ${{ number_format($contract->optional_down_payment ?? 0, 2) }}</p>
-                </div>
-                <div class="bg-gray-50 p-4 rounded-lg text-right">
-                    <p class="text-sm text-gray-700">Subtotal: ${{ number_format($subtotal, 2) }}</p>
-                    <p class="text-sm text-gray-700">Taxes (13% HST): ${{ number_format($taxes, 2) }}</p>
-                    <p class="text-sm font-semibold text-gray-700">Total: ${{ number_format($total, 2) }}</p>
-                </div>
-            </div>
-        </div>
-        <hr class="border-gray-200">
-
-        <!-- Total Contract Cost -->
-        <div class="section px-6 py-4 bg-blue-50 border-b border-gray-200">
-            <h3 class="text-lg font-semibold text-gray-900">Total Contract Cost Breakdown</h3>
-            <div class="bg-blue-100 p-4 rounded-lg mt-4">
-                <ul class="list-disc pl-6 text-sm text-gray-700">
-                    <li>Device Cost (after ${{ number_format($contract->agreement_credit_amount ?? 0, 2) }} credit): ${{ number_format($deviceAmount, 2) }}</li>
-                    <li>Rate Plan (24 months): ${{ number_format(($contract->rate_plan_price ?? $contract->bell_plan_cost ?? 0) * 24, 2) }}</li>
-                    <li>Add-ons (24 months): ${{ number_format($totalAddOnCost * 24, 2) }}</li>
-                    <li>One-Time Fees: ${{ number_format($totalOneTimeFeeCost, 2) }}</li>
-                </ul>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                    <p class="text-lg font-semibold text-gray-900">Total Contract Cost (before taxes):</p>
-                    <p class="text-lg font-semibold text-gray-900 text-right">${{ number_format($totalCost, 2) }}</p>
-                    <p class="text-sm text-gray-600">Estimated taxes (13% HST):</p>
-                    <p class="text-sm text-gray-600 text-right">${{ number_format($totalCost * 0.13, 2) }}</p>
-                    <p class="text-sm text-gray-600">Total with estimated taxes:</p>
-                    <p class="text-sm text-gray-600 text-right">${{ number_format($totalCost * 1.13, 2) }}</p>
-                </div>
-            </div>
-        </div>
-        <hr class="border-gray-200">
+		<!-- One-Time Charges -->
+		<div class="section px-6 py-4 bg-white border-b border-gray-200">
+			<h3 class="text-lg font-semibold text-gray-900">One-Time Charges</h3>
+			@php
+				$subtotal = $totalOneTimeFeeCost + ($contract->required_upfront_payment ?? 0) + ($contract->optional_down_payment ?? 0);
+				$taxes = $subtotal * 0.13;
+				$total = $subtotal + $taxes;
+			@endphp
+			<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+				<div class="bg-gray-50 p-4 rounded-lg">
+					<p class="text-sm text-gray-700"><span class="font-semibold">One-Time Fees:</span> ${{ number_format($totalOneTimeFeeCost, 2) }}</p>
+					<p class="text-sm text-gray-700"><span class="font-semibold">Up-front Payment Requirement:</span> ${{ number_format($contract->required_upfront_payment ?? 0, 2) }}</p>
+					<p class="text-sm text-gray-700"><span class="font-semibold">Optional Up-front Payment:</span> ${{ number_format($contract->optional_down_payment ?? 0, 2) }}</p>
+				</div>
+				<div class="bg-gray-50 p-4 rounded-lg text-right">
+					<p class="text-sm text-gray-700">Subtotal: ${{ number_format($subtotal, 2) }}</p>
+					<p class="text-sm text-gray-700">Taxes (13% HST): ${{ number_format($taxes, 2) }}</p>
+					<p class="text-sm font-semibold text-gray-700">Total: ${{ number_format($total, 2) }}</p>
+				</div>
+			</div>
+		</div>
+		<hr class="border-gray-200">
+		@if((auth()->user()->show_development_info ?? false) || \App\Helpers\SettingsHelper::enabled('show_development_info'))
+			<!-- Total Contract Cost Breakdown - Development/Calculation Check -->
+			<div class="section px-6 py-4 bg-yellow-50 border-b border-yellow-200">
+				<div class="flex items-start mb-2">
+					<svg class="h-5 w-5 text-yellow-600 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+					</svg>
+					<div>
+						<h3 class="text-lg font-semibold text-gray-900">Complete Contract Calculations</h3>
+						<p class="text-xs text-yellow-700 mt-1">Development/Verification - All formulas and calculations shown for accuracy checking.</p>
+					</div>
+				</div>
+				
+				<div class="bg-yellow-100 p-6 rounded-lg mt-4 space-y-6">
+					
+					<!-- DEVICE CALCULATIONS -->
+					@php
+						$retailPrice = $contract->bell_retail_price ?? 0;
+						$agreementCredit = $contract->agreement_credit_amount ?? 0;
+						$deviceAmount = $deviceAmount; // Already calculated in controller
+						$requiredUpfront = $contract->required_upfront_payment ?? 0;
+						$optionalUpfront = $contract->optional_down_payment ?? 0;
+						$deferredPayment = $contract->deferred_payment_amount ?? 0;
+						$totalFinanced = $totalFinancedAmount; // Already calculated
+						$remainingBalance = $totalFinanced - $deferredPayment;
+						$monthlyDevicePayment = $monthlyDevicePayment; // Already calculated
+						$monthlyReduction = $monthlyReduction; // Already calculated
+					@endphp
+					
+					<div class="border-l-4 border-blue-500 pl-4">
+						<h4 class="text-md font-semibold text-gray-900 mb-3">💰 Device Pricing Calculations</h4>
+						<div class="space-y-2 text-sm font-mono">
+							<p class="text-gray-700">
+								<span class="text-blue-600">Device Retail Price:</span> 
+								<span class="float-right">${{ number_format($retailPrice, 2) }}</span>
+							</p>
+							<p class="text-gray-700">
+								<span class="text-blue-600">Agreement Credit:</span> 
+								<span class="float-right text-green-600">-${{ number_format($agreementCredit, 2) }}</span>
+							</p>
+							<hr class="border-gray-300 my-1">
+							<p class="text-gray-900 font-bold">
+								<span class="text-blue-600">Device Amount = Retail - Credit:</span> 
+								<span class="float-right">${{ number_format($deviceAmount, 2) }}</span>
+							</p>
+							
+							<div class="mt-3 pt-3 border-t border-gray-300">
+								<p class="text-gray-700">
+									<span class="text-blue-600">Required Upfront Payment:</span> 
+									<span class="float-right">${{ number_format($requiredUpfront, 2) }}</span>
+								</p>
+								<p class="text-gray-700">
+									<span class="text-blue-600">Optional Upfront Payment:</span> 
+									<span class="float-right">${{ number_format($optionalUpfront, 2) }}</span>
+								</p>
+								<p class="text-gray-700">
+									<span class="text-blue-600">Deferred Payment (DRO):</span> 
+									<span class="float-right">${{ number_format($deferredPayment, 2) }}</span>
+								</p>
+								<hr class="border-gray-300 my-1">
+								<p class="text-gray-900 font-bold">
+									<span class="text-blue-600">Total Financed = Device - Upfronts:</span> 
+									<span class="float-right">${{ number_format($totalFinanced, 2) }}</span>
+								</p>
+								<p class="text-gray-900 font-bold">
+									<span class="text-blue-600">Remaining Balance = Financed - DRO:</span> 
+									<span class="float-right">${{ number_format($remainingBalance, 2) }}</span>
+								</p>
+							</div>
+							
+							<div class="mt-3 pt-3 border-t-2 border-gray-400">
+								<p class="text-gray-900 font-bold text-base">
+									<span class="text-blue-600">Monthly Device Payment = Balance ÷ 24:</span> 
+									<span class="float-right">${{ number_format($monthlyDevicePayment, 2) }}</span>
+								</p>
+								<p class="text-xs text-gray-600 mt-1">
+									Formula: ${{ number_format($remainingBalance, 2) }} ÷ 24 months = ${{ number_format($monthlyDevicePayment, 2) }}/month
+								</p>
+								<p class="text-xs text-gray-600">
+									Monthly reduction in buyout: ${{ number_format($monthlyReduction, 2) }}
+								</p>
+							</div>
+						</div>
+					</div>
+					
+					<!-- PLAN CALCULATIONS -->
+					@php
+						$ratePlanPrice = $contract->rate_plan_price ?? $contract->bell_plan_cost ?? 0;
+						$mobileInternetPrice = $contract->mobile_internet_price ?? 0;
+						$totalPlanMonthly = $ratePlanPrice + $mobileInternetPrice;
+					@endphp
+					
+					<div class="border-l-4 border-green-500 pl-4">
+						<h4 class="text-md font-semibold text-gray-900 mb-3">📱 Monthly Plan Calculations</h4>
+						<div class="space-y-2 text-sm font-mono">
+							<p class="text-gray-700">
+								<span class="text-green-600">Rate Plan Cost:</span> 
+								<span class="float-right">${{ number_format($ratePlanPrice, 2) }}/mo</span>
+							</p>
+							<p class="text-gray-700">
+								<span class="text-green-600">Mobile Internet Cost:</span> 
+								<span class="float-right">${{ number_format($mobileInternetPrice, 2) }}/mo</span>
+							</p>
+							<hr class="border-gray-300 my-1">
+							<p class="text-gray-900 font-bold">
+								<span class="text-green-600">Total Plan Cost = Rate + Internet:</span> 
+								<span class="float-right">${{ number_format($totalPlanMonthly, 2) }}/mo</span>
+							</p>
+						</div>
+					</div>
+					
+					<!-- ADD-ONS CALCULATIONS -->
+					@php
+						$addOnsList = $contract->addOns;
+						$totalAddOnsMonthly = $totalAddOnCost; // Already calculated
+					@endphp
+					
+					<div class="border-l-4 border-purple-500 pl-4">
+						<h4 class="text-md font-semibold text-gray-900 mb-3">➕ Add-ons Calculations</h4>
+						<div class="space-y-2 text-sm font-mono">
+							@if($addOnsList->count() > 0)
+								@foreach($addOnsList as $addon)
+									<p class="text-gray-700">
+										<span class="text-purple-600">{{ $addon->name }} ({{ $addon->code }}):</span> 
+										<span class="float-right {{ $addon->cost < 0 ? 'text-green-600' : '' }}">
+											{{ $addon->cost < 0 ? '-' : '' }}${{ number_format(abs($addon->cost), 2) }}/mo
+										</span>
+									</p>
+								@endforeach
+								<hr class="border-gray-300 my-1">
+							@else
+								<p class="text-gray-500 italic">No add-ons selected</p>
+							@endif
+							<p class="text-gray-900 font-bold">
+								<span class="text-purple-600">Total Add-ons:</span> 
+								<span class="float-right">${{ number_format($totalAddOnsMonthly, 2) }}/mo</span>
+							</p>
+						</div>
+					</div>
+					
+					<!-- MONTHLY TOTAL CALCULATIONS -->
+					@php
+						$minimumMonthly = $minimumMonthlyCharge; // Already calculated
+						$totalMonthly = $minimumMonthly + $totalAddOnsMonthly;
+					@endphp
+					
+					<div class="border-l-4 border-indigo-500 pl-4">
+						<h4 class="text-md font-semibold text-gray-900 mb-3">📊 Total Monthly Calculations</h4>
+						<div class="space-y-2 text-sm font-mono">
+							<p class="text-gray-700">
+								<span class="text-indigo-600">Monthly Device Payment:</span> 
+								<span class="float-right">${{ number_format($monthlyDevicePayment, 2) }}/mo</span>
+							</p>
+							<p class="text-gray-700">
+								<span class="text-indigo-600">Monthly Plan Cost:</span> 
+								<span class="float-right">${{ number_format($totalPlanMonthly, 2) }}/mo</span>
+							</p>
+							<p class="text-gray-700">
+								<span class="text-indigo-600">Monthly Add-ons:</span> 
+								<span class="float-right">${{ number_format($totalAddOnsMonthly, 2) }}/mo</span>
+							</p>
+							<hr class="border-gray-300 my-1">
+							<p class="text-gray-900 font-bold text-base">
+								<span class="text-indigo-600">Total Monthly Charge = Device + Plan + Add-ons:</span> 
+								<span class="float-right">${{ number_format($totalMonthly, 2) }}/mo</span>
+							</p>
+							<p class="text-xs text-gray-600 mt-1">
+								Formula: ${{ number_format($monthlyDevicePayment, 2) }} + ${{ number_format($totalPlanMonthly, 2) }} + ${{ number_format($totalAddOnsMonthly, 2) }} = ${{ number_format($totalMonthly, 2) }}/mo
+							</p>
+						</div>
+					</div>
+					
+					<!-- ONE-TIME FEES -->
+					@php
+						$oneTimeFeesList = $contract->oneTimeFees;
+						$totalOneTimeFees = $totalOneTimeFeeCost; // Already calculated
+					@endphp
+					
+					<div class="border-l-4 border-orange-500 pl-4">
+						<h4 class="text-md font-semibold text-gray-900 mb-3">🔔 One-Time Fees</h4>
+						<div class="space-y-2 text-sm font-mono">
+							@if($oneTimeFeesList->count() > 0)
+								@foreach($oneTimeFeesList as $fee)
+									<p class="text-gray-700">
+										<span class="text-orange-600">{{ $fee->name }}:</span> 
+										<span class="float-right">${{ number_format($fee->cost, 2) }}</span>
+									</p>
+								@endforeach
+								<hr class="border-gray-300 my-1">
+							@else
+								<p class="text-gray-500 italic">No one-time fees</p>
+							@endif
+							<p class="text-gray-900 font-bold">
+								<span class="text-orange-600">Total One-Time Fees:</span> 
+								<span class="float-right">${{ number_format($totalOneTimeFees, 2) }}</span>
+							</p>
+						</div>
+					</div>
+					
+					<!-- 24-MONTH CONTRACT TOTAL -->
+					@php
+						$device24Month = $monthlyDevicePayment * 24;
+						$plan24Month = $totalPlanMonthly * 24;
+						$addons24Month = $totalAddOnsMonthly * 24;
+						$totalRecurring24 = $device24Month + $plan24Month + $addons24Month;
+						$contractSubtotal = $totalRecurring24 + $totalOneTimeFees;
+						$upfrontTotal = $requiredUpfront + $optionalUpfront;
+						$grandSubtotal = $contractSubtotal + $upfrontTotal;
+						$taxAmount = $grandSubtotal * 0.13;
+						$grandTotal = $grandSubtotal + $taxAmount;
+					@endphp
+					
+					<div class="border-l-4 border-red-500 pl-4">
+						<h4 class="text-md font-semibold text-gray-900 mb-3">📅 24-Month Contract Totals</h4>
+						<div class="space-y-2 text-sm font-mono">
+							<p class="text-gray-700">
+								<span class="text-red-600">Device Cost (24 × ${{ number_format($monthlyDevicePayment, 2) }}):</span> 
+								<span class="float-right">${{ number_format($device24Month, 2) }}</span>
+							</p>
+							<p class="text-gray-700">
+								<span class="text-red-600">Plan Cost (24 × ${{ number_format($totalPlanMonthly, 2) }}):</span> 
+								<span class="float-right">${{ number_format($plan24Month, 2) }}</span>
+							</p>
+							<p class="text-gray-700">
+								<span class="text-red-600">Add-ons (24 × ${{ number_format($totalAddOnsMonthly, 2) }}):</span> 
+								<span class="float-right">${{ number_format($addons24Month, 2) }}</span>
+							</p>
+							<hr class="border-gray-300 my-1">
+							<p class="text-gray-900 font-bold">
+								<span class="text-red-600">Recurring Charges (24 months):</span> 
+								<span class="float-right">${{ number_format($totalRecurring24, 2) }}</span>
+							</p>
+							<p class="text-gray-700 mt-2">
+								<span class="text-red-600">One-Time Fees:</span> 
+								<span class="float-right">${{ number_format($totalOneTimeFees, 2) }}</span>
+							</p>
+							<p class="text-gray-700">
+								<span class="text-red-600">Upfront Payments:</span> 
+								<span class="float-right">${{ number_format($upfrontTotal, 2) }}</span>
+							</p>
+							<hr class="border-gray-400 my-2">
+							<p class="text-gray-900 font-bold text-base">
+								<span class="text-red-600">Contract Subtotal (before tax):</span> 
+								<span class="float-right">${{ number_format($grandSubtotal, 2) }}</span>
+							</p>
+							<p class="text-xs text-gray-600 mt-1">
+								Formula: ${{ number_format($totalRecurring24, 2) }} + ${{ number_format($totalOneTimeFees, 2) }} + ${{ number_format($upfrontTotal, 2) }} = ${{ number_format($grandSubtotal, 2) }}
+							</p>
+						</div>
+					</div>
+					
+					<!-- FINAL TOTALS WITH TAX -->
+					<div class="border-l-4 border-gray-700 pl-4 bg-gray-50 p-4 rounded">
+						<h4 class="text-md font-semibold text-gray-900 mb-3">💵 Final Contract Totals</h4>
+						<div class="space-y-2 text-sm font-mono">
+							<p class="text-gray-900 font-bold text-base">
+								<span>Subtotal (before tax):</span> 
+								<span class="float-right">${{ number_format($grandSubtotal, 2) }}</span>
+							</p>
+							<p class="text-gray-700">
+								<span>HST (13% × ${{ number_format($grandSubtotal, 2) }}):</span> 
+								<span class="float-right">${{ number_format($taxAmount, 2) }}</span>
+							</p>
+							<hr class="border-gray-700 my-2">
+							<p class="text-gray-900 font-bold text-lg">
+								<span>GRAND TOTAL (with tax):</span> 
+								<span class="float-right">${{ number_format($grandTotal, 2) }}</span>
+							</p>
+						</div>
+					</div>
+					
+					<!-- NOTES -->
+					<div class="mt-4 p-3 bg-blue-50 border border-blue-200 rounded">
+						<p class="text-xs text-blue-900">
+							<strong>Note:</strong> All calculations shown exclude actual taxes charged by the provider on monthly bills. 
+							The 13% HST shown is an estimate for contract total comparison purposes only. 
+							Actual taxes will vary based on your location and applicable tax rates at time of billing.
+						</p>
+					</div>
+					
+				</div>
+			</div>
+			<hr class="border-gray-200">
+				
+		@endif
+		
 
 		<!-- Signature -->
 		@if ($contract->signature_path || $contract->status !== 'draft')

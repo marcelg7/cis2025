@@ -37,9 +37,39 @@ class ContractPdfService
         $devicePrice = $contract->bell_retail_price ?? $contract->device_price ?? 0;
         $deviceAmount = $devicePrice - ($contract->agreement_credit_amount ?? 0);
         $totalFinancedAmount = $deviceAmount - ($contract->required_upfront_payment ?? 0) - ($contract->optional_down_payment ?? 0);
-        $monthlyDevicePayment = ($totalFinancedAmount - ($contract->deferred_payment_amount ?? 0)) / 24;
+        $deferredPayment = $contract->deferred_payment_amount ?? 0;
+        $remainingBalance = $totalFinancedAmount - $deferredPayment;
+        $monthlyDevicePayment = $remainingBalance / 24;
         $earlyCancellationFee = $totalFinancedAmount + ($contract->bell_dro_amount ?? 0);
         $monthlyReduction = $monthlyDevicePayment;
+        
+        // NEW: Calculate buyout cost using CSR's formula
+        $buyoutCost = ($devicePrice - $deferredPayment) / 24;
+        
+        // NEW: Get and format the cancellation policy from CommitmentPeriod
+        $cancellationPolicy = '';
+        if ($contract->commitmentPeriod && $contract->commitmentPeriod->cancellation_policy) {
+            $cancellationPolicy = str_replace(
+                [
+                    '{balance}',
+                    '{monthly_reduction}',
+                    '{start_date}',
+                    '{end_date}',
+                    '{buyout_cost}',
+                    '{device_return_option}'
+                ],
+                [
+                    number_format($remainingBalance, 2),
+                    number_format($buyoutCost, 2),
+                    $contract->start_date->format('M d, Y'),
+                    $contract->end_date->format('M d, Y'),
+                    number_format($buyoutCost, 2),
+                    number_format($deferredPayment, 2)
+                ],
+                $contract->commitmentPeriod->cancellation_policy
+            );
+        }
+        
         $totalAddOnCost = $contract->addOns->sum('cost') ?? 0;
         $totalOneTimeFeeCost = $contract->oneTimeFees->sum('cost') ?? 0;
         $totalCost = ($totalAddOnCost + ($contract->rate_plan_price ?? $contract->bell_plan_cost ?? 0) + $monthlyDevicePayment) * 24 + $totalOneTimeFeeCost;
@@ -47,6 +77,7 @@ class ContractPdfService
         Log::debug('Calculated financials', [
             'contract_id' => $contract->id,
             'devicePrice' => $devicePrice,
+            'buyoutCost' => $buyoutCost, // NEW
         ]);
 
         // Sanitize HTML
@@ -78,7 +109,9 @@ class ContractPdfService
             'totalFinancedAmount',
             'monthlyDevicePayment',
             'earlyCancellationFee',
-            'monthlyReduction'
+            'monthlyReduction',
+            'buyoutCost',           // NEW
+            'cancellationPolicy'    // NEW
         );
 
         // Generate main contract PDF using clean PDF view
