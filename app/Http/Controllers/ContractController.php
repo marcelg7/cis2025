@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Controllers;
 
 use App\Models\Subscriber;
@@ -26,10 +25,12 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\View\View;
 use setasign\Fpdi\Fpdi;
 use Carbon\Carbon;
-use HTMLPurifier; // Import the Purifier class
-use HTMLPurifier_Config; // For configuration
+use HTMLPurifier;
+use HTMLPurifier_Config;
 use App\Services\VaultFtpService;
 use App\Services\ContractPdfService;
+use App\Services\ContractFileCleanupService;
+
 
 class ContractController extends Controller
 {
@@ -57,6 +58,7 @@ class ContractController extends Controller
         $contracts = $query->latest()->paginate(10)->appends($request->query());
         return view('contracts.index', compact('contracts'));
     }
+	
 	public function create($subscriberId = null)
 	{
 		$customers = Customer::orderBy('last_name')->get();
@@ -65,12 +67,10 @@ class ContractController extends Controller
 		$commitmentPeriods = CommitmentPeriod::orderBy('name')->get();
 		$bellDevices = BellDevice::orderBy('model')->get();
 		
-		// Add cellular pricing data
 		$ratePlans = RatePlan::current()->active()->orderBy('plan_type')->orderBy('tier')->orderBy('base_price')->get();
 		$mobileInternetPlans = MobileInternetPlan::current()->active()->orderBy('monthly_rate')->get();
 		$planAddOns = PlanAddOn::current()->active()->orderBy('category')->orderBy('add_on_name')->get();
 		
-		// Get subscriber if ID provided
 		$subscriber = null;
 		if ($subscriberId) {
 			$subscriber = Subscriber::findOrFail($subscriberId);
@@ -78,12 +78,10 @@ class ContractController extends Controller
 		
 		$tiers = $ratePlans->pluck('tier')->unique()->sort()->values()->toArray();
 		
-		// NEW: Get available tiers for each device
 		$deviceTiers = [];
 		foreach ($bellDevices as $device) {
 			$availableTiers = [];
 			
-			// Check SmartPay pricing
 			if ($device->has_smartpay) {
 				$smartpayTiers = \App\Models\BellPricing::where('bell_device_id', $device->id)
 					->pluck('tier')
@@ -92,7 +90,6 @@ class ContractController extends Controller
 				$availableTiers = array_merge($availableTiers, $smartpayTiers);
 			}
 			
-			// Check DRO pricing
 			if ($device->has_dro) {
 				$droTiers = \App\Models\BellDroPricing::where('bell_device_id', $device->id)
 					->pluck('tier')
@@ -104,7 +101,6 @@ class ContractController extends Controller
 			$deviceTiers[$device->id] = array_unique($availableTiers);
 		}
 		
-		// Define default first bill date
 		$defaultFirstBillDate = Carbon::now()->addMonth()->startOfMonth();
 	   
 		return view('contracts.create', compact(
@@ -119,51 +115,60 @@ class ContractController extends Controller
 			'subscriber',
 			'tiers',
 			'defaultFirstBillDate',
-			'deviceTiers'  // NEW: Add this
+			'deviceTiers'
 		));
 	}
+	
     public function store(Request $request, $subscriberId)
     {
-        $request->validate([
-            'start_date' => 'required|date',
-            'end_date' => 'nullable|date|after:start_date',
-            'activity_type_id' => 'required|exists:activity_types,id',
-            'contract_date' => 'required|date',
-            'location' => 'required|in:zurich,exeter,grand_bend',
-            'bell_device_id' => 'nullable|exists:bell_devices,id',
-            'bell_pricing_type' => 'nullable|in:smartpay,dro,byod', // Added 'byod'
-            'bell_tier' => 'nullable|in:Ultra,Max,Select,Lite',
-            'bell_retail_price' => 'nullable|numeric|min:0',
-            'bell_monthly_device_cost' => 'nullable|numeric|min:0',
-            'bell_plan_cost' => 'nullable|numeric|min:0',
-            'bell_dro_amount' => 'nullable|numeric|min:0',
-            'bell_plan_plus_device' => 'nullable|numeric|min:0',
-            'agreement_credit_amount' => 'required|numeric|min:0',
-            'required_upfront_payment' => 'required|numeric|min:0',
-            'optional_down_payment' => 'nullable|numeric|min:0',
-            'deferred_payment_amount' => 'nullable|numeric|min:0',
-            'commitment_period_id' => 'required|exists:commitment_periods,id',
-            'first_bill_date' => 'required|date',
-            'add_ons' => 'nullable|array',
-            'add_ons.*.name' => 'required_with:add_ons.*.code|required_with:add_ons.*.cost|string|max:100',
-            'add_ons.*.code' => 'required_with:add_ons.*.name|required_with:add_ons.*.cost|string|max:50',
-            'add_ons.*.cost' => 'required_with:add_ons.*.name|required_with:add_ons.*.code|numeric',
-            'one_time_fees' => 'nullable|array',
-            'one_time_fees.*.name' => 'required_with:one_time_fees.*.cost|string|max:100',
-            'one_time_fees.*.cost' => 'required_with:one_time_fees.*.name|numeric',
-            'rate_plan_id' => 'nullable|exists:rate_plans,id',
-            'mobile_internet_plan_id' => 'nullable|exists:mobile_internet_plans,id',
-            'rate_plan_price' => 'nullable|numeric|min:0',
-            'mobile_internet_price' => 'nullable|numeric|min:0',
-            'selected_tier' => 'nullable|string|in:Lite,Select,Max,Ultra',
-            'custom_device_name' => 'nullable|string|max:255',
-        ]);
+		$request->validate([
+			'start_date' => 'required|date',
+			'end_date' => 'nullable|date|after:start_date',
+			'activity_type_id' => 'required|exists:activity_types,id',
+			'contract_date' => 'required|date',
+			'location' => 'required|in:zurich,exeter,grand_bend',
+			'bell_device_id' => 'nullable|exists:bell_devices,id',
+			'bell_pricing_type' => 'nullable|in:smartpay,dro,byod',
+			'bell_tier' => 'nullable|in:Ultra,Max,Select,Lite',
+			'bell_retail_price' => 'nullable|numeric|min:0',
+			'bell_monthly_device_cost' => 'nullable|numeric|min:0',
+			'bell_plan_cost' => 'nullable|numeric|min:0',
+			'bell_dro_amount' => 'nullable|numeric|min:0',
+			'bell_plan_plus_device' => 'nullable|numeric|min:0',
+			'agreement_credit_amount' => 'required|numeric|min:0',
+			'required_upfront_payment' => 'required|numeric|min:0',
+			'optional_down_payment' => 'nullable|numeric|min:0',
+			'deferred_payment_amount' => 'nullable|numeric|min:0',
+			'commitment_period_id' => 'required|exists:commitment_periods,id',
+			'first_bill_date' => 'required|date',
+			'add_ons' => 'nullable|array',
+			'add_ons.*.name' => 'required|string|max:100',
+			'add_ons.*.code' => 'nullable|string|max:50',
+			'add_ons.*.cost' => 'required|numeric',
+			'one_time_fees' => 'nullable|array',
+			'one_time_fees.*.name' => 'required|string|max:100',
+			'one_time_fees.*.cost' => 'required|numeric',
+			'rate_plan_id' => 'nullable|exists:rate_plans,id',
+			'mobile_internet_plan_id' => 'nullable|exists:mobile_internet_plans,id',
+			'rate_plan_price' => 'nullable|numeric|min:0',
+			'mobile_internet_price' => 'nullable|numeric|min:0',
+			'selected_tier' => 'nullable|string|in:Lite,Select,Max,Ultra',
+			'custom_device_name' => 'nullable|string|max:255',
+		]);
+        
+		// Debug: Log what we're receiving
+		\Log::info('Contract Store - Add-ons received:', [
+			'add_ons' => $request->input('add_ons'),
+			'has_add_ons' => $request->has('add_ons'),
+		]);		
+		
         $subscriber = Subscriber::with('mobilityAccount.ivueAccount.customer')->findOrFail($subscriberId);
         $price = 0;
+        
         if ($request->filled('bell_device_id')) {
             $price = $request->bell_retail_price ?? 0;
         }
-        // If BYOD plan, null Bell fields
+        
         if ($request->rate_plan_id) {
             $ratePlan = RatePlan::find($request->rate_plan_id);
             if ($ratePlan && $ratePlan->plan_type === 'byod') {
@@ -178,6 +183,7 @@ class ContractController extends Controller
                 $price = 0;
             }
         }
+        
         $contract = Contract::create([
             'subscriber_id' => $subscriberId,
             'start_date' => $request->start_date,
@@ -215,7 +221,6 @@ class ContractController extends Controller
             'custom_device_name' => $request->custom_device_name,
         ]);
        
-        // Set financing status based on whether financing is required
         if ($contract->requiresFinancing()) {
             $contract->update(['financing_status' => 'pending']);
             Log::info('Contract requires financing form', ['contract_id' => $contract->id]);
@@ -223,7 +228,7 @@ class ContractController extends Controller
             $contract->update(['financing_status' => 'not_required']);
             Log::info('Contract does not require financing form', ['contract_id' => $contract->id]);
         }
-		// Set DRO status based on whether DRO is required
+		
 		if ($contract->requiresDro()) {
 			$contract->update(['dro_status' => 'pending']);
 			Log::info('Contract requires DRO form', ['contract_id' => $contract->id]);
@@ -231,9 +236,7 @@ class ContractController extends Controller
 			$contract->update(['dro_status' => 'not_required']);
 			Log::info('Contract does not require DRO form', ['contract_id' => $contract->id]);
 		}		
-		
-		
-		
+        
         if ($request->has('add_ons')) {
             foreach ($request->add_ons as $addOn) {
                 ContractAddOn::create([
@@ -244,6 +247,7 @@ class ContractController extends Controller
                 ]);
             }
         }
+        
         if ($request->has('one_time_fees')) {
             foreach ($request->one_time_fees as $fee) {
                 ContractOneTimeFee::create([
@@ -253,8 +257,9 @@ class ContractController extends Controller
                 ]);
             }
         }
+        
         $contract->load('addOns', 'oneTimeFees', 'subscriber.mobilityAccount.ivueAccount.customer', 'activityType', 'commitmentPeriod', 'ratePlan', 'mobileInternetPlan', 'bellDevice');
-        // Financial calculations (matching view method)
+        
         $devicePrice = $contract->bell_retail_price ?? $contract->device_price ?? 0;
         $deviceAmount = $devicePrice - ($contract->agreement_credit_amount ?? 0);
         $totalFinancedAmount = $deviceAmount - ($contract->required_upfront_payment ?? 0) - ($contract->optional_down_payment ?? 0);
@@ -264,19 +269,7 @@ class ContractController extends Controller
         $totalAddOnCost = $contract->addOns->sum('cost') ?? 0;
         $totalOneTimeFeeCost = $contract->oneTimeFees->sum('cost') ?? 0;
         $totalCost = ($totalAddOnCost + ($contract->rate_plan_price ?? $contract->bell_plan_cost ?? 0) + $monthlyDevicePayment) * 24 + $totalOneTimeFeeCost;
-        Log::debug('Calculated financials for store', [
-            'contract_id' => $contract->id,
-            'devicePrice' => $devicePrice,
-            'deviceAmount' => $deviceAmount,
-            'totalFinancedAmount' => $totalFinancedAmount,
-            'monthlyDevicePayment' => $monthlyDevicePayment,
-            'earlyCancellationFee' => $earlyCancellationFee,
-            'monthlyReduction' => $monthlyReduction,
-            'totalAddOnCost' => $totalAddOnCost,
-            'totalOneTimeFeeCost' => $totalOneTimeFeeCost,
-            'totalCost' => $totalCost
-        ]);
-        // Sanitize ratePlan features and mobileInternetPlan description
+        
         $config = HTMLPurifier_Config::createDefault();
         $config->set('Core.Encoding', 'UTF-8');
         $config->set('HTML.Doctype', 'HTML 4.01 Transitional');
@@ -284,37 +277,17 @@ class ContractController extends Controller
         $config->set('AutoFormat.AutoParagraph', true);
         $config->set('AutoFormat.Linkify', true);
         $config->set('URI.AllowedSchemes', ['http' => true, 'https' => true, 'mailto' => true, 'ftp' => true]);
-        $config->set('Cache.SerializerPath', storage_path('htmlpurifier')); // Set custom cache directory
+        $config->set('Cache.SerializerPath', storage_path('htmlpurifier'));
         $purifier = new HTMLPurifier($config);
-        Log::debug('HTMLPurifier initialized for store');
+        
         if ($contract->ratePlan && $contract->ratePlan->features) {
-            $originalFeatures = $contract->ratePlan->features;
             $contract->ratePlan->features = $purifier->purify($contract->ratePlan->features);
-            Log::debug('Sanitized ratePlan features', [
-                'contract_id' => $contract->id,
-                'original' => $originalFeatures,
-                'sanitized' => $contract->ratePlan->features
-            ]);
-        } else {
-            Log::debug('No ratePlan features to sanitize in store', [
-                'contract_id' => $contract->id,
-                'hasRatePlan' => !empty($contract->ratePlan),
-                'hasFeatures' => !empty($contract->ratePlan->features)
-            ]);
         }
+        
         if ($contract->mobileInternetPlan && $contract->mobileInternetPlan->description) {
-            $originalDescription = $contract->mobileInternetPlan->description;
             $contract->mobileInternetPlan->description = $purifier->purify($contract->mobileInternetPlan->description);
-            Log::debug('Sanitized mobileInternetPlan description', [
-                'contract_id' => $contract->id,
-                'original' => $originalDescription,
-                'sanitized' => $contract->mobileInternetPlan->description
-            ]);
-        } else {
-            Log::debug('No mobileInternetPlan description to sanitize in store', [
-                'contract_id' => $contract->id
-            ]);
         }
+        
         $pdf = Pdf::loadView('contracts.view', compact(
             'contract',
             'totalAddOnCost',
@@ -341,9 +314,11 @@ class ContractController extends Controller
                 'margin_left' => 10,
                 'margin_right' => 10,
             ]);
+        
         $pdfPath = "contracts/contract_{$contract->id}.pdf";
         Storage::disk('public')->put($pdfPath, $pdf->output());
         $contract->update(['pdf_path' => $pdfPath]);
+        
         $customerId = $contract->subscriber->mobilityAccount->ivueAccount->customer_id;
         return redirect()->route('customers.show', $customerId)->with('success', 'Contract created successfully.');
     }
@@ -356,19 +331,16 @@ class ContractController extends Controller
 		$commitmentPeriods = CommitmentPeriod::orderBy('name')->get();
 		$bellDevices = BellDevice::orderBy('model')->get();
 		   
-		// Add cellular pricing data
 		$ratePlans = RatePlan::current()->active()->orderBy('plan_type')->orderBy('tier')->orderBy('base_price')->get();
 		$mobileInternetPlans = MobileInternetPlan::current()->active()->orderBy('monthly_rate')->get();
 		$planAddOns = PlanAddOn::current()->active()->orderBy('category')->orderBy('add_on_name')->get();
 	   
 		$tiers = $ratePlans->pluck('tier')->unique()->sort()->values()->toArray();
 	   
-		// NEW: Get available tiers for each device
 		$deviceTiers = [];
 		foreach ($bellDevices as $device) {
 			$availableTiers = [];
 			
-			// Check SmartPay pricing
 			if ($device->has_smartpay) {
 				$smartpayTiers = \App\Models\BellPricing::where('bell_device_id', $device->id)
 					->pluck('tier')
@@ -377,7 +349,6 @@ class ContractController extends Controller
 				$availableTiers = array_merge($availableTiers, $smartpayTiers);
 			}
 			
-			// Check DRO pricing
 			if ($device->has_dro) {
 				$droTiers = \App\Models\BellDroPricing::where('bell_device_id', $device->id)
 					->pluck('tier')
@@ -400,7 +371,7 @@ class ContractController extends Controller
 			'mobileInternetPlans',
 			'planAddOns',
 			'tiers',
-			'deviceTiers'  // NEW: Pass device tier availability
+			'deviceTiers'
 		));
 	}
 	   
@@ -442,14 +413,12 @@ class ContractController extends Controller
 		]);
 
 		$price = 0;
-		$customDeviceName = null; // NEW: Initialize custom device name
+		$customDeviceName = null;
 		
-		// If Bell pricing is used, override device_price with bell_retail_price
 		if ($request->filled('bell_device_id')) {
 			$price = $request->bell_retail_price ?? 0;
 		}
 
-		// If BYOD plan, null Bell fields and keep custom device name
 		if ($request->rate_plan_id) {
 			$ratePlan = RatePlan::find($request->rate_plan_id);
 			if ($ratePlan && $ratePlan->plan_type === 'byod') {
@@ -462,9 +431,8 @@ class ContractController extends Controller
 					'bell_plan_plus_device' => 0,
 				]);
 				$price = 0;
-				$customDeviceName = $request->custom_device_name; // Keep custom device for BYOD
+				$customDeviceName = $request->custom_device_name;
 			} else {
-				// NEW: For non-BYOD plans, clear custom device name
 				$customDeviceName = null;
 			}
 		}
@@ -501,10 +469,9 @@ class ContractController extends Controller
 			'rate_plan_price' => $request->rate_plan_price,
 			'mobile_internet_price' => $request->mobile_internet_price,
 			'selected_tier' => $request->selected_tier,
-			'custom_device_name' => null, // no longer used
+			'custom_device_name' => null,
 		]);
        
-        // Update financing status based on whether financing is required
         if ($contract->requiresFinancing()) {
             if ($contract->financing_status === 'not_required') {
                 $contract->update(['financing_status' => 'pending']);
@@ -517,7 +484,6 @@ class ContractController extends Controller
             }
         }
        
-		// NEW: Update DRO status based on whether DRO is required
 		if ($contract->requiresDro()) {
 			if ($contract->dro_status === 'not_required') {
 				$contract->update(['dro_status' => 'pending']);
@@ -530,7 +496,6 @@ class ContractController extends Controller
 			}
 		}
 	   
-        // Update add-ons
         $contract->addOns()->delete();
         if ($request->add_ons) {
             foreach ($request->add_ons as $addOn) {
@@ -542,7 +507,7 @@ class ContractController extends Controller
                 ]);
             }
         }
-        // Update one-time fees
+        
         $contract->oneTimeFees()->delete();
         if ($request->one_time_fees) {
             foreach ($request->one_time_fees as $fee) {
@@ -552,58 +517,70 @@ class ContractController extends Controller
                     'cost' => $fee['cost'],
                 ]);
             }
-        
 		}
 
         return redirect()->route('contracts.view', $contract->id)->with('success', 'Contract updated successfully.');
     }
+	
     public function sign($id): \Illuminate\Contracts\View\View|\Illuminate\Http\RedirectResponse
     {
         $contract = Contract::with('subscriber.mobilityAccount.ivueAccount.customer')->findOrFail($id);
-        Log::debug('Contract status in sign method', ['contract_id' => $id, 'status' => $contract->status, 'fresh' => $contract->freshTimestamp()]);
+        
         if ($contract->status !== 'draft') {
             Log::warning('Contract cannot be signed due to status', ['contract_id' => $id, 'status' => $contract->status]);
             return redirect()->route('contracts.view', $id)->with('error', 'Contract cannot be signed.');
         }
+        
         return view('contracts.sign', compact('contract'));
     }
+	
     public function storeSignature(Request $request, $id)
     {
         $contract = Contract::with('subscriber.mobilityAccount.ivueAccount.customer')->findOrFail($id);
-        Log::debug('Contract status before signature update', ['contract_id' => $id, 'status' => $contract->status]);
+        
         if ($contract->status !== 'draft') {
             Log::warning('Contract cannot be signed due to status in storeSignature', ['contract_id' => $id, 'status' => $contract->status]);
             return redirect()->route('contracts.view', $id)->with('error', 'Contract cannot be signed.');
         }
+        
         $request->validate([
             'signature' => 'required|string|regex:/^data:image\/png;base64,/',
         ], [
             'signature.required' => 'Please provide a signature.',
             'signature.regex' => 'Invalid signature format.',
         ]);
+        
         try {
             $signature = $request->signature;
-            Log::info('Received signature data', ['contract_id' => $id, 'signature' => substr($signature, 0, 50) . '...']);
+            Log::info('Received signature data', ['contract_id' => $id]);
+            
             $signaturePath = "signatures/contract_{$contract->id}.png";
             $signatureData = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $signature));
+            
             if ($signatureData === false) {
                 Log::error('Failed to decode signature data', ['contract_id' => $id]);
                 return redirect()->back()->with('error', 'Failed to process signature.');
             }
+            
             $stored = Storage::disk('public')->put($signaturePath, $signatureData);
             if (!$stored) {
-                Log::error('Failed to store signature file', ['contract_id' => $id, 'path' => $signaturePath]);
+                Log::error('Failed to store signature file', ['contract_id' => $id]);
                 return redirect()->back()->with('error', 'Failed to save signature file.');
             }
+            
             Log::info('Signature file stored', ['contract_id' => $id, 'path' => $signaturePath]);
+            
             $contract->update([
                 'signature_path' => 'storage/' . $signaturePath,
                 'status' => 'signed',
                 'updated_by' => auth()->id(),
             ]);
+            
             $contract->refresh();
             Log::info('Contract status after update', ['contract_id' => $id, 'status' => $contract->status]);
+            
             $contract->load('addOns', 'oneTimeFees', 'subscriber.mobilityAccount.ivueAccount.customer', 'activityType', 'commitmentPeriod');
+            
             $devicePrice = $contract->bell_retail_price ?? $contract->device_price ?? 0;
             $deviceAmount = $devicePrice - ($contract->agreement_credit_amount ?? 0);
             $totalFinancedAmount = $deviceAmount - ($contract->required_upfront_payment ?? 0) - ($contract->optional_down_payment ?? 0);
@@ -614,7 +591,7 @@ class ContractController extends Controller
             $totalOneTimeFeeCost = $contract->oneTimeFees->sum('cost');
             $totalFinancingCost = ($contract->required_upfront_payment ?? 0) + ($contract->optional_down_payment ?? 0) + ($contract->deferred_payment_amount ?? 0);
             $totalCost = ($contract->device_price ?? 0) + $totalAddOnCost + $totalOneTimeFeeCost + $totalFinancingCost;
-            Log::debug('Generating PDF for contract', ['contract_id' => $contract->id, 'sections' => ['Header', 'Your Information', 'Device Details', 'Return Policy', 'Rate Plan Details', 'Minimum Monthly Charge', 'Total Monthly Charges', 'Add-ons', 'One-Time Fees', 'One-Time Charges', 'Total Cost', 'Signature']]);
+            
             $pdf = Pdf::loadView('contracts.view', compact(
                 'contract',
                 'totalAddOnCost',
@@ -642,11 +619,13 @@ class ContractController extends Controller
                     'margin_left' => 10,
                     'margin_right' => 10,
                 ]);
+            
             $pdfPath = "contracts/contract_{$contract->id}.pdf";
             Storage::disk('public')->put($pdfPath, $pdf->output());
             $contract->update(['pdf_path' => $pdfPath]);
+            
             Log::info('PDF regenerated with signature', ['contract_id' => $id, 'pdf_path' => $pdfPath]);
-            // Clear any previous error messages and redirect with success
+            
             return redirect()->route('contracts.view', $id)->with('success', 'Contract signed successfully');
         } catch (\Exception $e) {
             Log::error('Error in storeSignature', ['contract_id' => $id, 'error' => $e->getMessage()]);
@@ -657,17 +636,16 @@ class ContractController extends Controller
     public function finalize($id)
     {
         $contract = Contract::with('subscriber.mobilityAccount.ivueAccount.customer')->findOrFail($id);
+        
         if ($contract->status !== 'signed') {
             return redirect()->route('contracts.view', $id)->with('error', 'Contract must be signed before finalizing.');
         }
 
-		// NEW: Check if financing form is required and completed
 		if ($contract->requiresFinancing() && $contract->financing_status !== 'finalized') {
 			return redirect()->route('contracts.view', $id)
 				->with('error', 'Financing form must be completed and finalized before finalizing the contract.');
 		}
 		
-		// NEW: Check if DRO form is required and completed
 		if ($contract->requiresDro() && $contract->dro_status !== 'finalized') {
 			return redirect()->route('contracts.view', $id)
 				->with('error', 'DRO form must be completed and finalized before finalizing the contract.');
@@ -677,8 +655,9 @@ class ContractController extends Controller
             'status' => 'finalized',
             'updated_by' => auth()->id(),
         ]);
+        
         $contract->load('addOns', 'oneTimeFees', 'subscriber.mobilityAccount.ivueAccount.customer', 'activityType', 'commitmentPeriod', 'ratePlan', 'mobileInternetPlan', 'bellDevice');
-        // Financial calculations
+        
         $devicePrice = $contract->bell_retail_price ?? $contract->device_price ?? 0;
         $deviceAmount = $devicePrice - ($contract->agreement_credit_amount ?? 0);
         $totalFinancedAmount = $deviceAmount - ($contract->required_upfront_payment ?? 0) - ($contract->optional_down_payment ?? 0);
@@ -688,19 +667,7 @@ class ContractController extends Controller
         $totalAddOnCost = $contract->addOns->sum('cost') ?? 0;
         $totalOneTimeFeeCost = $contract->oneTimeFees->sum('cost') ?? 0;
         $totalCost = ($totalAddOnCost + ($contract->rate_plan_price ?? $contract->bell_plan_cost ?? 0) + $monthlyDevicePayment) * 24 + $totalOneTimeFeeCost;
-        Log::debug('Calculated financials for finalize', [
-            'contract_id' => $contract->id,
-            'devicePrice' => $devicePrice,
-            'deviceAmount' => $deviceAmount,
-            'totalFinancedAmount' => $totalFinancedAmount,
-            'monthlyDevicePayment' => $monthlyDevicePayment,
-            'earlyCancellationFee' => $earlyCancellationFee,
-            'monthlyReduction' => $monthlyReduction,
-            'totalAddOnCost' => $totalAddOnCost,
-            'totalOneTimeFeeCost' => $totalOneTimeFeeCost,
-            'totalCost' => $totalCost
-        ]);
-        // Sanitize ratePlan features and mobileInternetPlan description
+        
         $config = HTMLPurifier_Config::createDefault();
         $config->set('Core.Encoding', 'UTF-8');
         $config->set('HTML.Doctype', 'HTML 4.01 Transitional');
@@ -708,14 +675,17 @@ class ContractController extends Controller
         $config->set('AutoFormat.AutoParagraph', true);
         $config->set('AutoFormat.Linkify', true);
         $config->set('URI.AllowedSchemes', ['http' => true, 'https' => true, 'mailto' => true, 'ftp' => true]);
-        $config->set('Cache.SerializerPath', storage_path('htmlpurifier')); // Set custom cache directory
+        $config->set('Cache.SerializerPath', storage_path('htmlpurifier'));
         $purifier = new HTMLPurifier($config);
+        
         if ($contract->ratePlan && $contract->ratePlan->features) {
             $contract->ratePlan->features = $purifier->purify($contract->ratePlan->features);
         }
+        
         if ($contract->mobileInternetPlan && $contract->mobileInternetPlan->description) {
             $contract->mobileInternetPlan->description = $purifier->purify($contract->mobileInternetPlan->description);
         }
+        
         $pdf = Pdf::loadView('contracts.view', compact(
             'contract',
             'totalAddOnCost',
@@ -742,14 +712,18 @@ class ContractController extends Controller
                 'margin_left' => 10,
                 'margin_right' => 10,
             ]);
+        
         $pdfPath = "contracts/contract_{$contract->id}.pdf";
         Storage::disk('public')->put($pdfPath, $pdf->output());
         $contract->update(['pdf_path' => $pdfPath]);
+        
         Log::info('PDF generated for finalized contract', ['contract_id' => $id, 'pdf_path' => $pdfPath]);
-       // **FTP Upload to Vault**
+        
+        // FTP Upload to Vault
         $ftpService = new VaultFtpService();
         $remoteFilename = $ftpService->getRemoteFilename($contract);
         $result = $ftpService->uploadToVault($pdfPath, $remoteFilename);
+        
         if ($result['success']) {
             $contract->update([
                 'ftp_to_vault' => true,
@@ -757,33 +731,51 @@ class ContractController extends Controller
                 'vault_path' => $result['path'],
                 'ftp_error' => null
             ]);
-           
+            
+            $message = $result['test_mode'] ?? false 
+                ? 'Contract finalized successfully (Vault upload simulated in test mode).' 
+                : 'Contract finalized and uploaded to vault successfully.';
+            
             Log::info('Contract uploaded to vault during finalization', [
                 'contract_id' => $id,
-                'vault_filename' => $remoteFilename
+                'vault_filename' => $remoteFilename,
+                'test_mode' => $result['test_mode'] ?? false
             ]);
-           
-            return redirect()->route('contracts.view', $id)
-                ->with('success', 'Contract finalized and uploaded to vault successfully.');
+            
+            // Cleanup files after successful upload
+            $cleanupService = new ContractFileCleanupService();
+            if ($cleanupService->canCleanup($contract)) {
+                $cleanupResult = $cleanupService->cleanupContractFiles($contract);
+                Log::info('Contract files cleaned up', [
+                    'contract_id' => $id,
+                    'deleted_count' => $cleanupResult['deleted_count'],
+                    'files' => $cleanupResult['deleted_files']
+                ]);
+                
+                $message .= sprintf(' %d sensitive file(s) securely deleted.', $cleanupResult['deleted_count']);
+            }
+            
+            return redirect()->route('contracts.view', $id)->with('success', $message);
         } else {
-            // Log error but don't block finalization
             $contract->update([
                 'ftp_to_vault' => false,
                 'ftp_error' => $result['error']
             ]);
-           
+            
             Log::warning('Contract finalized but FTP upload failed', [
                 'contract_id' => $id,
                 'error' => $result['error']
             ]);
-           
+            
             return redirect()->route('contracts.view', $id)
                 ->with('warning', 'Contract finalized successfully, but upload to vault failed. You can retry from the contract page.');
         }
     }
+	
     public function createRevision($id)
     {
         $originalContract = Contract::with('subscriber.mobilityAccount.ivueAccount.customer')->findOrFail($id);
+        
         if ($originalContract->status !== 'finalized') {
             return redirect()->route('contracts.view', $id)->with('error', 'Only finalized contracts can have revisions.');
         }
@@ -807,6 +799,7 @@ class ContractController extends Controller
       
         return redirect()->route('contracts.edit', $revision->id)->with('success', 'Revision created successfully.');
     }
+	
     public function ftp($id)
     {
         $contract = Contract::with('subscriber.mobilityAccount.ivueAccount.customer')->findOrFail($id);
@@ -820,6 +813,12 @@ class ContractController extends Controller
         }
        
         $ftpService = new VaultFtpService();
+        
+        // Check if test mode
+        if ($ftpService->isTestMode()) {
+            return redirect()->back()->with('info', 'Vault is in test mode. FTP uploads are simulated. Set VAULT_TEST_MODE=false in .env to enable real uploads.');
+        }
+        
         $remoteFilename = $ftpService->getRemoteFilename($contract);
         $result = $ftpService->uploadToVault($contract->pdf_path, $remoteFilename);
        
@@ -830,6 +829,16 @@ class ContractController extends Controller
                 'vault_path' => $result['path'],
                 'ftp_error' => null
             ]);
+            
+            // Cleanup files after successful manual upload
+            $cleanupService = new ContractFileCleanupService();
+            if ($cleanupService->canCleanup($contract)) {
+                $cleanupResult = $cleanupService->cleanupContractFiles($contract);
+                Log::info('Contract files cleaned up after manual FTP', [
+                    'contract_id' => $id,
+                    'deleted_count' => $cleanupResult['deleted_count']
+                ]);
+            }
            
             return redirect()->back()->with('success', "Contract uploaded to vault successfully as: {$remoteFilename}");
         } else {
@@ -841,6 +850,7 @@ class ContractController extends Controller
             return redirect()->back()->with('error', 'FTP upload failed: ' . $result['error']);
         }
     }
+	
     public function download($id)
     {
         $contract = Contract::findOrFail($id);
@@ -848,12 +858,14 @@ class ContractController extends Controller
         if ($contract->status !== 'finalized') {
             return redirect()->back()->with('error', 'Contract must be finalized to download.');
         }
+        
         try {
             $pdfService = app(ContractPdfService::class);
             $mergedPdfContent = $pdfService->generateMergedPdfContent($contract);
            
-            $ftpService = new \App\Services\VaultFtpService();
+            $ftpService = new VaultFtpService();
             $pdfFileName = $ftpService->getRemoteFilename($contract);
+            
             return response()->streamDownload(function () use ($mergedPdfContent) {
                 echo $mergedPdfContent;
             }, $pdfFileName, ['Content-Type' => 'application/pdf']);
@@ -867,131 +879,98 @@ class ContractController extends Controller
             return redirect()->back()->with('error', 'Failed to generate PDF: ' . $e->getMessage());
         }
     }
+	
     public function view($id)
-            {
-                Log::debug('Starting ContractController@view', ['id' => $id]);
-                        // Load the contract with relationships
-                        $contract = Contract::with([
-                            'ratePlan',
-                            'mobileInternetPlan',
-                            'addOns',
-                            'oneTimeFees',
-                            'subscriber.mobilityAccount.ivueAccount.customer',
-                            'activityType',
-                            'commitmentPeriod',
-                            'bellDevice'
-                        ])->findOrFail($id);
-                        Log::debug('Contract loaded', ['contract_id' => $contract->id]);
-                        // Initialize HTML Purifier
-                        $config = HTMLPurifier_Config::createDefault();
-                        $config->set('Core.Encoding', 'UTF-8');
-                        $config->set('HTML.Doctype', 'HTML 4.01 Transitional');
-                        $config->set('HTML.Allowed', 'p,strong,em,ul,ol,li,a[href|title],br,div[class],span[class],table,tr,td,th,hr');
-                        $config->set('AutoFormat.AutoParagraph', true);
-                        $config->set('AutoFormat.Linkify', true);
-                        $config->set('URI.AllowedSchemes', ['http' => true, 'https' => true, 'mailto' => true, 'ftp' => true]);
-                        $config->set('Cache.SerializerPath', storage_path('htmlpurifier')); // Set custom cache directory
-                        $purifier = new HTMLPurifier($config);
-                        Log::debug('HTMLPurifier initialized');
-                        // Sanitize ratePlan features
-                        if ($contract->ratePlan && $contract->ratePlan->features) {
-                            $originalFeatures = $contract->ratePlan->features;
-                            $contract->ratePlan->features = $purifier->purify($contract->ratePlan->features);
-                            Log::debug('Sanitized ratePlan features', [
-                                'original' => $originalFeatures,
-                                'sanitized' => $contract->ratePlan->features
-                            ]);
-                        } else {
-                            Log::debug('No ratePlan features to sanitize', [
-                                'hasRatePlan' => !empty($contract->ratePlan),
-                                'hasFeatures' => !empty($contract->ratePlan->features)
-                            ]);
-                        }
-                        // Sanitize mobileInternetPlan description
-                        if ($contract->mobileInternetPlan && $contract->mobileInternetPlan->description) {
-                            $originalDescription = $contract->mobileInternetPlan->description;
-                            $contract->mobileInternetPlan->description = $purifier->purify($contract->mobileInternetPlan->description);
-                            Log::debug('Sanitized mobileInternetPlan description', [
-                                'original' => $originalDescription,
-                                'sanitized' => $contract->mobileInternetPlan->description
-                            ]);
-                        } else {
-                            Log::debug('No mobileInternetPlan description to sanitize');
-                        }
-                        // Financial calculations
-                        $devicePrice = $contract->bell_retail_price ?? $contract->device_price ?? 0;
-                        $deviceAmount = $devicePrice - ($contract->agreement_credit_amount ?? 0);
-                        $totalFinancedAmount = $deviceAmount - ($contract->required_upfront_payment ?? 0) - ($contract->optional_down_payment ?? 0);
-                        $monthlyDevicePayment = ($totalFinancedAmount - ($contract->deferred_payment_amount ?? 0)) / 24;
-                        $earlyCancellationFee = $totalFinancedAmount + ($contract->bell_dro_amount ?? 0);
-                        $monthlyReduction = $monthlyDevicePayment;
-                        $totalAddOnCost = $contract->addOns->sum('cost') ?? 0;
-                        $totalOneTimeFeeCost = $contract->oneTimeFees->sum('cost') ?? 0;
-                        $totalCost = ($totalAddOnCost + ($contract->rate_plan_price ?? $contract->bell_plan_cost ?? 0) + $monthlyDevicePayment) * 24 + $totalOneTimeFeeCost;
-                        Log::debug('Calculated financials', [
-                            'devicePrice' => $devicePrice,
-                            'deviceAmount' => $deviceAmount,
-                            'totalFinancedAmount' => $totalFinancedAmount,
-                            'monthlyDevicePayment' => $monthlyDevicePayment,
-                            'earlyCancellationFee' => $earlyCancellationFee,
-                            'monthlyReduction' => $monthlyReduction,
-                            'totalAddOnCost' => $totalAddOnCost,
-                            'totalOneTimeFeeCost' => $totalOneTimeFeeCost,
-                            'totalCost' => $totalCost
-                        ]);
-                       
-                       
-                        return view('contracts.view', compact(
-                            'contract',
-                            'totalAddOnCost',
-                            'totalOneTimeFeeCost',
-                            'totalCost',
-                            'devicePrice',
-                            'deviceAmount',
-                            'totalFinancedAmount',
-                            'monthlyDevicePayment',
-                            'earlyCancellationFee',
-                            'monthlyReduction'
-                        ));
-                }
-   
-   
-public function email($id)
-{
-$contract = Contract::with('subscriber.mobilityAccount.ivueAccount.customer')->findOrFail($id);
-if ($contract->status !== 'finalized') {
-return redirect()->back()->with('error', 'Contract must be finalized to email.');
-}
+    {
+        Log::debug('Starting ContractController@view', ['id' => $id]);
+        
+        $contract = Contract::with([
+            'ratePlan',
+            'mobileInternetPlan',
+            'addOns',
+            'oneTimeFees',
+            'subscriber.mobilityAccount.ivueAccount.customer',
+            'activityType',
+            'commitmentPeriod',
+            'bellDevice'
+        ])->findOrFail($id);
+        
+        $config = HTMLPurifier_Config::createDefault();
+        $config->set('Core.Encoding', 'UTF-8');
+        $config->set('HTML.Doctype', 'HTML 4.01 Transitional');
+        $config->set('HTML.Allowed', 'p,strong,em,ul,ol,li,a[href|title],br,div[class],span[class],table,tr,td,th,hr');
+        $config->set('AutoFormat.AutoParagraph', true);
+        $config->set('AutoFormat.Linkify', true);
+        $config->set('URI.AllowedSchemes', ['http' => true, 'https' => true, 'mailto' => true, 'ftp' => true]);
+        $config->set('Cache.SerializerPath', storage_path('htmlpurifier'));
+        $purifier = new HTMLPurifier($config);
+        
+        if ($contract->ratePlan && $contract->ratePlan->features) {
+            $contract->ratePlan->features = $purifier->purify($contract->ratePlan->features);
+        }
+        
+        if ($contract->mobileInternetPlan && $contract->mobileInternetPlan->description) {
+            $contract->mobileInternetPlan->description = $purifier->purify($contract->mobileInternetPlan->description);
+        }
+        
+        $devicePrice = $contract->bell_retail_price ?? $contract->device_price ?? 0;
+        $deviceAmount = $devicePrice - ($contract->agreement_credit_amount ?? 0);
+        $totalFinancedAmount = $deviceAmount - ($contract->required_upfront_payment ?? 0) - ($contract->optional_down_payment ?? 0);
+        $monthlyDevicePayment = ($totalFinancedAmount - ($contract->deferred_payment_amount ?? 0)) / 24;
+        $earlyCancellationFee = $totalFinancedAmount + ($contract->bell_dro_amount ?? 0);
+        $monthlyReduction = $monthlyDevicePayment;
+        $totalAddOnCost = $contract->addOns->sum('cost') ?? 0;
+        $totalOneTimeFeeCost = $contract->oneTimeFees->sum('cost') ?? 0;
+        $totalCost = ($totalAddOnCost + ($contract->rate_plan_price ?? $contract->bell_plan_cost ?? 0) + $monthlyDevicePayment) * 24 + $totalOneTimeFeeCost;
+       
+        return view('contracts.view', compact(
+            'contract',
+            'totalAddOnCost',
+            'totalOneTimeFeeCost',
+            'totalCost',
+            'devicePrice',
+            'deviceAmount',
+            'totalFinancedAmount',
+            'monthlyDevicePayment',
+            'earlyCancellationFee',
+            'monthlyReduction'
+        ));
+    }
+
+    public function email($id)
+    {
+        $contract = Contract::with('subscriber.mobilityAccount.ivueAccount.customer')->findOrFail($id);
+        
+        if ($contract->status !== 'finalized') {
+            return redirect()->back()->with('error', 'Contract must be finalized to email.');
+        }
+      
+        $email = $contract->subscriber->mobilityAccount->ivueAccount->customer->email;
+        if (!$email || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            Log::error('Invalid or missing email for customer', ['contract_id' => $id, 'email' => $email]);
+            return redirect()->back()->with('error', 'No valid email address found for this customer.');
+        }
+      
+        try {
+            $pdfService = app(ContractPdfService::class);
+            $mergedPdfContent = $pdfService->generateMergedPdfContent($contract);
+            $ftpService = new VaultFtpService();
+            $pdfFileName = $ftpService->getRemoteFilename($contract);
+            
+            Mail::send('emails.contract', ['contract' => $contract], function ($message) use ($contract, $email, $mergedPdfContent, $pdfFileName) {
+                $message->to($email)
+                    ->subject('Your Hay CIS Contract #' . $contract->id);
+                $message->attachData($mergedPdfContent, $pdfFileName, ['mime' => 'application/pdf']);
+            });
+      
+            Log::info('Contract email sent with merged PDF', ['contract_id' => $id, 'email' => $email]);
+            return redirect()->back()->with('success', 'Contract emailed successfully.');
+        } catch (\Exception $e) {
+            Log::error('Failed to send contract email', ['contract_id' => $id, 'email' => $email, 'error' => $e->getMessage()]);
+            return redirect()->back()->with('error', 'Failed to send email: ' . $e->getMessage());
+        }
+    }
   
-$email = $contract->subscriber->mobilityAccount->ivueAccount->customer->email;
-if (!$email || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-Log::error('Invalid or missing email for customer', ['contract_id' => $id, 'email' => $email]);
-return redirect()->back()->with('error', 'No valid email address found for this customer.');
-}
-  
-try {
-$pdfService = app(ContractPdfService::class);
-$mergedPdfContent = $pdfService->generateMergedPdfContent($contract);
-$ftpService = new \App\Services\VaultFtpService();
-$pdfFileName = $ftpService->getRemoteFilename($contract);
-Mail::send('emails.contract', ['contract' => $contract], function ($message) use ($contract, $email, $mergedPdfContent, $pdfFileName) {
-$message->to($email)
-->subject('Your Hay CIS Contract #' . $contract->id);
-$message->attachData($mergedPdfContent, $pdfFileName, ['mime' => 'application/pdf']);
-// No financing attachment
-});
-  
-Log::info('Contract email sent with merged PDF', ['contract_id' => $id, 'email' => $email]);
-return redirect()->back()->with('success', 'Contract emailed successfully.');
-} catch (\Exception $e) {
-Log::error('Failed to send contract email', ['contract_id' => $id, 'email' => $email, 'error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
-return redirect()->back()->with('error', 'Failed to send email: ' . $e->getMessage());
-}
-}
-  
-    /**
-     * Helper method to get Bell pricing for a device
-     */
     private function getBellPricing($deviceId, $tier, $useDro = false)
     {
         if ($useDro) {
@@ -1001,63 +980,65 @@ return redirect()->back()->with('error', 'Failed to send email: ' . $e->getMessa
         return BellPricing::getPricing($deviceId, $tier);
     }
    
-   
-   
-    /**
-     * Display the financing form
-     */
+    // FINANCING FORM METHODS
+    
     public function financingForm($id)
     {
         $contract = Contract::with([
             'subscriber.mobilityAccount.ivueAccount.customer',
             'bellDevice'
         ])->findOrFail($id);
-        // Check if financing is required
+        
         if (!$contract->requiresFinancing()) {
             return redirect()->route('contracts.view', $id)
                 ->with('error', 'This contract does not require a financing form.');
         }
+        
         return view('contracts.financing', compact('contract'));
     }
-    /**
-     * Show the financing form signature page
-     */
+    
     public function signFinancing($id)
     {
         $contract = Contract::with([
             'subscriber.mobilityAccount.ivueAccount.customer',
             'bellDevice'
         ])->findOrFail($id);
+        
         if (!$contract->requiresFinancing()) {
             return redirect()->route('contracts.view', $id)
                 ->with('error', 'This contract does not require a financing form.');
         }
+        
         if ($contract->financing_status !== 'pending') {
-            return redirect()->route('contracts.financing', $id)
+            return redirect()->route('contracts.financing.index', $id)
                 ->with('error', 'Financing form cannot be signed at this time.');
         }
+        
         return view('contracts.sign-financing', compact('contract'));
     }
+    
     public function storeFinancingSignature(Request $request, $id)
     {
         $contract = Contract::with('subscriber.mobilityAccount.ivueAccount.customer')->findOrFail($id);
+        
         if ($contract->financing_status !== 'pending') {
             Log::warning('Financing form cannot be signed - wrong status', [
                 'contract_id' => $id,
                 'current_status' => $contract->financing_status
             ]);
-            return redirect()->route('contracts.financing', $id)
+            return redirect()->route('contracts.financing.index', $id)
                 ->with('error', 'Financing form cannot be signed at this time.');
         }
+        
         $request->validate([
             'signature' => 'required|string|regex:/^data:image\/png;base64,/',
         ], [
             'signature.required' => 'Please provide a signature.',
             'signature.regex' => 'Invalid signature format.',
         ]);
+        
         try {
             $signature = $request->signature;
-            Log::info('Received financing signature data', ['contract_id' => $id]);
             $signaturePath = "signatures/financing_contract_{$contract->id}.png";
             $signatureData = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $signature));
            
@@ -1065,34 +1046,29 @@ return redirect()->back()->with('error', 'Failed to send email: ' . $e->getMessa
                 Log::error('Failed to decode financing signature data', ['contract_id' => $id]);
                 return redirect()->back()->with('error', 'Failed to process signature.');
             }
+            
             $stored = Storage::disk('public')->put($signaturePath, $signatureData);
             if (!$stored) {
                 Log::error('Failed to store financing signature file', ['contract_id' => $id]);
                 return redirect()->back()->with('error', 'Failed to save signature file.');
             }
-            Log::info('Financing signature file stored', ['contract_id' => $id, 'path' => $signaturePath]);
-            // Update the contract with all financing signature info
+            
             $updated = $contract->update([
                 'financing_signature_path' => 'storage/' . $signaturePath,
                 'financing_status' => 'customer_signed',
                 'financing_signed_at' => now(),
                 'updated_by' => auth()->id(),
             ]);
+            
             if (!$updated) {
                 Log::error('Failed to update contract with financing signature', ['contract_id' => $id]);
                 return redirect()->back()->with('error', 'Failed to save signature to database.');
             }
-            // Refresh the contract to get updated values
+            
             $contract->refresh();
-            Log::info('Financing form signed successfully', [
-                'contract_id' => $id,
-                'new_status' => $contract->financing_status,
-                'signature_path' => $contract->financing_signature_path,
-                'signed_at' => $contract->financing_signed_at
-            ]);
-            // Generate PDF
             $this->generateFinancingPdf($contract);
-            return redirect()->route('contracts.financing', $id)
+            
+            return redirect()->route('contracts.financing.index', $id)
                 ->with('success', 'Financing form signed successfully');
                
         } catch (\Exception $e) {
@@ -1100,115 +1076,130 @@ return redirect()->back()->with('error', 'Failed to send email: ' . $e->getMessa
             return redirect()->back()->with('error', 'Failed to save signature: ' . $e->getMessage());
         }
     }
-    /**
-     * Finalize the financing form
-     */
+    
     public function finalizeFinancing($id)
     {
         $contract = Contract::with([
             'subscriber.mobilityAccount.ivueAccount.customer',
             'bellDevice'
         ])->findOrFail($id);
+        
         if ($contract->financing_status !== 'csr_initialed') {
-            return redirect()->route('contracts.financing', $id)
+            return redirect()->route('contracts.financing.index', $id)
                 ->with('error', 'Financing form must be initialed by CSR before finalizing.');
         }
+        
         $contract->update([
             'financing_status' => 'finalized',
             'updated_by' => auth()->id(),
         ]);
-        // Regenerate PDF with initials
+        
         $this->generateFinancingPdf($contract);
+        
         Log::info('Financing form finalized', ['contract_id' => $id]);
+        
         // FTP to Vault
-        if (config('filesystems.disks.vault_ftp')) {
-            try {
-                $ftpService = new \App\Services\VaultFtpService();
-                $remoteFilename = $ftpService->getRemoteFilename($contract);
-                // Add _financing suffix
-                $remoteFilename = str_replace('.pdf', '_financing.pdf', $remoteFilename);
-               
-                $result = $ftpService->uploadToVault($contract->financing_pdf_path, $remoteFilename);
-               
-                if ($result['success']) {
-                    Log::info('Financing form uploaded to vault', [
-                        'contract_id' => $id,
-                        'vault_filename' => $remoteFilename
-                    ]);
-                } else {
-                    Log::warning('Financing form finalized but FTP upload failed', [
-                        'contract_id' => $id,
-                        'error' => $result['error']
-                    ]);
+        $ftpService = new VaultFtpService();
+        $remoteFilename = $ftpService->getRemoteFilename($contract);
+        $remoteFilename = str_replace('.pdf', '_financing.pdf', $remoteFilename);
+        
+        $result = $ftpService->uploadToVault($contract->financing_pdf_path, $remoteFilename);
+        
+        if ($result['success']) {
+            Log::info('Financing form uploaded to vault', [
+                'contract_id' => $id,
+                'vault_filename' => $remoteFilename,
+                'test_mode' => $result['test_mode'] ?? false
+            ]);
+            
+            // Cleanup financing files after successful upload
+            $cleanupService = new ContractFileCleanupService();
+            if ($cleanupService->canCleanup($contract)) {
+                // Only cleanup financing-specific files
+                $deletedFiles = [];
+                
+                if ($contract->financing_pdf_path && Storage::disk('public')->exists($contract->financing_pdf_path)) {
+                    Storage::disk('public')->delete($contract->financing_pdf_path);
+                    $deletedFiles[] = $contract->financing_pdf_path;
                 }
-            } catch (\Exception $e) {
-                Log::error('FTP upload exception for financing form', [
+                
+                if ($contract->financing_signature_path) {
+                    $path = str_replace('storage/', '', $contract->financing_signature_path);
+                    if (Storage::disk('public')->exists($path)) {
+                        Storage::disk('public')->delete($path);
+                        $deletedFiles[] = $path;
+                    }
+                }
+                
+                if ($contract->financing_csr_initials_path) {
+                    $path = str_replace('storage/', '', $contract->financing_csr_initials_path);
+                    if (Storage::disk('public')->exists($path)) {
+                        Storage::disk('public')->delete($path);
+                        $deletedFiles[] = $path;
+                    }
+                }
+                
+                Log::info('Financing files cleaned up', [
                     'contract_id' => $id,
-                    'error' => $e->getMessage()
+                    'deleted_count' => count($deletedFiles)
                 ]);
             }
         }
-        return redirect()->route('contracts.financing', $id)
+        
+        return redirect()->route('contracts.financing.index', $id)
             ->with('success', 'Financing form finalized successfully.');
     }
    
-    /**
-     * Show the CSR initials signature pad
-     */
     public function signCsrFinancing($id)
     {
         $contract = Contract::with([
             'subscriber.mobilityAccount.ivueAccount.customer',
             'bellDevice'
         ])->findOrFail($id);
+        
         if (!$contract->requiresFinancing() || $contract->financing_status !== 'customer_signed') {
-            return redirect()->route('contracts.financing', $id)
+            return redirect()->route('contracts.financing.index', $id)
                 ->with('error', 'Financing form cannot be initialed at this time.');
         }
+        
         return view('contracts.sign-financing-csr', compact('contract'));
     }
-    /**
-     * Store the CSR initials
-     */
+    
     public function storeCsrFinancingInitials(Request $request, $id)
     {
         $contract = Contract::with('subscriber.mobilityAccount.ivueAccount.customer')->findOrFail($id);
+        
         if ($contract->financing_status !== 'customer_signed') {
-            return redirect()->route('contracts.financing', $id)
+            return redirect()->route('contracts.financing.index', $id)
                 ->with('error', 'Financing form cannot be initialed at this time.');
         }
+        
         $request->validate([
             'initials' => 'required|string|regex:/^data:image\/png;base64,/',
-        ], [
-            'initials.required' => 'Please provide initials.',
-            'initials.regex' => 'Invalid initials format.',
         ]);
+        
         try {
             $initials = $request->initials;
-            Log::info('Received CSR initials data', ['contract_id' => $id]);
             $initialsPath = "initials/financing_contract_{$contract->id}_csr.png";
             $initialsData = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $initials));
            
             if ($initialsData === false) {
-                Log::error('Failed to decode CSR initials data', ['contract_id' => $id]);
                 return redirect()->back()->with('error', 'Failed to process initials.');
             }
-            $stored = Storage::disk('public')->put($initialsPath, $initialsData);
-            if (!$stored) {
-                Log::error('Failed to store CSR initials file', ['contract_id' => $id]);
-                return redirect()->back()->with('error', 'Failed to save initials file.');
-            }
-            Log::info('CSR initials file stored', ['contract_id' => $id, 'path' => $initialsPath]);
+            
+            Storage::disk('public')->put($initialsPath, $initialsData);
+            
             $contract->update([
                 'financing_csr_initials_path' => 'storage/' . $initialsPath,
                 'financing_status' => 'csr_initialed',
                 'financing_csr_initialed_at' => now(),
                 'updated_by' => auth()->id(),
             ]);
+            
             $contract->refresh();
-            // Regenerate PDF with initials
             $this->generateFinancingPdf($contract);
-            return redirect()->route('contracts.financing', $id)
+            
+            return redirect()->route('contracts.financing.index', $id)
                 ->with('success', 'Financing form initialed successfully');
         } catch (\Exception $e) {
             Log::error('Error in storeCsrFinancingInitials', ['contract_id' => $id, 'error' => $e->getMessage()]);
@@ -1216,49 +1207,40 @@ return redirect()->back()->with('error', 'Failed to send email: ' . $e->getMessa
         }
     }
    
-    /**
-     * Download the financing form
-     */
     public function downloadFinancing($id)
     {
         $contract = Contract::with([
             'subscriber.mobilityAccount.ivueAccount.customer',
             'bellDevice'
         ])->findOrFail($id);
+        
         if ($contract->financing_status !== 'finalized') {
             return redirect()->back()->with('error', 'Financing form must be finalized to download.');
         }
+        
         if (!$contract->financing_pdf_path || !Storage::disk('public')->exists($contract->financing_pdf_path)) {
-            Log::error('Financing PDF not found', ['contract_id' => $id, 'path' => $contract->financing_pdf_path]);
             return redirect()->back()->with('error', 'Financing PDF not found.');
         }
-        try {
-            $pdfContent = Storage::disk('public')->get($contract->financing_pdf_path);
-            $fileName = str_replace('.pdf', '_financing.pdf',
-                $contract->subscriber->last_name . '_' .
-                $contract->subscriber->first_name . '_' .
-                $contract->id . '.pdf'
-            );
-            return response()->streamDownload(function () use ($pdfContent) {
-                echo $pdfContent;
-            }, $fileName, ['Content-Type' => 'application/pdf']);
-        } catch (\Exception $e) {
-            Log::error('Financing PDF download failed', [
-                'contract_id' => $id,
-                'error' => $e->getMessage()
-            ]);
-            return redirect()->back()->with('error', 'Failed to download PDF: ' . $e->getMessage());
-        }
+        
+        $pdfContent = Storage::disk('public')->get($contract->financing_pdf_path);
+        $fileName = str_replace('.pdf', '_financing.pdf',
+            $contract->subscriber->last_name . '_' .
+            $contract->subscriber->first_name . '_' .
+            $contract->id . '.pdf'
+        );
+        
+        return response()->streamDownload(function () use ($pdfContent) {
+            echo $pdfContent;
+        }, $fileName, ['Content-Type' => 'application/pdf']);
     }
+    
     private function generateFinancingPdf($contract)
     {
-       
-        // Render the HTML from the view
-        $html = view('contracts.financing', [ // Assuming 'finance' is a typo and it's 'financing.blade.php'
+        $html = view('contracts.financing', [
             'contract' => $contract,
             'pdf' => true
         ])->render();
-        // Set up options (matching your current ones)
+        
         $options = new Options();
         $options->set('isHtml5ParserEnabled', true);
         $options->set('isRemoteEnabled', true);
@@ -1271,33 +1253,29 @@ return redirect()->back()->with('error', 'Failed to send email: ' . $e->getMessa
         $options->set('margin_bottom', 10);
         $options->set('margin_left', 10);
         $options->set('margin_right', 10);
-        // First pass: Render to measure height (use standard A4 to estimate)
+        
         $dompdf = new Dompdf($options);
         $dompdf->loadHtml($html);
         $dompdf->setPaper('a4', 'portrait');
         $dompdf->render();
-        // Get the rendered height in points + buffer for margins/footer (adjust 50-100pt if needed for safety)
+        
         $canvas = $dompdf->getCanvas();
-        $height = $canvas->get_height() + 80; // Add buffer to avoid cutoff
-        // Second pass: Re-render with custom paper size (A4 width = 595pt, dynamic height)
+        $height = $canvas->get_height() + 80;
+        
         $dompdf = new Dompdf($options);
         $dompdf->loadHtml($html);
-        $dompdf->setPaper([0, 0, 595, $height]); // Custom size: x,y,width,height in points
+        $dompdf->setPaper([0, 0, 595, $height]);
         $dompdf->render();
-        // Save the PDF
+        
         $pdfPath = "contracts/financing_contract_{$contract->id}.pdf";
         Storage::disk('public')->put($pdfPath, $dompdf->output());
         $contract->update(['financing_pdf_path' => $pdfPath]);
-        Log::info('Financing PDF generated with custom height', [
-            'contract_id' => $contract->id,
-            'calculated_height' => $height,
-            'path' => $pdfPath
-        ]);
+        
+        Log::info('Financing PDF generated', ['contract_id' => $contract->id, 'path' => $pdfPath]);
     }
 	   
-	   /**
-	 * Display the DRO form
-	 */
+    // DRO FORM METHODS
+	   
 	public function droForm($id)
 	{
 		$contract = Contract::with([
@@ -1305,7 +1283,6 @@ return redirect()->back()->with('error', 'Failed to send email: ' . $e->getMessa
 			'bellDevice'
 		])->findOrFail($id);
 		
-		// Check if DRO is required
 		if (!$contract->requiresDro()) {
 			return redirect()->route('contracts.view', $id)
 				->with('error', 'This contract does not require a DRO form.');
@@ -1314,9 +1291,6 @@ return redirect()->back()->with('error', 'Failed to send email: ' . $e->getMessa
 		return view('contracts.dro', compact('contract'));
 	}
 
-	/**
-	 * Show the DRO form signature page
-	 */
 	public function signDro($id)
 	{
 		$contract = Contract::with([
@@ -1330,81 +1304,48 @@ return redirect()->back()->with('error', 'Failed to send email: ' . $e->getMessa
 		}
 		
 		if ($contract->dro_status !== 'pending') {
-			return redirect()->route('contracts.dro', $id)
+			return redirect()->route('contracts.dro.index', $id)
 				->with('error', 'DRO form cannot be signed at this time.');
 		}
 		
 		return view('contracts.sign-dro', compact('contract'));
 	}
 
-	/**
-	 * Store the DRO signature
-	 */
 	public function storeDroSignature(Request $request, $id)
 	{
 		$contract = Contract::with('subscriber.mobilityAccount.ivueAccount.customer')->findOrFail($id);
 		
 		if ($contract->dro_status !== 'pending') {
-			Log::warning('DRO form cannot be signed - wrong status', [
-				'contract_id' => $id,
-				'current_status' => $contract->dro_status
-			]);
-			return redirect()->route('contracts.dro', $id)
+			return redirect()->route('contracts.dro.index', $id)
 				->with('error', 'DRO form cannot be signed at this time.');
 		}
 		
 		$request->validate([
 			'signature' => 'required|string|regex:/^data:image\/png;base64,/',
-		], [
-			'signature.required' => 'Please provide a signature.',
-			'signature.regex' => 'Invalid signature format.',
 		]);
 		
 		try {
 			$signature = $request->signature;
-			Log::info('Received DRO signature data', ['contract_id' => $id]);
-			
 			$signaturePath = "signatures/dro_contract_{$contract->id}.png";
 			$signatureData = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $signature));
 			
 			if ($signatureData === false) {
-				Log::error('Failed to decode DRO signature data', ['contract_id' => $id]);
 				return redirect()->back()->with('error', 'Failed to process signature.');
 			}
 			
-			$stored = Storage::disk('public')->put($signaturePath, $signatureData);
-			if (!$stored) {
-				Log::error('Failed to store DRO signature file', ['contract_id' => $id]);
-				return redirect()->back()->with('error', 'Failed to save signature file.');
-			}
+			Storage::disk('public')->put($signaturePath, $signatureData);
 			
-			Log::info('DRO signature file stored', ['contract_id' => $id, 'path' => $signaturePath]);
-			
-			$updated = $contract->update([
+			$contract->update([
 				'dro_signature_path' => 'storage/' . $signaturePath,
 				'dro_status' => 'customer_signed',
 				'dro_signed_at' => now(),
 				'updated_by' => auth()->id(),
 			]);
 			
-			if (!$updated) {
-				Log::error('Failed to update contract with DRO signature', ['contract_id' => $id]);
-				return redirect()->back()->with('error', 'Failed to save signature to database.');
-			}
-			
 			$contract->refresh();
-			
-			Log::info('DRO form signed successfully', [
-				'contract_id' => $id,
-				'new_status' => $contract->dro_status,
-				'signature_path' => $contract->dro_signature_path,
-				'signed_at' => $contract->dro_signed_at
-			]);
-			
-			// Generate PDF
 			$this->generateDroPdf($contract);
 			
-			return redirect()->route('contracts.dro', $id)
+			return redirect()->route('contracts.dro.index', $id)
 				->with('success', 'DRO form signed successfully');
 				
 		} catch (\Exception $e) {
@@ -1413,9 +1354,6 @@ return redirect()->back()->with('error', 'Failed to send email: ' . $e->getMessa
 		}
 	}
 
-	/**
-	 * Show the CSR initials signature pad for DRO
-	 */
 	public function signCsrDro($id)
 	{
 		$contract = Contract::with([
@@ -1424,51 +1362,36 @@ return redirect()->back()->with('error', 'Failed to send email: ' . $e->getMessa
 		])->findOrFail($id);
 		
 		if (!$contract->requiresDro() || $contract->dro_status !== 'customer_signed') {
-			return redirect()->route('contracts.dro', $id)
+			return redirect()->route('contracts.dro.index', $id)
 				->with('error', 'DRO form cannot be initialed at this time.');
 		}
 		
 		return view('contracts.sign-dro-csr', compact('contract'));
 	}
 
-	/**
-	 * Store the CSR initials for DRO
-	 */
 	public function storeCsrDroInitials(Request $request, $id)
 	{
 		$contract = Contract::with('subscriber.mobilityAccount.ivueAccount.customer')->findOrFail($id);
 		
 		if ($contract->dro_status !== 'customer_signed') {
-			return redirect()->route('contracts.dro', $id)
+			return redirect()->route('contracts.dro.index', $id)
 				->with('error', 'DRO form cannot be initialed at this time.');
 		}
 		
 		$request->validate([
 			'initials' => 'required|string|regex:/^data:image\/png;base64,/',
-		], [
-			'initials.required' => 'Please provide initials.',
-			'initials.regex' => 'Invalid initials format.',
 		]);
 		
 		try {
 			$initials = $request->initials;
-			Log::info('Received CSR initials data for DRO', ['contract_id' => $id]);
-			
 			$initialsPath = "initials/dro_contract_{$contract->id}_csr.png";
 			$initialsData = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $initials));
 			
 			if ($initialsData === false) {
-				Log::error('Failed to decode CSR initials data for DRO', ['contract_id' => $id]);
 				return redirect()->back()->with('error', 'Failed to process initials.');
 			}
 			
-			$stored = Storage::disk('public')->put($initialsPath, $initialsData);
-			if (!$stored) {
-				Log::error('Failed to store CSR initials file for DRO', ['contract_id' => $id]);
-				return redirect()->back()->with('error', 'Failed to save initials file.');
-			}
-			
-			Log::info('CSR initials file stored for DRO', ['contract_id' => $id, 'path' => $initialsPath]);
+			Storage::disk('public')->put($initialsPath, $initialsData);
 			
 			$contract->update([
 				'dro_csr_initials_path' => 'storage/' . $initialsPath,
@@ -1478,11 +1401,9 @@ return redirect()->back()->with('error', 'Failed to send email: ' . $e->getMessa
 			]);
 			
 			$contract->refresh();
-			
-			// Regenerate PDF with initials
 			$this->generateDroPdf($contract);
 			
-			return redirect()->route('contracts.dro', $id)
+			return redirect()->route('contracts.dro.index', $id)
 				->with('success', 'DRO form initialed successfully');
 		} catch (\Exception $e) {
 			Log::error('Error in storeCsrDroInitials', ['contract_id' => $id, 'error' => $e->getMessage()]);
@@ -1490,9 +1411,6 @@ return redirect()->back()->with('error', 'Failed to send email: ' . $e->getMessa
 		}
 	}
 
-	/**
-	 * Finalize the DRO form
-	 */
 	public function finalizeDro($id)
 	{
 		$contract = Contract::with([
@@ -1501,7 +1419,7 @@ return redirect()->back()->with('error', 'Failed to send email: ' . $e->getMessa
 		])->findOrFail($id);
 		
 		if ($contract->dro_status !== 'csr_initialed') {
-			return redirect()->route('contracts.dro', $id)
+			return redirect()->route('contracts.dro.index', $id)
 				->with('error', 'DRO form must be initialed by CSR before finalizing.');
 		}
 		
@@ -1510,47 +1428,61 @@ return redirect()->back()->with('error', 'Failed to send email: ' . $e->getMessa
 			'updated_by' => auth()->id(),
 		]);
 		
-		// Regenerate PDF with initials
 		$this->generateDroPdf($contract);
 		
 		Log::info('DRO form finalized', ['contract_id' => $id]);
 		
 		// FTP to Vault
-		if (config('filesystems.disks.vault_ftp')) {
-			try {
-				$ftpService = new \App\Services\VaultFtpService();
-				$remoteFilename = $ftpService->getRemoteFilename($contract);
-				// Add _dro suffix
-				$remoteFilename = str_replace('.pdf', '_dro.pdf', $remoteFilename);
+		$ftpService = new VaultFtpService();
+		$remoteFilename = $ftpService->getRemoteFilename($contract);
+		$remoteFilename = str_replace('.pdf', '_dro.pdf', $remoteFilename);
+		
+		$result = $ftpService->uploadToVault($contract->dro_pdf_path, $remoteFilename);
+		
+		if ($result['success']) {
+			Log::info('DRO form uploaded to vault', [
+				'contract_id' => $id,
+				'vault_filename' => $remoteFilename,
+				'test_mode' => $result['test_mode'] ?? false
+			]);
+			
+			// Cleanup DRO files after successful upload
+			$cleanupService = new ContractFileCleanupService();
+			if ($cleanupService->canCleanup($contract)) {
+				$deletedFiles = [];
 				
-				$result = $ftpService->uploadToVault($contract->dro_pdf_path, $remoteFilename);
-				
-				if ($result['success']) {
-					Log::info('DRO form uploaded to vault', [
-						'contract_id' => $id,
-						'vault_filename' => $remoteFilename
-					]);
-				} else {
-					Log::warning('DRO form finalized but FTP upload failed', [
-						'contract_id' => $id,
-						'error' => $result['error']
-					]);
+				if ($contract->dro_pdf_path && Storage::disk('public')->exists($contract->dro_pdf_path)) {
+					Storage::disk('public')->delete($contract->dro_pdf_path);
+					$deletedFiles[] = $contract->dro_pdf_path;
 				}
-			} catch (\Exception $e) {
-				Log::error('FTP upload exception for DRO form', [
+				
+				if ($contract->dro_signature_path) {
+					$path = str_replace('storage/', '', $contract->dro_signature_path);
+					if (Storage::disk('public')->exists($path)) {
+						Storage::disk('public')->delete($path);
+						$deletedFiles[] = $path;
+					}
+				}
+				
+				if ($contract->dro_csr_initials_path) {
+					$path = str_replace('storage/', '', $contract->dro_csr_initials_path);
+					if (Storage::disk('public')->exists($path)) {
+						Storage::disk('public')->delete($path);
+						$deletedFiles[] = $path;
+					}
+				}
+				
+				Log::info('DRO files cleaned up', [
 					'contract_id' => $id,
-					'error' => $e->getMessage()
+					'deleted_count' => count($deletedFiles)
 				]);
 			}
 		}
 		
-		return redirect()->route('contracts.dro', $id)
+		return redirect()->route('contracts.dro.index', $id)
 			->with('success', 'DRO form finalized successfully.');
 	}
 
-	/**
-	 * Download the DRO form
-	 */
 	public function downloadDro($id)
 	{
 		$contract = Contract::with([
@@ -1563,41 +1495,27 @@ return redirect()->back()->with('error', 'Failed to send email: ' . $e->getMessa
 		}
 		
 		if (!$contract->dro_pdf_path || !Storage::disk('public')->exists($contract->dro_pdf_path)) {
-			Log::error('DRO PDF not found', ['contract_id' => $id, 'path' => $contract->dro_pdf_path]);
 			return redirect()->back()->with('error', 'DRO PDF not found.');
 		}
 		
-		try {
-			$pdfContent = Storage::disk('public')->get($contract->dro_pdf_path);
-			$fileName = str_replace('.pdf', '_dro.pdf',
-				$contract->subscriber->last_name . '_' .
-				$contract->subscriber->first_name . '_' .
-				$contract->id . '.pdf'
-			);
-			
-			return response()->streamDownload(function () use ($pdfContent) {
-				echo $pdfContent;
-			}, $fileName, ['Content-Type' => 'application/pdf']);
-		} catch (\Exception $e) {
-			Log::error('DRO PDF download failed', [
-				'contract_id' => $id,
-				'error' => $e->getMessage()
-			]);
-			return redirect()->back()->with('error', 'Failed to download PDF: ' . $e->getMessage());
-		}
+		$pdfContent = Storage::disk('public')->get($contract->dro_pdf_path);
+		$fileName = str_replace('.pdf', '_dro.pdf',
+			$contract->subscriber->last_name . '_' .
+			$contract->subscriber->first_name . '_' .
+			$contract->id . '.pdf'
+		);
+		
+		return response()->streamDownload(function () use ($pdfContent) {
+			echo $pdfContent;
+		}, $fileName, ['Content-Type' => 'application/pdf']);
 	}
 
-	/**
-	 * Generate DRO PDF
-	 */
 	private function generateDroPdf($contract)
 	{
-		// Render the HTML from the PDF-specific view
 		$html = view('contracts.dro-pdf', [
 			'contract' => $contract
 		])->render();
 		
-		// Set up options
 		$options = new Options();
 		$options->set('isHtml5ParserEnabled', true);
 		$options->set('isRemoteEnabled', true);
@@ -1611,32 +1529,23 @@ return redirect()->back()->with('error', 'Failed to send email: ' . $e->getMessa
 		$options->set('margin_left', 10);
 		$options->set('margin_right', 10);
 		
-		// First pass: Render to measure height
 		$dompdf = new Dompdf($options);
 		$dompdf->loadHtml($html);
 		$dompdf->setPaper('a4', 'portrait');
 		$dompdf->render();
 		
-		// Get the rendered height in points + buffer
 		$canvas = $dompdf->getCanvas();
 		$height = $canvas->get_height() + 80;
 		
-		// Second pass: Re-render with custom paper size
 		$dompdf = new Dompdf($options);
 		$dompdf->loadHtml($html);
 		$dompdf->setPaper([0, 0, 595, $height]);
 		$dompdf->render();
 		
-		// Save the PDF
 		$pdfPath = "contracts/dro_contract_{$contract->id}.pdf";
 		Storage::disk('public')->put($pdfPath, $dompdf->output());
 		$contract->update(['dro_pdf_path' => $pdfPath]);
 		
-		Log::info('DRO PDF generated with custom height', [
-			'contract_id' => $contract->id,
-			'calculated_height' => $height,
-			'path' => $pdfPath
-		]);
+		Log::info('DRO PDF generated', ['contract_id' => $contract->id, 'path' => $pdfPath]);
 	}
-	   
 }

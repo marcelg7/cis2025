@@ -161,7 +161,7 @@
             @if($contract->requiresFinancing() && $contract->status !== 'draft')
                 @if($contract->financing_status === 'pending')
                     <div class="flex-shrink-0">
-                        <a href="{{ route('contracts.financing', $contract->id) }}" 
+                        <a href="{{ route('contracts.financing.index', $contract->id) }}" 
                            class="inline-flex justify-center items-center w-10 h-10 rounded-full bg-orange-100 hover:bg-orange-200 text-orange-800 focus:outline-none focus:ring-1 focus:ring-offset-1 focus:ring-orange-500" 
                            title="Financing Form Pending">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -171,7 +171,7 @@
                     </div>
                 @elseif($contract->financing_status === 'signed')
                     <div class="flex-shrink-0">
-                        <a href="{{ route('contracts.financing', $contract->id) }}" 
+                        <a href="{{ route('contracts.financing.index', $contract->id) }}" 
                            class="inline-flex justify-center items-center w-10 h-10 rounded-full bg-blue-100 hover:bg-blue-200 text-blue-800 focus:outline-none focus:ring-1 focus:ring-offset-1 focus:ring-blue-500" 
                            title="Financing Form Signed">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -181,7 +181,7 @@
                     </div>
                 @elseif($contract->financing_status === 'finalized')
                     <div class="flex-shrink-0">
-                        <a href="{{ route('contracts.financing', $contract->id) }}" 
+                        <a href="{{ route('contracts.financing.index', $contract->id) }}" 
                            class="inline-flex justify-center items-center w-10 h-10 rounded-full bg-green-100 hover:bg-green-200 text-green-800 focus:outline-none focus:ring-1 focus:ring-offset-1 focus:ring-green-500" 
                            title="Financing Form Finalized">
                             <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">

@@ -8,14 +8,38 @@ use Illuminate\Support\Facades\Log;
 class VaultFtpService
 {
     /**
-     * Upload a file to the vault via FTP
+     * Check if vault is in test mode
+     */
+    public function isTestMode(): bool
+    {
+        return config('filesystems.disks.vault_ftp.test_mode', true);
+    }
+
+    /**
+     * Upload a file to the vault via FTP (or simulate in test mode)
      *
      * @param string $localPath - Path to local file (e.g., 'contracts/contract_123.pdf')
      * @param string $remotePath - Remote filename on FTP server
-     * @return array ['success' => bool, 'path' => string|null, 'error' => string|null]
+     * @return array ['success' => bool, 'path' => string|null, 'error' => string|null, 'test_mode' => bool]
      */
     public function uploadToVault(string $localPath, string $remotePath): array
     {
+        // Test mode - simulate successful upload without actually uploading
+        if ($this->isTestMode()) {
+            Log::info('Vault test mode: Simulating FTP upload', [
+                'local_path' => $localPath,
+                'remote_filename' => $remotePath
+            ]);
+
+            return [
+                'success' => true,
+                'path' => '/test/' . $remotePath,
+                'test_mode' => true,
+                'error' => null
+            ];
+        }
+
+        // Production mode - actual FTP upload
         try {
             // Check if local file exists
             if (!Storage::disk('public')->exists($localPath)) {
@@ -25,7 +49,8 @@ class VaultFtpService
                 return [
                     'success' => false,
                     'path' => null,
-                    'error' => 'Local file not found'
+                    'error' => 'Local file not found',
+                    'test_mode' => false
                 ];
             }
 
@@ -44,7 +69,8 @@ class VaultFtpService
                 return [
                     'success' => true,
                     'path' => $remotePath,
-                    'error' => null
+                    'error' => null,
+                    'test_mode' => false
                 ];
             } else {
                 Log::error('FTP upload failed', [
@@ -55,7 +81,8 @@ class VaultFtpService
                 return [
                     'success' => false,
                     'path' => null,
-                    'error' => 'FTP upload returned false'
+                    'error' => 'FTP upload returned false',
+                    'test_mode' => false
                 ];
             }
         } catch (\Exception $e) {
@@ -69,70 +96,71 @@ class VaultFtpService
             return [
                 'success' => false,
                 'path' => null,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
+                'test_mode' => false
             ];
         }
     }
 
-	/**
-	 * Generate standardized filename for contract PDF
-	 * Format: IVUE_CUSTOMER_NUMBER-IVUE_ACCOUNT-ACCOUNT_NAME-SUBSCRIBER-MOBILE_NUMBER.pdf
-	 * Example: 50208810-12345-Hay_Communications-John_Smith-5195551234.pdf
-	 */
-	 public function getRemoteFilename($contract): string
-	{
-		// Get iVue customer number (format: 50208810)
-		$ivueCustomerNumber = $contract->subscriber->mobilityAccount->ivueAccount->customer->ivue_customer_number;
-		
-		// Get iVue account number
-		$ivueAccount = $contract->subscriber->mobilityAccount->ivueAccount->ivue_account;
-		
-		// Get account/company name (Title Case)
-		$accountName = $contract->subscriber->mobilityAccount->ivueAccount->customer->display_name;
-		$safeAccountName = $this->sanitizeFilename($accountName);
-		
-		// Get subscriber name (Title Case)
-		$subscriberName = $contract->subscriber->first_name . ' ' . $contract->subscriber->last_name;
-		$safeSubscriberName = $this->sanitizeFilename($subscriberName);
-		
-		// Get mobile number (remove non-digits)
-		$mobileNumber = preg_replace('/[^0-9]/', '', $contract->subscriber->mobile_number);
-		
-		// Build filename
-		$filename = "{$ivueCustomerNumber}-{$ivueAccount}-{$safeAccountName}-{$safeSubscriberName}-{$mobileNumber}.pdf";
-		
-		// Ensure filename isn't too long (max 255 chars for most filesystems)
-		if (strlen($filename) > 255) {
-			// Truncate account name if needed
-			$maxAccountNameLength = 255 - strlen("{$ivueCustomerNumber}-{$ivueAccount}--{$safeSubscriberName}-{$mobileNumber}.pdf");
-			$safeAccountName = substr($safeAccountName, 0, $maxAccountNameLength);
-			$filename = "{$ivueCustomerNumber}-{$ivueAccount}-{$safeAccountName}-{$safeSubscriberName}-{$mobileNumber}.pdf";
-		}
-		
-		return $filename;
-	}
-		
-	/**
-	 * Sanitize string for use in filename
-	 * Converts to Title Case, replaces spaces with underscores, removes special chars
-	 */
-	private function sanitizeFilename(string $name): string
-	{
-		// Convert to Title Case (first letter of each word capitalized)
-		$name = ucwords(strtolower($name));
-		
-		// Replace spaces with underscores
-		$name = str_replace(' ', '_', $name);
-		
-		// Remove any character that's not alphanumeric, underscore, or hyphen
-		$name = preg_replace('/[^A-Za-z0-9_\-]/', '', $name);
-		
-		// Replace multiple underscores/hyphens with single one
-		$name = preg_replace('/[_\-]+/', '_', $name);
-		
-		// Trim underscores/hyphens from start and end
-		$name = trim($name, '_-');
-		
-		return $name;
-	}
+    /**
+     * Generate standardized filename for contract PDF
+     * Format: IVUE_CUSTOMER_NUMBER-IVUE_ACCOUNT-ACCOUNT_NAME-SUBSCRIBER-MOBILE_NUMBER.pdf
+     * Example: 50208810-12345-Hay_Communications-John_Smith-5195551234.pdf
+     */
+    public function getRemoteFilename($contract): string
+    {
+        // Get iVue customer number (format: 50208810)
+        $ivueCustomerNumber = $contract->subscriber->mobilityAccount->ivueAccount->customer->ivue_customer_number;
+        
+        // Get iVue account number
+        $ivueAccount = $contract->subscriber->mobilityAccount->ivueAccount->ivue_account;
+        
+        // Get account/company name (Title Case)
+        $accountName = $contract->subscriber->mobilityAccount->ivueAccount->customer->display_name;
+        $safeAccountName = $this->sanitizeFilename($accountName);
+        
+        // Get subscriber name (Title Case)
+        $subscriberName = $contract->subscriber->first_name . ' ' . $contract->subscriber->last_name;
+        $safeSubscriberName = $this->sanitizeFilename($subscriberName);
+        
+        // Get mobile number (remove non-digits)
+        $mobileNumber = preg_replace('/[^0-9]/', '', $contract->subscriber->mobile_number);
+        
+        // Build filename
+        $filename = "{$ivueCustomerNumber}-{$ivueAccount}-{$safeAccountName}-{$safeSubscriberName}-{$mobileNumber}.pdf";
+        
+        // Ensure filename isn't too long (max 255 chars for most filesystems)
+        if (strlen($filename) > 255) {
+            // Truncate account name if needed
+            $maxAccountNameLength = 255 - strlen("{$ivueCustomerNumber}-{$ivueAccount}--{$safeSubscriberName}-{$mobileNumber}.pdf");
+            $safeAccountName = substr($safeAccountName, 0, $maxAccountNameLength);
+            $filename = "{$ivueCustomerNumber}-{$ivueAccount}-{$safeAccountName}-{$safeSubscriberName}-{$mobileNumber}.pdf";
+        }
+        
+        return $filename;
+    }
+        
+    /**
+     * Sanitize string for use in filename
+     * Converts to Title Case, replaces spaces with underscores, removes special chars
+     */
+    private function sanitizeFilename(string $name): string
+    {
+        // Convert to Title Case (first letter of each word capitalized)
+        $name = ucwords(strtolower($name));
+        
+        // Replace spaces with underscores
+        $name = str_replace(' ', '_', $name);
+        
+        // Remove any character that's not alphanumeric, underscore, or hyphen
+        $name = preg_replace('/[^A-Za-z0-9_\-]/', '', $name);
+        
+        // Replace multiple underscores/hyphens with single one
+        $name = preg_replace('/[_\-]+/', '_', $name);
+        
+        // Trim underscores/hyphens from start and end
+        $name = trim($name, '_-');
+        
+        return $name;
+    }
 }

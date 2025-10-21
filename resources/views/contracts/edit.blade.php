@@ -150,28 +150,32 @@
                         </select>
                     </div>
                 </div>
-                <!-- Pricing Details Display -->
-                <div id="pricing-details" class="mt-4 p-4 bg-white border border-gray-300 rounded-md hidden">
-                    <h4 class="text-sm font-medium text-gray-900 mb-2">Pricing Details</h4>
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                        <div>
-                            <span class="text-gray-600">Retail Price:</span>
-                            <span class="font-medium text-gray-900" id="display-retail-price">-</span>
-                        </div>
-                        <div>
-                            <span class="text-gray-600">Monthly Device:</span>
-                            <span class="font-medium text-gray-900" id="display-monthly-device">-</span>
-                        </div>
-                        <div>
-                            <span class="text-gray-600">Plan + Device:</span>
-                            <span class="font-medium text-gray-900" id="display-plan-device">-</span>
-                        </div>
-                        <div id="dro-amount-display" class="hidden">
-                            <span class="text-gray-600">DRO Amount:</span>
-                            <span class="font-medium text-orange-600" id="display-dro-amount">-</span>
-                        </div>
-                    </div>
-                </div>
+				<!-- Pricing Details Display -->
+				<div id="pricing-details" class="mt-4 p-4 bg-white border border-gray-300 rounded-md hidden">
+					<h4 class="text-sm font-medium text-gray-900 mb-2">Pricing Details</h4>
+					<div class="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
+						<div>
+							<span class="text-gray-600">Retail Price:</span>
+							<span class="font-medium text-gray-900" id="display-retail-price">-</span>
+						</div>
+						<div>
+							<span class="text-gray-600">Agreement Credit:</span>
+							<span class="font-medium text-green-600" id="display-agreement-credit">-</span>
+						</div>
+						<div>
+							<span class="text-gray-600">Monthly Device:</span>
+							<span class="font-medium text-gray-900" id="display-monthly-device">-</span>
+						</div>
+						<div>
+							<span class="text-gray-600">Plan + Device:</span>
+							<span class="font-medium text-gray-900" id="display-plan-device">-</span>
+						</div>
+						<div id="dro-amount-display" class="hidden">
+							<span class="text-gray-600">DRO Amount:</span>
+							<span class="font-medium text-orange-600" id="display-dro-amount">-</span>
+						</div>
+					</div>
+				</div>
                 <button type="button"
                         id="load-pricing-btn"
                         class="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700">
@@ -269,63 +273,56 @@
             </div>
         </div>
         
-        <div>
-            <h2 class="text-lg font-medium text-gray-900">Plan Add-ons</h2>
-            <div id="add-ons" class="mt-4 space-y-4">
-                @foreach($contract->addOns as $index => $addOn)
-                    <div class="add-on grid grid-cols-1 sm:grid-cols-4 gap-4 items-end">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Name</label>
-                            <input type="text"
-                                   name="add_ons[{{ $index }}][name]"
-                                   value="{{ old("add_ons.{$index}.name", $addOn->name) }}"
-                                   class="addon-name-input mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                                   list="addon-suggestions"
-                                   autocomplete="off">
-                            @error("add_ons.{$index}.name")
-                                <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Code</label>
-                            <input type="text"
-                                   name="add_ons[{{ $index }}][code]"
-                                   value="{{ old("add_ons.{$index}.code", $addOn->code) }}"
-                                   class="addon-code-input mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                            @error("add_ons.{$index}.code")
-                                <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Cost ($)</label>
-                            <input type="number"
-                                   name="add_ons[{{ $index }}][cost]"
-                                   step="0.01"
-                                   value="{{ old("add_ons.{$index}.cost", $addOn->cost) }}"
-                                   class="addon-cost-input mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm total-input">
-                            @error("add_ons.{$index}.cost")
-                                <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
-                        </div>
-                        <div>
-                            <button type="button" onclick="removeAddOn(this)" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
-                                Remove
-                            </button>
-                        </div>
-                    </div>
-                @endforeach
-            </div>
-            <button type="button" onclick="addAddOn()" class="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                + Add Add-on
-            </button>
-            
-            <!-- Hidden datalist for autocomplete -->
-            <datalist id="addon-suggestions">
-                @foreach($planAddOns as $addon)
-                    <option value="{{ $addon->add_on_name }}" data-code="{{ $addon->soc_code }}" data-cost="{{ $addon->monthly_rate }}">
-                @endforeach
-            </datalist>
-        </div>
+		<div>
+			<h2 class="text-lg font-medium text-gray-900">Plan Add-ons</h2>
+			<div id="add-ons" class="mt-4 space-y-4">
+				@foreach($contract->addOns as $index => $addOn)
+					<div class="add-on grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
+						<div class="sm:col-span-2">
+							<label class="block text-sm font-medium text-gray-700">Name</label>
+							<input type="text"
+								   name="add_ons[{{ $index }}][name]"
+								   value="{{ old("add_ons.{$index}.name", $addOn->name) }}"
+								   class="addon-name-input mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+								   list="addon-suggestions"
+								   autocomplete="off">
+							<input type="hidden"
+								   name="add_ons[{{ $index }}][code]"
+								   value="{{ old("add_ons.{$index}.code", $addOn->code) }}"
+								   class="addon-code-input">
+							@error("add_ons.{$index}.name")
+								<p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+							@enderror
+						</div>
+						<div>
+							<label class="block text-sm font-medium text-gray-700">Cost ($)</label>
+							<input type="number"
+								   name="add_ons[{{ $index }}][cost]"
+								   step="0.01"
+								   value="{{ old("add_ons.{$index}.cost", $addOn->cost) }}"
+								   class="addon-cost-input mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm total-input">
+							@error("add_ons.{$index}.cost")
+								<p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+							@enderror
+						</div>
+						<div>
+							<button type="button" onclick="removeAddOn(this)" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+								Remove
+							</button>
+						</div>
+					</div>
+				@endforeach
+			</div>
+			<button type="button" onclick="addAddOn()" class="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+				+ Add Add-on
+			</button>
+			
+			<datalist id="addon-suggestions">
+				@foreach($planAddOns as $addon)
+					<option value="{{ $addon->add_on_name }}" data-code="{{ $addon->soc_code }}" data-cost="{{ $addon->monthly_rate }}">
+				@endforeach
+			</datalist>
+		</div>       
         
         <div>
             <h2 class="text-lg font-medium text-gray-900">One Time Fees</h2>
@@ -392,21 +389,19 @@ const addonData = @json($planAddOns->map(function($addon) {
 
 function addAddOn() {
     const div = document.createElement('div');
-    div.className = 'add-on grid grid-cols-1 sm:grid-cols-4 gap-4 items-end';
+    div.className = 'add-on grid grid-cols-1 sm:grid-cols-3 gap-4 items-end';
     div.innerHTML = `
-        <div>
+        <div class="sm:col-span-2">
             <label class="block text-sm font-medium text-gray-700">Name</label>
             <input type="text"
                    name="add_ons[${addOnCount}][name]"
                    class="addon-name-input mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                    list="addon-suggestions"
                    autocomplete="off">
-        </div>
-        <div>
-            <label class="block text-sm font-medium text-gray-700">Code</label>
-            <input type="text"
+            <input type="hidden"
                    name="add_ons[${addOnCount}][code]"
-                   class="addon-code-input mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                   value="ADDON"
+                   class="addon-code-input">
         </div>
         <div>
             <label class="block text-sm font-medium text-gray-700">Cost ($)</label>
@@ -431,7 +426,7 @@ function addAddOn() {
 }
 
 function removeAddOn(button) {
-    button.parentElement.parentElement.remove();
+    button.closest('.add-on').remove();
     if (typeof calculateTotal === 'function') calculateTotal();
 }
 
@@ -439,7 +434,7 @@ function attachAddonAutocomplete(nameInput, container) {
     nameInput.addEventListener('input', function() {
         const value = this.value.toLowerCase();
         const match = addonData.find(addon => addon.name.toLowerCase() === value);
-        
+      
         if (match) {
             container.querySelector('.addon-code-input').value = match.code;
             container.querySelector('.addon-cost-input').value = match.cost;
@@ -581,10 +576,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     tier: tier,
                     pricing: data.pricing
                 };
-                
-                document.getElementById('display-retail-price').textContent = '$' + parseFloat(data.pricing.retail_price).toFixed(2);
-                document.getElementById('display-monthly-device').textContent = '$' + parseFloat(data.pricing.monthly_device_cost_pre_tax).toFixed(2);
-                document.getElementById('display-plan-device').textContent = '$' + parseFloat(data.pricing.plan_plus_device_pre_tax).toFixed(2);
+								
+				document.getElementById('display-retail-price').textContent = '$' + parseFloat(data.pricing.retail_price).toFixed(2);
+				document.getElementById('display-agreement-credit').textContent = data.pricing.agreement_credit ? '$' + parseFloat(data.pricing.agreement_credit).toFixed(2) : '$0.00';
+				document.getElementById('display-monthly-device').textContent = '$' + parseFloat(data.pricing.monthly_device_cost_pre_tax).toFixed(2);
+				document.getElementById('display-plan-device').textContent = '$' + parseFloat(data.pricing.plan_plus_device_pre_tax).toFixed(2);
                 
                 if (pricingType === 'dro') {
                     document.getElementById('dro-amount-display').classList.remove('hidden');

@@ -58,6 +58,7 @@ return [
 			'passive' => (bool) env('VAULT_FTP_PASSIVE', true), // Cast to boolean
 			'ssl' => (bool) env('VAULT_FTP_SSL', false), // Cast to boolean
 			'timeout' => 30,
+			'test_mode' => env('VAULT_TEST_MODE', true),
 		],
 
     ],

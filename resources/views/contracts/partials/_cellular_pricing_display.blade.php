@@ -1,4 +1,3 @@
-<!-- partials/_cellular_pricing_display.blade.php -->
 @if($contract->ratePlan || $contract->mobileInternetPlan)
     <div class="bg-white shadow rounded-lg p-6">
         <h3 class="text-lg font-semibold text-gray-900 mb-4">Cellular Pricing</h3>
@@ -18,6 +17,11 @@
                                         {{ $contract->ratePlan->tier }}
                                     </span>
                                 @endif
+								@if($contract->ratePlan->credit_eligible)
+									<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800" title="This plan is eligible for ${{ number_format($contract->ratePlan->credit_amount, 2) }} {{ $contract->ratePlan->credit_type }}">
+										💰 {{ $contract->ratePlan->credit_type }} Eligible
+									</span>
+								@endif
                             </div>
                             <p class="text-sm text-gray-700">
                                 <strong>{{ $contract->ratePlan->plan_name }}</strong>
@@ -83,22 +87,12 @@
                                     {{ $contract->mobileInternetPlan->category }}
                                 </span>
                             @endif
-                            
-                            <a href="{{ route('cellular-pricing.mobile-internet.show', $contract->mobileInternetPlan) }}" target="_blank" class="text-xs text-indigo-600 hover:text-indigo-500 mt-2 inline-block">
-                                View all plans →
-                            </a>
                         </div>
                         <div class="text-right ml-4">
                             <div class="text-2xl font-bold text-gray-900">
                                 ${{ number_format($contract->mobile_internet_price, 2) }}
                             </div>
                             <div class="text-xs text-gray-500">per month</div>
-                            
-                            @if($contract->mobileInternetPlan->monthly_rate != $contract->mobile_internet_price)
-                                <div class="mt-2 text-xs text-yellow-600 bg-yellow-50 px-2 py-1 rounded">
-                                    Current: ${{ number_format($contract->mobileInternetPlan->monthly_rate, 2) }}
-                                </div>
-                            @endif
                         </div>
                     </div>
                 </div>
@@ -112,17 +106,6 @@
                     </span>
                 </div>
             @endif
-            
-            <!-- Total Monthly Cost -->
-            @if(isset($totalCellularRate) && $totalCellularRate > 0)
-                <div class="pt-4 border-t border-gray-200">
-                    <div class="flex items-center justify-between">
-                        <span class="text-base font-semibold text-gray-900">Total Monthly Cellular Cost:</span>
-                        <span class="text-3xl font-bold text-indigo-600">${{ number_format($totalCellularRate, 2) }}</span>
-                    </div>
-                </div>
-            @endif
-		
         </div>
     </div>
 @endif

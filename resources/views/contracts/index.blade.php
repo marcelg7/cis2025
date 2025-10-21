@@ -234,7 +234,7 @@
         <!-- Financing Form - Only for contracts that require financing -->
         @if($contract->requiresFinancing() && $contract->status !== 'draft')
             @if($contract->financing_status === 'pending')
-                <a href="{{ route('contracts.financing', $contract->id) }}" 
+                <a href="{{ route('contracts.financing.index', $contract->id) }}" 
                    class="inline-flex items-center p-2 rounded-full text-orange-600 hover:bg-orange-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500" 
                    title="Financing Form Pending">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -242,7 +242,7 @@
                     </svg>
                 </a>
             @elseif($contract->financing_status === 'signed')
-                <a href="{{ route('contracts.financing', $contract->id) }}" 
+                <a href="{{ route('contracts.financing.index', $contract->id) }}" 
                    class="inline-flex items-center p-2 rounded-full text-blue-600 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" 
                    title="Financing Form Signed">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -250,7 +250,7 @@
                     </svg>
                 </a>
             @elseif($contract->financing_status === 'finalized')
-                <a href="{{ route('contracts.financing', $contract->id) }}" 
+                <a href="{{ route('contracts.financing.index', $contract->id) }}" 
                    class="inline-flex items-center p-2 rounded-full text-green-600 hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500" 
                    title="Financing Form Finalized">
                     <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">

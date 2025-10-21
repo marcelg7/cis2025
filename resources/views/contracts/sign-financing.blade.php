@@ -3,7 +3,7 @@
 @section('content')
 <div class="max-w-4xl mx-auto sm:px-6 lg:px-8 py-6">
     <div class="mb-6">
-        <a href="{{ route('contracts.financing', $contract->id) }}" class="inline-flex items-center text-sm text-indigo-600 hover:text-indigo-500">
+        <a href="{{ route('contracts.financing.index', $contract->id) }}" class="inline-flex items-center text-sm text-indigo-600 hover:text-indigo-500">
             <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
             </svg>
@@ -50,7 +50,7 @@
                 <input type="hidden" name="signature" id="signature-data">
 
                 <div class="flex justify-end space-x-4">
-                    <a href="{{ route('contracts.financing', $contract->id) }}" 
+                    <a href="{{ route('contracts.financing.index', $contract->id) }}" 
                        class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50">
                         Cancel
                     </a>

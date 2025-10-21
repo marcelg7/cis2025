@@ -8,61 +8,54 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class RatePlan extends Model
 {
     protected $fillable = [
-		'soc_code',
-		'plan_name',
-		'plan_type',
-		'tier',
-		'base_price',
-		'promo_price',
-		'promo_description',
-		'data_amount',
-		'is_international',
-		'is_us_mexico',
-		'features',
-		'effective_date',
-		'is_current',
-		'is_active',
-		'is_test',
+        'soc_code',
+        'plan_name',
+        'plan_type',
+        'tier',
+        'base_price',
+        'promo_price',
+        'promo_description',
+		'credit_eligible',     
+		'credit_amount',        
+		'credit_type',          
+        'data_amount',
+        'is_international',
+        'is_us_mexico',
+        'features',
+        'effective_date',
+        'is_current',
+        'is_active',
+        'is_test',
     ];
 
-    protected $casts = [
-        'base_price' => 'decimal:2',
-        'promo_price' => 'decimal:2',
-        'effective_date' => 'date',
-        'is_current' => 'boolean',
-        'is_active' => 'boolean',
-        'is_test' => 'boolean',
-        'is_international' => 'boolean',
-        'is_us_mexico' => 'boolean',
-    ];
+	protected $casts = [
+		'base_price' => 'decimal:2',
+		'promo_price' => 'decimal:2',
+		'credit_amount' => 'decimal:2',  
+		'effective_date' => 'date',
+		'is_current' => 'boolean',
+		'is_active' => 'boolean',
+		'is_test' => 'boolean',
+		'is_international' => 'boolean',
+		'is_us_mexico' => 'boolean',
+		'credit_eligible' => 'boolean',  
+	];
 
-    /**
-     * Scope to get only current pricing
-     */
     public function scopeCurrent($query)
     {
         return $query->where('is_current', true);
     }
 
-    /**
-     * Scope to get only active plans
-     */
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
     }
 
-    /**
-     * Scope to filter by plan type (byod or smartpay)
-     */
     public function scopeOfType($query, $type)
     {
         return $query->where('plan_type', $type);
     }
 
-    /**
-     * Scope to filter by tier
-     */
     public function scopeOfTier($query, $tier)
     {
         return $query->where('tier', $tier);
@@ -70,6 +63,7 @@ class RatePlan extends Model
 
     /**
      * Get the effective price (promo if available, otherwise base)
+     * NOTE: Does NOT apply Hay Credit - that's manual
      */
     public function getEffectivePriceAttribute()
     {
@@ -77,7 +71,7 @@ class RatePlan extends Model
     }
 
     /**
-     * Check if plan has a promotion
+     * Check if plan has a promotion (excluding Hay Credit)
      */
     public function getHasPromoAttribute()
     {
@@ -96,17 +90,11 @@ class RatePlan extends Model
         return "{$this->plan_name} - {$price}";
     }
 
-    /**
-     * Get contracts using this rate plan (we'll add this relationship later)
-     */
     public function contracts(): HasMany
     {
         return $this->hasMany(Contract::class);
     }
 
-    /**
-     * Get pricing for a specific SOC code and tier
-     */
     public static function getPricing($socCode, $tier = null)
     {
         $query = static::where('soc_code', $socCode)
@@ -120,9 +108,6 @@ class RatePlan extends Model
         return $query->first();
     }
 
-    /**
-     * Get all current BYOD plans
-     */
     public static function getCurrentByodPlans()
     {
         return static::current()
@@ -133,9 +118,6 @@ class RatePlan extends Model
             ->get();
     }
 
-    /**
-     * Get all current SmartPay plans
-     */
     public static function getCurrentSmartPayPlans()
     {
         return static::current()

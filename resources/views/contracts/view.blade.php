@@ -361,41 +361,109 @@
         </div>
         <hr class="border-gray-200">
 
-        <!-- Signature -->
-        @if ($contract->signature_path)
-            @php
-                $signaturePath = trim($contract->signature_path);
-                $checkPath = str_replace('storage/', '', $signaturePath);
-                $signatureFullPath = storage_path('app/public/' . $checkPath);
-                $signatureExists = file_exists($signatureFullPath);
-                $signatureBase64 = null;
-                $signatureSrc = null;
-                if ($signatureExists) {
-                    try {
-                        $signatureData = file_get_contents($signatureFullPath);
-                        $signatureBase64 = 'data:image/png;base64,' . base64_encode($signatureData);
-                        $signatureSrc = $signatureBase64;
-                    } catch (\Exception $e) {
-                        Log::error('Failed to process signature', [
-                            'contract_id' => $contract->id,
-                            'error' => $e->getMessage()
-                        ]);
-                    }
-                }
-            @endphp
-            <div class="section px-6 py-4 bg-white border-b border-gray-200">
-                <h3 class="text-lg font-semibold text-gray-900">Signature</h3>
-                @if ($signatureExists && !empty($signatureSrc))
-                    <div class="signature-wrapper border border-gray-200 rounded-lg p-2 bg-gray-50 mt-4">
-                        <img src="{{ $signatureSrc }}" alt="Signature" style="max-h-32 w-auto">
-                    </div>
-                @else
-                    <p class="text-sm text-red-600">Signature file not found at {{ $checkPath }}</p>
-                @endif
-            </div>
-            <hr class="border-gray-200">
-        @endif
-
+		<!-- Signature -->
+		@if ($contract->signature_path || $contract->status !== 'draft')
+			@php
+				$signaturePath = trim($contract->signature_path ?? '');
+				$checkPath = str_replace('storage/', '', $signaturePath);
+				$signatureFullPath = $signaturePath ? storage_path('app/public/' . $checkPath) : null;
+				$signatureExists = $signatureFullPath ? file_exists($signatureFullPath) : false;
+				$signatureBase64 = null;
+				$signatureSrc = null;
+				
+				if ($signatureExists) {
+					try {
+						$signatureData = file_get_contents($signatureFullPath);
+						$signatureBase64 = 'data:image/png;base64,' . base64_encode($signatureData);
+						$signatureSrc = $signatureBase64;
+					} catch (\Exception $e) {
+						Log::error('Failed to process signature', [
+							'contract_id' => $contract->id,
+							'error' => $e->getMessage()
+						]);
+					}
+				}
+			@endphp
+			
+			<div class="section px-6 py-4 bg-white border-b border-gray-200">
+				<h3 class="text-lg font-semibold text-gray-900">Signature</h3>
+				
+				@if ($signatureExists && !empty($signatureSrc))
+					<!-- Signature file exists - show it -->
+					<div class="signature-wrapper border border-gray-200 rounded-lg p-2 bg-gray-50 mt-4">
+						<img src="{{ $signatureSrc }}" alt="Signature" style="max-height: 128px; width: auto;">
+					</div>
+					<p class="text-xs text-gray-500 mt-2">
+						Contract signed on {{ $contract->updated_at->format('M d, Y \a\t g:i A') }}
+					</p>
+				@elseif ($contract->ftp_to_vault && $contract->vault_path)
+					<!-- Contract uploaded to vault - signature removed for security -->
+					<div class="bg-blue-50 border border-blue-200 rounded-lg p-6 mt-4">
+						<div class="flex items-start">
+							<div class="flex-shrink-0">
+								<svg class="h-6 w-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+								</svg>
+							</div>
+							<div class="ml-3 flex-1">
+								<h4 class="text-sm font-semibold text-blue-900">Signature Securely Archived</h4>
+								<p class="mt-2 text-sm text-blue-800">
+									This contract was signed on <strong>{{ $contract->updated_at->format('M d, Y \a\t g:i A') }}</strong>.
+								</p>
+								<p class="mt-2 text-sm text-blue-800">
+									For security purposes, signature files are automatically removed from the server after successful upload to the vault. 
+									The complete signed contract can be accessed in the <strong>NISC iVue Vault</strong>.
+								</p>
+								<div class="mt-4 flex items-center text-xs text-blue-700">
+									<svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+									</svg>
+									<span>Uploaded to vault: {{ $contract->ftp_at->format('M d, Y \a\t g:i A') }}</span>
+								</div>
+								@if($contract->vault_path)
+									<div class="mt-1 flex items-center text-xs text-blue-700">
+										<svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+										</svg>
+										<span class="font-mono">{{ basename($contract->vault_path) }}</span>
+									</div>
+								@endif
+							</div>
+						</div>
+					</div>
+				@elseif ($contract->status === 'signed' || $contract->status === 'finalized')
+					<!-- Contract is signed but signature file is missing (edge case) -->
+					<div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mt-4">
+						<div class="flex items-start">
+							<div class="flex-shrink-0">
+								<svg class="h-6 w-6 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+								</svg>
+							</div>
+							<div class="ml-3">
+								<h4 class="text-sm font-semibold text-yellow-900">Signature File Not Available</h4>
+								<p class="mt-2 text-sm text-yellow-800">
+									This contract was signed on <strong>{{ $contract->updated_at->format('M d, Y \a\t g:i A') }}</strong>, 
+									but the signature file is not currently available on this server.
+								</p>
+								@if(!$contract->ftp_to_vault)
+									<p class="mt-2 text-sm text-yellow-800">
+										The contract has not yet been uploaded to the vault. Please contact support if you need access to the signed copy.
+									</p>
+								@endif
+							</div>
+						</div>
+					</div>
+				@else
+					<!-- Contract not yet signed -->
+					<div class="bg-gray-50 border border-gray-200 rounded-lg p-6 mt-4">
+						<p class="text-sm text-gray-600 italic">This contract has not been signed yet.</p>
+					</div>
+				@endif
+			</div>
+			<hr class="border-gray-200">
+		@endif
+ 
         <!-- Buttons -->
         <div class="px-6 py-6 flex flex-wrap gap-4 no-print">
             <a href="{{ route('contracts.download', $contract->id) }}"
@@ -457,7 +525,7 @@
             <!-- Financing Form Button -->
             @if($contract->requiresFinancing())
                 @if($contract->financing_status === 'pending')
-                    <a href="{{ route('contracts.financing', $contract->id) }}" 
+                    <a href="{{ route('contracts.financing.index', $contract->id) }}" 
                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
                        style="background-color: #ea580c !important; color: #ffffff !important;">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -466,7 +534,7 @@
                         Financing Form (Pending)
                     </a>
                 @elseif($contract->financing_status === 'signed')
-                    <a href="{{ route('contracts.financing', $contract->id) }}" 
+                    <a href="{{ route('contracts.financing.index', $contract->id) }}" 
                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                        style="background-color: #2563eb !important; color: #ffffff !important;">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -475,7 +543,7 @@
                         Financing Form (Signed)
                     </a>
                 @elseif($contract->financing_status === 'finalized')
-                    <a href="{{ route('contracts.financing', $contract->id) }}" 
+                    <a href="{{ route('contracts.financing.index', $contract->id) }}" 
                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
                        style="background-color: #16a34a !important; color: #ffffff !important;">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -488,7 +556,7 @@
 
 			<!-- DRO Form Button -->
 			@if($contract->requiresDro())
-				<a href="{{ route('contracts.dro', $contract->id) }}" 
+				<a href="{{ route('contracts.dro.index', $contract->id) }}"
 				   class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white 
 				   {{ $contract->dro_status === 'finalized' ? 'bg-green-600 hover:bg-green-700' : 'bg-orange-600 hover:bg-orange-700' }}">
 					<svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
