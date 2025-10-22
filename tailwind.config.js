@@ -9,6 +9,20 @@ export default {
         './resources/views/**/*.blade.php',
     ],
 
+    safelist: [
+        // Signature page animations
+        'signature-page-container',
+        'signature-card',
+        'signature-pad-wrapper',
+        'signature-button',
+        'signature-canvas',
+        'clear-signature-btn',
+        'signature-success',
+        'loading-spinner',
+        'stagger-item',
+        'form-input-animated',
+    ],
+
     theme: {
         extend: {
             fontFamily: {

@@ -1,16 +1,16 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="max-w-7xl mx-auto sm:px-6 lg:px-8 py-6">
-    <div class="bg-white shadow rounded-lg overflow-hidden">
+<div class="max-w-7xl mx-auto sm:px-6 lg:px-8 py-6 signature-page-container">
+    <div class="bg-white shadow rounded-lg overflow-hidden signature-card">
         <div class="px-6 py-4 border-b border-gray-200">
             <h2 class="text-2xl font-bold text-gray-900">Initial DRO Form as CSR</h2>
         </div>
-        
+
         <div class="px-6 py-4">
-            <p class="mb-4">Please provide your initials below to confirm you have reviewed the DRO form.</p>
-            
-            <div wire:ignore x-data="{
+            <p class="mb-4 stagger-item">Please provide your initials below to confirm you have reviewed the DRO form.</p>
+
+            <div class="signature-pad-wrapper" wire:ignore x-data="{
                 signaturePad: null,
                 initials: '',
                 init() {
@@ -40,10 +40,10 @@
                     this.signaturePad.clear();
                 }
             }" @resize.window="resizeCanvas">
-                <canvas x-ref="canvas" class="w-full border border-gray-300 rounded-md bg-gray-50" style="height: 250px; min-height: 250px;"></canvas>
-                <div class="flex justify-between mt-4">
-                    <button @click="clear" class="px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300">Clear</button>
-                    <button @click="save" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Save Initials</button>
+                <canvas x-ref="canvas" class="w-full border border-gray-300 rounded-md bg-gray-50 signature-canvas" style="height: 250px; min-height: 250px;"></canvas>
+                <div class="flex justify-between mt-4 stagger-item">
+                    <button @click="clear" class="px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300 clear-signature-btn">Clear</button>
+                    <button @click="save" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 signature-button">Save Initials</button>
                 </div>
             </div>
             

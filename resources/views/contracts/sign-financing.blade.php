@@ -1,9 +1,9 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="max-w-4xl mx-auto sm:px-6 lg:px-8 py-6">
-    <div class="mb-6">
-        <a href="{{ route('contracts.financing.index', $contract->id) }}" class="inline-flex items-center text-sm text-indigo-600 hover:text-indigo-500">
+<div class="max-w-4xl mx-auto sm:px-6 lg:px-8 py-6 signature-page-container">
+    <div class="mb-6 stagger-item">
+        <a href="{{ route('contracts.financing.index', $contract->id) }}" class="inline-flex items-center text-sm text-indigo-600 hover:text-indigo-500 transition-all duration-200 hover:translate-x-1">
             <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
             </svg>
@@ -11,14 +11,14 @@
         </a>
     </div>
 
-    <div class="bg-white shadow rounded-lg overflow-hidden">
+    <div class="bg-white shadow rounded-lg overflow-hidden signature-card">
         <div class="px-6 py-4 border-b border-gray-200">
             <h2 class="text-2xl font-bold text-gray-900">Sign Financing Form</h2>
             <p class="mt-1 text-sm text-gray-600">Contract #{{ $contract->id }} - {{ $contract->subscriber->first_name }} {{ $contract->subscriber->last_name }}</p>
         </div>
 
         <div class="px-6 py-6">
-            <p class="text-sm text-gray-700 mb-6">
+            <p class="text-sm text-gray-700 mb-6 stagger-item">
                 Please review the financing form and provide your signature below to confirm your agreement to the terms and conditions.
             </p>
 
@@ -30,14 +30,14 @@
 
             <form action="{{ route('contracts.financing.signature', $contract->id) }}" method="POST" id="signature-form">
                 @csrf
-                
-                <div class="mb-6">
+
+                <div class="mb-6 signature-pad-wrapper">
                     <label class="block text-sm font-medium text-gray-700 mb-2">Customer Signature</label>
-                    <div class="border border-gray-300 rounded-md bg-gray-50">
+                    <div class="border border-gray-300 rounded-md bg-gray-50 signature-canvas">
                         <canvas id="signature-pad" class="w-full" style="height: 300px; min-height: 300px; touch-action: none;"></canvas>
                     </div>
                     <div class="mt-2 flex justify-between items-center">
-                        <button type="button" id="clear-signature" class="text-sm text-gray-600 hover:text-gray-900">
+                        <button type="button" id="clear-signature" class="text-sm text-gray-600 hover:text-gray-900 clear-signature-btn">
                             Clear Signature
                         </button>
                         <p class="text-xs text-gray-500">Sign above using your mouse or touch screen</p>
@@ -49,13 +49,13 @@
 
                 <input type="hidden" name="signature" id="signature-data">
 
-                <div class="flex justify-end space-x-4">
-                    <a href="{{ route('contracts.financing.index', $contract->id) }}" 
-                       class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50">
+                <div class="flex justify-end space-x-4 stagger-item">
+                    <a href="{{ route('contracts.financing.index', $contract->id) }}"
+                       class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 signature-button">
                         Cancel
                     </a>
                     <button type="submit" id="submit-signature"
-                            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700">
+                            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 signature-button">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                         </svg>
