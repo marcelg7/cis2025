@@ -654,9 +654,7 @@ function addAddOn() {
             if (pricing.agreement_credit) {
                 document.getElementById('agreement_credit_amount').value = pricing.agreement_credit;
             }
-          
-            alert(`Bell pricing applied!\n\nDevice: ${currentPricingData.device_name}\nTier: ${currentPricingData.tier}\nRetail Price: $${parseFloat(pricing.retail_price).toFixed(2)}`);
-          
+
             applyPricingBtn.textContent = '✓ Applied';
             applyPricingBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
             applyPricingBtn.classList.add('bg-gray-400');

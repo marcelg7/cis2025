@@ -149,8 +149,10 @@ class BellPricingController extends Controller
 			}
 
 			// Store the uploaded file temporarily
+			// SECURITY: Use cryptographically secure random filename
 			$file = $request->file('pricing_file');
-			$filename = 'bell-pricing-' . time() . '.' . $file->getClientOriginalExtension();
+			$extension = $file->getClientOriginalExtension();
+			$filename = 'bell-pricing-' . \Illuminate\Support\Str::random(40) . '.' . $extension;
 			
 			// Use move instead of storeAs for more reliability
 			$fullPath = $tempDir . '/' . $filename;

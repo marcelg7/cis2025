@@ -173,7 +173,7 @@ return [
     |
     */
 
-    'secure' => env('SESSION_SECURE_COOKIE', env('APP_ENV') === 'production'),
+    'secure' => env('SESSION_SECURE_COOKIE', true), // SECURITY: Always use HTTPS for cookies
 
     /*
     |--------------------------------------------------------------------------

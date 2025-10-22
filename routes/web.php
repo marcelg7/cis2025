@@ -85,13 +85,14 @@ Route::middleware(['auth', 'throttle:60,1'])->group(function () {  // CHANGED FR
         // Signing & Finalization
         Route::get('/{contract}/sign', [ContractController::class, 'sign'])->name('sign');
         Route::post('/{contract}/sign', [ContractController::class, 'storeSignature'])->name('storeSignature');
-        Route::post('/{contract}/finalize', [ContractController::class, 'finalize'])->name('finalize');
+        // SECURITY: Rate limit sensitive operations (10 per minute)
+        Route::post('/{contract}/finalize', [ContractController::class, 'finalize'])->name('finalize')->middleware('throttle:10,1');
         Route::post('/{contract}/revision', [ContractController::class, 'createRevision'])->name('revision');
-        
+
         // Export & Communication
         Route::get('/{contract}/download', [ContractController::class, 'download'])->name('download');
-        Route::post('/{contract}/email', [ContractController::class, 'email'])->name('email');
-        Route::get('/{contract}/ftp', [ContractController::class, 'ftp'])->name('ftp');
+        Route::post('/{contract}/email', [ContractController::class, 'email'])->name('email')->middleware('throttle:10,1');
+        Route::get('/{contract}/ftp', [ContractController::class, 'ftp'])->name('ftp')->middleware('throttle:10,1');
         
         // Financing Form
         Route::prefix('{contract}/financing')->name('financing.')->group(function () {

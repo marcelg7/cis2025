@@ -71,9 +71,11 @@ class CellularPricingController extends Controller
 
 		try {
 			// Get the uploaded file and move it to a temp location
+			// SECURITY: Use cryptographically secure random filename
 			$file = $request->file('pricing_file');
-			$tempPath = sys_get_temp_dir() . '/cellular_pricing_' . time() . '.' . $file->getClientOriginalExtension();
-			
+			$extension = $file->getClientOriginalExtension();
+			$tempPath = sys_get_temp_dir() . '/cellular_pricing_' . \Illuminate\Support\Str::random(40) . '.' . $extension;
+
 			// Move uploaded file to temp path
 			$file->move(dirname($tempPath), basename($tempPath));
 

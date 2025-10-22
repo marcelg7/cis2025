@@ -124,7 +124,7 @@ class ContractPdfService
                 'defaultFont' => 'sans-serif',
                 'memory_limit' => '512M',
                 'chroot' => base_path(),
-                'isPhpEnabled' => true,
+                'isPhpEnabled' => false, // SECURITY: Never enable PHP in PDFs (prevents RCE)
                 'margin_top' => 10,
                 'margin_bottom' => 10,
                 'margin_left' => 10,

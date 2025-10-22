@@ -301,20 +301,11 @@ document.getElementById('apply_plan_btn').addEventListener('click', function() {
   
     document.getElementById('applied_plans_summary').style.display = 'block';
     updateTotalCellularCost();
-  
+
     document.getElementById('cellular_plan_selector').value = '';
     document.getElementById('plan_details_display').style.display = 'none';
     currentSelectedPlan = null;
-  
-    this.textContent = '✓ Applied';
-    this.classList.remove('bg-green-600', 'hover:bg-green-700');
-    this.classList.add('bg-gray-400');
-    setTimeout(() => {
-        this.textContent = 'Apply to Contract';
-        this.classList.remove('bg-gray-400');
-        this.classList.add('bg-green-600', 'hover:bg-green-700');
-    }, 1500);
-  
+
     if (typeof calculateTotal === 'function') {
         calculateTotal();
     }

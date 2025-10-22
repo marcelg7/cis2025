@@ -55,10 +55,11 @@ class TermsOfServiceController extends Controller
         try {
             $file = $request->file('pdf');
             $originalName = $file->getClientOriginalName();
-            
-            // Generate a unique filename
-            $filename = 'terms_of_service_' . time() . '_' . $originalName;
-            
+
+            // SECURITY: Generate cryptographically secure random filename to prevent path traversal and prediction
+            $extension = $file->getClientOriginalExtension();
+            $filename = 'terms_of_service_' . \Illuminate\Support\Str::random(40) . '.' . $extension;
+
             // Store the file
             $path = $file->storeAs('terms-of-service', $filename, 'public');
             

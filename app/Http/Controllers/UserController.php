@@ -18,18 +18,33 @@ class UserController extends Controller
 
     public function index(): View
     {
+        // SECURITY: Only admins can view all users
+        if (!auth()->user()->hasRole('admin')) {
+            abort(403, 'Unauthorized action.');
+        }
+
         $users = User::all();
         return view('users.index', compact('users'));
     }
 
     public function create(): View
     {
+        // SECURITY: Only admins can create users
+        if (!auth()->user()->hasRole('admin')) {
+            abort(403, 'Unauthorized action.');
+        }
+
         $roles = Role::pluck('name', 'name');
         return view('users.create', compact('roles'));
     }
 
     public function store(Request $request)
     {
+        // SECURITY: Only admins can create users
+        if (!auth()->user()->hasRole('admin')) {
+            abort(403, 'Unauthorized action.');
+        }
+
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
@@ -52,17 +67,36 @@ class UserController extends Controller
 
     public function edit(User $user): View
     {
+        // SECURITY: Only admins can edit users
+        if (!auth()->user()->hasRole('admin')) {
+            abort(403, 'Unauthorized action.');
+        }
+
         $roles = Role::pluck('name', 'name');
         return view('users.edit', compact('user', 'roles'));
     }
 
     public function update(Request $request, User $user)
     {
+        // SECURITY: Only admins can update users
+        if (!auth()->user()->hasRole('admin')) {
+            abort(403, 'Unauthorized action.');
+        }
+
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
             'role' => 'required|exists:roles,name',
-            'password' => 'nullable|string|min:8|confirmed',
+            // SECURITY: Strong password requirements (12+ chars, mixed case, numbers, special chars)
+            'password' => [
+                'nullable',
+                'string',
+                'min:12',
+                'confirmed',
+                'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/',
+            ],
+        ], [
+            'password.regex' => 'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character (@$!%*?&).',
         ]);
 
         $user->update([
@@ -78,6 +112,11 @@ class UserController extends Controller
 
     public function destroy(User $user)
     {
+        // SECURITY: Only admins can delete users
+        if (!auth()->user()->hasRole('admin')) {
+            abort(403, 'Unauthorized action.');
+        }
+
         if ($user->id === auth()->id()) {
             return redirect()->route('users.index')->with('error', 'Cannot delete your own account.');
         }

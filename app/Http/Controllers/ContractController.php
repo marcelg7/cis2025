@@ -132,29 +132,29 @@ class ContractController extends Controller
 			'bell_device_id' => 'nullable|exists:bell_devices,id',
 			'bell_pricing_type' => 'nullable|in:smartpay,dro,byod',
 			'bell_tier' => 'nullable|in:Ultra,Max,Select,Lite',
-			'bell_retail_price' => 'nullable|numeric|min:0',
-			'bell_monthly_device_cost' => 'nullable|numeric|min:0',
-			'bell_plan_cost' => 'nullable|numeric|min:0',
-			'bell_dro_amount' => 'nullable|numeric|min:0',
-			'bell_plan_plus_device' => 'nullable|numeric|min:0',
-			'agreement_credit_amount' => 'required|numeric|min:0',
-			'required_upfront_payment' => 'required|numeric|min:0',
-			'optional_down_payment' => 'nullable|numeric|min:0',
-			'deferred_payment_amount' => 'nullable|numeric|min:0',
+			'bell_retail_price' => 'nullable|numeric|min:0|max:10000', // SECURITY: Prevent unreasonably large values
+			'bell_monthly_device_cost' => 'nullable|numeric|min:0|max:10000',
+			'bell_plan_cost' => 'nullable|numeric|min:0|max:10000',
+			'bell_dro_amount' => 'nullable|numeric|min:0|max:10000',
+			'bell_plan_plus_device' => 'nullable|numeric|min:0|max:10000',
+			'agreement_credit_amount' => 'required|numeric|min:0|max:10000',
+			'required_upfront_payment' => 'required|numeric|min:0|max:10000',
+			'optional_down_payment' => 'nullable|numeric|min:0|max:10000',
+			'deferred_payment_amount' => 'nullable|numeric|min:0|max:10000',
 			'commitment_period_id' => 'required|exists:commitment_periods,id',
 			'first_bill_date' => 'required|date',
 			'imei' => 'nullable|string|max:20',
 			'add_ons' => 'nullable|array',
 			'add_ons.*.name' => 'required|string|max:100',
 			'add_ons.*.code' => 'nullable|string|max:50',
-			'add_ons.*.cost' => 'required|numeric',
+			'add_ons.*.cost' => 'required|numeric|max:10000',
 			'one_time_fees' => 'nullable|array',
 			'one_time_fees.*.name' => 'required|string|max:100',
-			'one_time_fees.*.cost' => 'required|numeric', // REMOVED min:0 to allow negative
+			'one_time_fees.*.cost' => 'required|numeric|min:-10000|max:10000', // Allow negative for credits
 			'rate_plan_id' => 'nullable|exists:rate_plans,id',
 			'mobile_internet_plan_id' => 'nullable|exists:mobile_internet_plans,id',
-			'rate_plan_price' => 'nullable|numeric|min:0',
-			'mobile_internet_price' => 'nullable|numeric|min:0',
+			'rate_plan_price' => 'nullable|numeric|min:0|max:10000',
+			'mobile_internet_price' => 'nullable|numeric|min:0|max:10000',
 			'selected_tier' => 'nullable|string|in:Lite,Select,Max,Ultra',
 			'custom_device_name' => 'nullable|string|max:255',
 		]);
@@ -287,8 +287,8 @@ class ContractController extends Controller
                 [
                     number_format($remainingBalance, 2),
                     number_format($buyoutCost, 2),
-                    $contract->start_date->format('M d, Y'),
-                    $contract->end_date->format('M d, Y'),
+                    $contract->start_date ? $contract->start_date->format('M d, Y') : 'N/A',
+                    $contract->end_date ? $contract->end_date->format('M d, Y') : 'N/A',
                     number_format($buyoutCost, 2),
                     number_format($deferredPayment, 2)
                 ],
@@ -343,7 +343,7 @@ class ContractController extends Controller
                 'defaultFont' => 'sans-serif',
                 'memory_limit' => '512M',
                 'chroot' => base_path(),
-                'isPhpEnabled' => true,
+                'isPhpEnabled' => false, // SECURITY: Never enable PHP in PDFs (prevents RCE)
                 'margin_top' => 10,
                 'margin_bottom' => 10,
                 'margin_left' => 10,
@@ -434,29 +434,29 @@ class ContractController extends Controller
 			'bell_device_id' => 'nullable|exists:bell_devices,id',
 			'bell_pricing_type' => 'nullable|in:smartpay,dro,byod',
 			'bell_tier' => 'nullable|in:Ultra,Max,Select,Lite',
-			'bell_retail_price' => 'nullable|numeric|min:0',
-			'bell_monthly_device_cost' => 'nullable|numeric|min:0',
-			'bell_plan_cost' => 'nullable|numeric|min:0',
-			'bell_dro_amount' => 'nullable|numeric|min:0',
-			'bell_plan_plus_device' => 'nullable|numeric|min:0',
-			'agreement_credit_amount' => 'nullable|numeric|min:0',
-			'required_upfront_payment' => 'nullable|numeric|min:0',
-			'optional_down_payment' => 'nullable|numeric|min:0',
-			'deferred_payment_amount' => 'nullable|numeric|min:0',
+			'bell_retail_price' => 'nullable|numeric|min:0|max:10000', // SECURITY: Prevent unreasonably large values
+			'bell_monthly_device_cost' => 'nullable|numeric|min:0|max:10000',
+			'bell_plan_cost' => 'nullable|numeric|min:0|max:10000',
+			'bell_dro_amount' => 'nullable|numeric|min:0|max:10000',
+			'bell_plan_plus_device' => 'nullable|numeric|min:0|max:10000',
+			'agreement_credit_amount' => 'nullable|numeric|min:0|max:10000',
+			'required_upfront_payment' => 'nullable|numeric|min:0|max:10000',
+			'optional_down_payment' => 'nullable|numeric|min:0|max:10000',
+			'deferred_payment_amount' => 'nullable|numeric|min:0|max:10000',
 			'commitment_period_id' => 'required|exists:commitment_periods,id',
 			'first_bill_date' => 'required|date|after_or_equal:start_date',
 			'imei' => 'nullable|string|max:20',
 			'add_ons' => 'nullable|array',
 			'add_ons.*.name' => 'required|string|max:255',
 			'add_ons.*.code' => 'required|string|max:255',
-			'add_ons.*.cost' => 'required|numeric',
+			'add_ons.*.cost' => 'required|numeric|max:10000',
 			'one_time_fees' => 'nullable|array',
 			'one_time_fees.*.name' => 'required|string|max:255',
-			'one_time_fees.*.cost' => 'required|numeric', // REMOVED min:0 to allow negative
+			'one_time_fees.*.cost' => 'required|numeric|min:-10000|max:10000', // Allow negative for credits
 			'rate_plan_id' => 'nullable|exists:rate_plans,id',
 			'mobile_internet_plan_id' => 'nullable|exists:mobile_internet_plans,id',
-			'rate_plan_price' => 'nullable|numeric|min:0',
-			'mobile_internet_price' => 'nullable|numeric|min:0',
+			'rate_plan_price' => 'nullable|numeric|min:0|max:10000',
+			'mobile_internet_price' => 'nullable|numeric|min:0|max:10000',
 			'selected_tier' => 'nullable|string|in:Lite,Select,Max,Ultra',
 			'custom_device_name' => 'nullable|string|max:255',
 		]);
@@ -673,8 +673,8 @@ class ContractController extends Controller
 					[
 						number_format($remainingBalance, 2),
 						number_format($buyoutCost, 2),
-						$contract->start_date->format('M d, Y'),
-						$contract->end_date->format('M d, Y'),
+						$contract->start_date ? $contract->start_date->format('M d, Y') : 'N/A',
+						$contract->end_date ? $contract->end_date->format('M d, Y') : 'N/A',
 						number_format($buyoutCost, 2),
 						number_format($deferredPayment, 2)
 					],
@@ -728,7 +728,7 @@ class ContractController extends Controller
 					'defaultFont' => 'sans-serif',
 					'memory_limit' => '512M',
 					'chroot' => base_path(),
-					'isPhpEnabled' => true,
+					'isPhpEnabled' => false, // SECURITY: Never enable PHP in PDFs (prevents RCE)
 					'margin_top' => 10,
 					'margin_bottom' => 10,
 					'margin_left' => 10,
@@ -800,8 +800,8 @@ class ContractController extends Controller
 				[
 					number_format($remainingBalance, 2),
 					number_format($buyoutCost, 2),
-					$contract->start_date->format('M d, Y'),
-					$contract->end_date->format('M d, Y'),
+					$contract->start_date ? $contract->start_date->format('M d, Y') : 'N/A',
+					$contract->end_date ? $contract->end_date->format('M d, Y') : 'N/A',
 					number_format($buyoutCost, 2),
 					number_format($deferredPayment, 2)
 				],
@@ -855,7 +855,7 @@ class ContractController extends Controller
 				'defaultFont' => 'sans-serif',
 				'memory_limit' => '512M',
 				'chroot' => base_path(),
-				'isPhpEnabled' => true,
+				'isPhpEnabled' => false, // SECURITY: Never enable PHP in PDFs (prevents RCE)
 				'margin_top' => 10,
 				'margin_bottom' => 10,
 				'margin_left' => 10,
@@ -1150,8 +1150,8 @@ class ContractController extends Controller
 				[
 					number_format($remainingBalance, 2),
 					number_format($buyoutCost, 2),
-					$contract->start_date->format('M d, Y'),
-					$contract->end_date->format('M d, Y'),
+					$contract->start_date ? $contract->start_date->format('M d, Y') : 'N/A',
+					$contract->end_date ? $contract->end_date->format('M d, Y') : 'N/A',
 					number_format($buyoutCost, 2),
 					number_format($deferredPayment, 2)
 				],
@@ -1482,7 +1482,7 @@ class ContractController extends Controller
         $options->set('defaultFont', 'sans-serif');
         $options->set('memory_limit', '512M');
         $options->set('chroot', base_path());
-        $options->set('isPhpEnabled', true);
+        $options->set('isPhpEnabled', false); // SECURITY: Never enable PHP in PDFs (prevents RCE)
         $options->set('margin_top', 10);
         $options->set('margin_bottom', 10);
         $options->set('margin_left', 10);
@@ -1730,7 +1730,7 @@ class ContractController extends Controller
 		$options->set('defaultFont', 'sans-serif');
 		$options->set('memory_limit', '512M');
 		$options->set('chroot', base_path());
-		$options->set('isPhpEnabled', true);
+		$options->set('isPhpEnabled', false); // SECURITY: Never enable PHP in PDFs (prevents RCE)
 		$options->set('margin_top', 10);
 		$options->set('margin_bottom', 10);
 		$options->set('margin_left', 10);
