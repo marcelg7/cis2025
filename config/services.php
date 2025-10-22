@@ -40,4 +40,10 @@ return [
         'token' => env('CUSTOMER_API_TOKEN'),
     ],
 
+    'github' => [
+        'owner' => env('GITHUB_OWNER'),
+        'repo' => env('GITHUB_REPO'),
+        'token' => env('GITHUB_TOKEN'),
+    ],
+
 ];

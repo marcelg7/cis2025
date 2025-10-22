@@ -919,7 +919,7 @@ class ContractController extends Controller
         if ($email && filter_var($email, FILTER_VALIDATE_EMAIL)) {
             try {
                 // Check if we should simulate email (development/test mode for non-Hay emails)
-                $shouldSimulate = env('APP_ENV') !== 'production' &&
+                $shouldSimulate = config('app.env') !== 'production' &&
                                  !str_ends_with($email, '@haymail.ca') &&
                                  !str_ends_with($email, '@hay.net');
 

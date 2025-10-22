@@ -11,9 +11,9 @@ class ChangelogController extends Controller
 	public function index()
 	{
 		$commits = [];
-		$owner = env('GITHUB_OWNER');
-		$repo = env('GITHUB_REPO');
-		$token = env('GITHUB_TOKEN'); // From your .env
+		$owner = config('services.github.owner');
+		$repo = config('services.github.repo');
+		$token = config('services.github.token');
 		$url = "https://api.github.com/repos/{$owner}/{$repo}/commits";
 
 		$response = Http::withToken($token)
