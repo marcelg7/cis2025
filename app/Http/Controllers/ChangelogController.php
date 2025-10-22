@@ -15,7 +15,7 @@ class ChangelogController extends Controller
 		$repo = env('GITHUB_REPO');
 		$token = env('GITHUB_TOKEN'); // From your .env
 		$url = "https://api.github.com/repos/{$owner}/{$repo}/commits";
-		
+
 		$response = Http::withToken($token)
 			->withHeaders([
 				'Accept' => 'application/vnd.github.v3+json',
@@ -28,16 +28,27 @@ class ChangelogController extends Controller
 		if ($response->successful()) {
 			$data = $response->json();
 			foreach ($data as $commitData) {
+				$message = $commitData['commit']['message'];
+
+				// Split message into title and body
+				$lines = explode("\n", $message);
+				$title = array_shift($lines);
+
+				// Keep remaining lines as body, preserving blank lines for markdown
+				$body = implode("\n", $lines);
+				$body = trim($body);
+
 				$commits[] = [
 					'hash' => substr($commitData['sha'], 0, 7),
 					'author' => $commitData['commit']['author']['name'],
 					'date' => $commitData['commit']['author']['date'],
-					'message' => $commitData['commit']['message'],
+					'title' => $title,
+					'body' => $body,
 				];
 			}
 		} else {
 			Log::error('Failed to fetch GitHub commits: ' . $response->body());
-			$commits[] = ['hash' => '', 'author' => '', 'date' => '', 'message' => 'No changelog available. GitHub API call failed.'];
+			$commits[] = ['hash' => '', 'author' => '', 'date' => '', 'title' => 'Error', 'body' => 'No changelog available. GitHub API call failed.'];
 		}
 
 		return view('changelog', compact('commits'));
