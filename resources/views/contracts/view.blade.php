@@ -249,7 +249,7 @@
                 <div class="col-span-1 md:col-span-2 bg-gray-50 p-4 rounded-lg">
                     @if($contract->ratePlan && $contract->ratePlan->features)
                         <div class="prose prose-sm max-w-none text-gray-700">
-                            {!! $contract->ratePlan->features ?? '<p>No features available</p>' !!}
+                            {!! Str::markdown($contract->ratePlan->features) !!}
                         </div>
                     @else
                         <p class="text-sm text-gray-700">No rate plan features have been entered for this plan.</p>
@@ -275,7 +275,7 @@
                     @if($contract->mobileInternetPlan->description)
                         <div class="col-span-1 md:col-span-2 bg-gray-50 p-4 rounded-lg">
                             <div class="prose prose-sm max-w-none text-gray-700">
-                                {!! $contract->mobileInternetPlan->description !!}
+                                {!! Str::markdown($contract->mobileInternetPlan->description) !!}
                             </div>
                         </div>
                     @endif

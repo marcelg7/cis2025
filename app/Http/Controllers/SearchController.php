@@ -73,8 +73,8 @@ class SearchController extends Controller
                 
                 // If it looks like a phone number, search by digits only
                 if ($isPhoneSearch) {
-                    // Strip all formatting: dashes, spaces, parentheses, periods
-                    $q->orWhere(DB::raw("REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(mobile_number, '-', ''), ' ', ''), '(', ''), ')', ''), '.', '')"), 'LIKE', "%{$normalizedPhone}%");
+                    // Strip all formatting: dashes, spaces, parentheses, periods - use parameter binding to prevent SQL injection
+                    $q->orWhereRaw("REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(mobile_number, '-', ''), ' ', ''), '(', ''), ')', ''), '.', '') LIKE ?", ["%{$normalizedPhone}%"]);
                 }
             });
             
@@ -100,9 +100,9 @@ class SearchController extends Controller
                          ->orWhere('first_name', 'LIKE', "%{$query}%")
                          ->orWhere('last_name', 'LIKE', "%{$query}%");
                     
-                    // If it looks like a phone number, search by digits only
+                    // If it looks like a phone number, search by digits only - use parameter binding to prevent SQL injection
                     if ($isPhoneSearch) {
-                        $subQ->orWhere(DB::raw("REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(mobile_number, '-', ''), ' ', ''), '(', ''), ')', ''), '.', '')"), 'LIKE', "%{$normalizedPhone}%");
+                        $subQ->orWhereRaw("REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(mobile_number, '-', ''), ' ', ''), '(', ''), ')', ''), '.', '') LIKE ?", ["%{$normalizedPhone}%"]);
                     }
                 });
                 
@@ -166,7 +166,7 @@ class SearchController extends Controller
             $results['mobile_internet_plans'] = $mobileInternetQuery->limit(10)->get();
 
             // Search Users (if admin)
-            if (auth()->user()->hasRole('admin')) {
+            if (auth()->check() && auth()->user()->hasRole('admin')) {
                 $results['users'] = User::where(function($q) use ($query) {
                     $q->where('name', 'LIKE', "%{$query}%")
                       ->orWhere('email', 'LIKE', "%{$query}%");
@@ -176,14 +176,14 @@ class SearchController extends Controller
             }
 
             // Search Activity Types (if admin)
-            if (auth()->user()->hasRole('admin')) {
+            if (auth()->check() && auth()->user()->hasRole('admin')) {
                 $results['activity_types'] = ActivityType::where('name', 'LIKE', "%{$query}%")
                     ->limit(10)
                     ->get();
             }
 
             // Search Commitment Periods (if admin)
-            if (auth()->user()->hasRole('admin')) {
+            if (auth()->check() && auth()->user()->hasRole('admin')) {
                 $results['commitment_periods'] = CommitmentPeriod::where('name', 'LIKE', "%{$query}%")
                     ->limit(10)
                     ->get();

@@ -51,9 +51,10 @@ class CustomerController extends Controller
 			$response = $client->get(config('services.customer_api.url') . $customerNumber, [
                 'headers' => ['Authorization' => 'Basic ' . config('services.customer_api.token')]
             ]);
-            
+
 			$data = json_decode($response->getBody(), true);
-            Log::info('API response: ' . json_encode($data));
+            // Log only non-sensitive data (removed full API response to protect PII)
+            Log::info('API response received for customer', ['customer_number' => $customerNumber, 'has_data' => !empty($data)]);
             if (empty($data) || !isset($data['customer'])) {
                 Log::warning('Empty or invalid API response for customer: ' . $customerNumber);
                 $latestContracts = Contract::with(['subscriber.mobilityAccount.ivueAccount.customer', 'device', 'activityType'])

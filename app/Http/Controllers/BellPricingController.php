@@ -99,6 +99,26 @@ class BellPricingController extends Controller
 			'effective_date' => 'required|date',
 		]);
 
+		// Verify actual file content (magic bytes) to prevent file type spoofing
+		$file = $request->file('pricing_file');
+		if ($file) {
+			$finfo = finfo_open(FILEINFO_MIME_TYPE);
+			$mimeType = finfo_file($finfo, $file->getRealPath());
+			finfo_close($finfo);
+
+			$allowedMimeTypes = [
+				'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
+				'application/vnd.ms-excel', // .xls
+				'application/zip', // .xlsx files may also be detected as zip
+			];
+
+			if (!in_array($mimeType, $allowedMimeTypes)) {
+				return redirect()->back()
+					->with('error', 'Invalid file type. Only Excel files (.xlsx, .xls) are allowed.')
+					->withInput();
+			}
+		}
+
 		try {
 			// Increase limits for large imports
 			ini_set('max_execution_time', 300); // 5 minutes

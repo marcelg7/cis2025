@@ -39,6 +39,19 @@ class TermsOfServiceController extends Controller
             'notes' => 'nullable|string|max:500',
         ]);
 
+        // Verify actual file content (magic bytes) to prevent file type spoofing
+        $file = $request->file('pdf');
+        if ($file) {
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            $mimeType = finfo_file($finfo, $file->getRealPath());
+            finfo_close($finfo);
+
+            if ($mimeType !== 'application/pdf') {
+                return redirect()->back()
+                    ->with('error', 'Invalid file type. Only PDF files are allowed.');
+            }
+        }
+
         try {
             $file = $request->file('pdf');
             $originalName = $file->getClientOriginalName();

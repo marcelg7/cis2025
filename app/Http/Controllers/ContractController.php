@@ -909,10 +909,9 @@ class ContractController extends Controller
                                  !str_ends_with($email, '@hay.net');
 
                 if ($shouldSimulate) {
-                    // Simulate email sending
+                    // Simulate email sending (PII removed from logs)
                     Log::info('Email simulated (test mode for non-Hay email)', [
                         'contract_id' => $id,
-                        'email' => $email,
                         'reason' => 'Development/test mode - email does not end in @haymail.ca or @hay.net'
                     ]);
                     $messages[] = 'Contract email simulated (test mode).';
@@ -924,13 +923,14 @@ class ContractController extends Controller
                         $message->attachData($mergedPdfContent, $remoteFilename, ['mime' => 'application/pdf']);
                     });
 
-                    Log::info('Contract email sent with merged PDF', ['contract_id' => $id, 'email' => $email]);
+                    // Log without exposing PII (email address removed)
+                    Log::info('Contract email sent with merged PDF', ['contract_id' => $id]);
                     $messages[] = 'Contract emailed to customer successfully.';
                 }
             } catch (\Exception $e) {
+                // Log without exposing PII (email address removed)
                 Log::error('Failed to send contract email during finalization', [
                     'contract_id' => $id,
-                    'email' => $email,
                     'error' => $e->getMessage()
                 ]);
                 $messages[] = 'Contract emailing failed: ' . $e->getMessage();
@@ -1166,7 +1166,8 @@ class ContractController extends Controller
       
         $email = $contract->subscriber->mobilityAccount->ivueAccount->customer->email;
         if (!$email || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            Log::error('Invalid or missing email for customer', ['contract_id' => $id, 'email' => $email]);
+            // Log without exposing PII (email address removed)
+            Log::error('Invalid or missing email for customer', ['contract_id' => $id, 'email_provided' => !empty($email)]);
             return redirect()->back()->with('error', 'No valid email address found for this customer.');
         }
       
@@ -1181,11 +1182,13 @@ class ContractController extends Controller
                     ->subject('Your Hay CIS Contract #' . $contract->id);
                 $message->attachData($mergedPdfContent, $pdfFileName, ['mime' => 'application/pdf']);
             });
-      
-            Log::info('Contract email sent with merged PDF', ['contract_id' => $id, 'email' => $email]);
+
+            // Log without exposing PII (email address removed)
+            Log::info('Contract email sent with merged PDF', ['contract_id' => $id]);
             return redirect()->back()->with('success', 'Contract emailed successfully.');
         } catch (\Exception $e) {
-            Log::error('Failed to send contract email', ['contract_id' => $id, 'email' => $email, 'error' => $e->getMessage()]);
+            // Log without exposing PII (email address removed)
+            Log::error('Failed to send contract email', ['contract_id' => $id, 'error' => $e->getMessage()]);
             return redirect()->back()->with('error', 'Failed to send email: ' . $e->getMessage());
         }
     }
