@@ -9,8 +9,15 @@ return new class extends Migration
 {
     public function up(): void
     {
+        // Skip this migration for SQLite (testing)
+        if (DB::connection()->getDriverName() === 'sqlite') {
+            return;
+        }
+
         Schema::table('contracts', function (Blueprint $table) {
-            DB::table('contracts')->update(['plan_id' => null]);
+            if (DB::table('contracts')->exists()) {
+                DB::table('contracts')->update(['plan_id' => null]);
+            }
             $table->dropForeign(['plan_id']);
             $table->dropColumn('plan_id');
         });

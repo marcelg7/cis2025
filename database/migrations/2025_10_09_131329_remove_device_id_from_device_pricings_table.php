@@ -9,13 +9,20 @@ return new class extends Migration
 {
     public function up(): void
     {
+        // Skip this migration for SQLite (testing)
+        if (DB::connection()->getDriverName() === 'sqlite') {
+            return;
+        }
+
         Schema::table('device_pricings', function (Blueprint $table) {
             // Make column nullable if not already
             $table->unsignedBigInteger('device_id')->nullable()->change();
         });
 
-        // Now update to NULL
-        DB::table('device_pricings')->update(['device_id' => null]);
+        // Now update to NULL (only if table has data)
+        if (DB::table('device_pricings')->exists()) {
+            DB::table('device_pricings')->update(['device_id' => null]);
+        }
 
         Schema::table('device_pricings', function (Blueprint $table) {
             $table->dropForeign('device_pricings_device_id_foreign');

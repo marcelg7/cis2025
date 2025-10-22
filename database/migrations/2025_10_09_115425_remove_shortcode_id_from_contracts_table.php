@@ -9,13 +9,20 @@ return new class extends Migration
 {
     public function up(): void
     {
+        // Skip this migration for SQLite (testing)
+        if (DB::connection()->getDriverName() === 'sqlite') {
+            return;
+        }
+
         Schema::table('contracts', function (Blueprint $table) {
-            // Clear references first to avoid integrity violations
-            DB::table('contracts')->update(['shortcode_id' => null]);
-            
+            // Clear references first to avoid integrity violations (only if table has data)
+            if (DB::table('contracts')->exists()) {
+                DB::table('contracts')->update(['shortcode_id' => null]);
+            }
+
             // Drop the foreign key using column name (Laravel auto-generates the constraint name)
             $table->dropForeign(['shortcode_id']);
-            
+
             // Drop the column
             $table->dropColumn('shortcode_id');
         });

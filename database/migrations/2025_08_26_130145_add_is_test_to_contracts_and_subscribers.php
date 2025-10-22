@@ -2,6 +2,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 class AddIsTestToContractsAndSubscribers extends Migration
 {
@@ -20,11 +21,19 @@ class AddIsTestToContractsAndSubscribers extends Migration
             $table->boolean('is_test')->default(false)->after('is_active');
         });
 
-        // Set existing records as test data
-        DB::table('contracts')->update(['is_test' => 1]);
-        DB::table('subscribers')->update(['is_test' => 1]);
-        DB::table('customers')->update(['is_test' => 1]);
-        DB::table('plans')->update(['is_test' => 1]); // Add this line
+        // Set existing records as test data (only if tables have data)
+        if (DB::table('contracts')->exists()) {
+            DB::table('contracts')->update(['is_test' => 1]);
+        }
+        if (DB::table('subscribers')->exists()) {
+            DB::table('subscribers')->update(['is_test' => 1]);
+        }
+        if (DB::table('customers')->exists()) {
+            DB::table('customers')->update(['is_test' => 1]);
+        }
+        if (DB::table('plans')->exists()) {
+            DB::table('plans')->update(['is_test' => 1]);
+        }
     }
 
     public function down()
