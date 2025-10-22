@@ -40,9 +40,6 @@ Route::middleware(['guest', 'throttle:10,1'])->group(function () {
         ->name('password.store');
 });
 
-// Test Routes
-Route::get('/test-alpine', fn() => view('test-alpine'))->name('test.alpine');
-
 /*
 |--------------------------------------------------------------------------
 | Authenticated Routes (ALL authenticated users)
@@ -184,11 +181,10 @@ Route::middleware(['auth', 'throttle:60,1'])->group(function () {  // CHANGED FR
 
     /*
     |--------------------------------------------------------------------------
-    | Mobile & Test Routes
+    | Mobile Routes
     |--------------------------------------------------------------------------
     */
     Route::get('/mobile/devices', [MobileController::class, 'devices'])->name('mobile.devices');
-    Route::get('/test-wp', [MobileController::class, 'testWordpress'])->name('test.wordpress');
 
     /*
     |--------------------------------------------------------------------------

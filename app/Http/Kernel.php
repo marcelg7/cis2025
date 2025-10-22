@@ -38,9 +38,7 @@ class Kernel extends HttpKernel
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
             \App\Http\Middleware\TrackActiveUsers::class,
             \App\Http\Middleware\CustomSessionLifetime::class,
-			
-
-		
+            \App\Http\Middleware\LogSecurityEvents::class, // SECURITY: Log authorization failures and rate limit events
         ],
         'api' => [
             \Illuminate\Routing\Middleware\ThrottleRequests::class.':api',
