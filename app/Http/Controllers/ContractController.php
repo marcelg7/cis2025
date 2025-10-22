@@ -355,7 +355,8 @@ class ContractController extends Controller
         $contract->update(['pdf_path' => $pdfPath]);
         
         $customerId = $contract->subscriber->mobilityAccount->ivueAccount->customer_id;
-        return redirect()->route('customers.show', $customerId)->with('success', 'Contract created successfully.');
+        // Redirect to contract view to start signing flow
+        return redirect()->route('contracts.view', $contract->id)->with('success', 'Contract created successfully. Please proceed with signing.');
     }
 	
 	public function edit(Contract $contract)
@@ -568,12 +569,24 @@ class ContractController extends Controller
     public function sign($id): \Illuminate\Contracts\View\View|\Illuminate\Http\RedirectResponse
     {
         $contract = Contract::with('subscriber.mobilityAccount.ivueAccount.customer')->findOrFail($id);
-        
+
         if ($contract->status !== 'draft') {
             Log::warning('Contract cannot be signed due to status', ['contract_id' => $id, 'status' => $contract->status]);
             return redirect()->route('contracts.view', $id)->with('error', 'Contract cannot be signed.');
         }
-        
+
+        // Check if financing needs to be signed first
+        if ($contract->requiresFinancing() && $contract->financing_status === 'pending') {
+            return redirect()->route('contracts.financing.sign', $id)
+                ->with('success', 'Please complete the financing form first.');
+        }
+
+        // Check if DRO needs to be signed first
+        if ($contract->requiresDro() && $contract->dro_status === 'pending') {
+            return redirect()->route('contracts.dro.sign', $id)
+                ->with('success', 'Please complete the DRO form first.');
+        }
+
         return view('contracts.sign', compact('contract'));
     }
 	
@@ -837,14 +850,24 @@ class ContractController extends Controller
 		$pdfPath = "contracts/contract_{$contract->id}.pdf";
 		Storage::disk('public')->put($pdfPath, $pdf->output());
 		$contract->update(['pdf_path' => $pdfPath]);
-		
+
 		Log::info('PDF generated for finalized contract', ['contract_id' => $id, 'pdf_path' => $pdfPath]);
-        
-        // FTP Upload to Vault
+
+        // Generate merged PDF (includes financing, DRO, and main contract)
+        $pdfService = app(ContractPdfService::class);
+        $mergedPdfContent = $pdfService->generateMergedPdfContent($contract);
+
+        // Save merged PDF
+        $mergedPdfPath = "contracts/contract_{$contract->id}_merged.pdf";
+        Storage::disk('public')->put($mergedPdfPath, $mergedPdfContent);
+
+        // FTP Upload merged PDF to Vault
         $ftpService = new VaultFtpService();
         $remoteFilename = $ftpService->getRemoteFilename($contract);
-        $result = $ftpService->uploadToVault($pdfPath, $remoteFilename);
-        
+        $result = $ftpService->uploadToVault($mergedPdfPath, $remoteFilename);
+
+        $messages = [];
+
         if ($result['success']) {
             $contract->update([
                 'ftp_to_vault' => true,
@@ -852,45 +875,82 @@ class ContractController extends Controller
                 'vault_path' => $result['path'],
                 'ftp_error' => null
             ]);
-            
-            $message = $result['test_mode'] ?? false 
-                ? 'Contract finalized successfully (Vault upload simulated in test mode).' 
+
+            $messages[] = $result['test_mode'] ?? false
+                ? 'Contract finalized successfully (Vault upload simulated in test mode).'
                 : 'Contract finalized and uploaded to vault successfully.';
-            
-            Log::info('Contract uploaded to vault during finalization', [
+
+            Log::info('Merged contract uploaded to vault during finalization', [
                 'contract_id' => $id,
                 'vault_filename' => $remoteFilename,
                 'test_mode' => $result['test_mode'] ?? false
             ]);
-            
-            // Cleanup files after successful upload
-            $cleanupService = new ContractFileCleanupService();
-            if ($cleanupService->canCleanup($contract)) {
-                $cleanupResult = $cleanupService->cleanupContractFiles($contract);
-                Log::info('Contract files cleaned up', [
-                    'contract_id' => $id,
-                    'deleted_count' => $cleanupResult['deleted_count'],
-                    'files' => $cleanupResult['deleted_files']
-                ]);
-                
-                $message .= sprintf(' %d sensitive file(s) securely deleted.', $cleanupResult['deleted_count']);
-            }
-            
-            return redirect()->route('contracts.view', $id)->with('success', $message);
         } else {
             $contract->update([
                 'ftp_to_vault' => false,
                 'ftp_error' => $result['error']
             ]);
-            
+
             Log::warning('Contract finalized but FTP upload failed', [
                 'contract_id' => $id,
                 'error' => $result['error']
             ]);
-            
-            return redirect()->route('contracts.view', $id)
-                ->with('warning', 'Contract finalized successfully, but upload to vault failed. You can retry from the contract page.');
+
+            $messages[] = 'Contract finalized, but upload to vault failed.';
         }
+
+        // Email customer with merged PDF
+        $email = $contract->subscriber->mobilityAccount->ivueAccount->customer->email;
+        if ($email && filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            try {
+                // Check if we should simulate email (development/test mode for non-Hay emails)
+                $shouldSimulate = env('APP_ENV') !== 'production' &&
+                                 !str_ends_with($email, '@haymail.ca') &&
+                                 !str_ends_with($email, '@hay.net');
+
+                if ($shouldSimulate) {
+                    // Simulate email sending
+                    Log::info('Email simulated (test mode for non-Hay email)', [
+                        'contract_id' => $id,
+                        'email' => $email,
+                        'reason' => 'Development/test mode - email does not end in @haymail.ca or @hay.net'
+                    ]);
+                    $messages[] = 'Contract email simulated (test mode).';
+                } else {
+                    // Actually send email
+                    Mail::send('emails.contract', ['contract' => $contract], function ($message) use ($contract, $email, $mergedPdfContent, $remoteFilename) {
+                        $message->to($email)
+                            ->subject('Your Hay CIS Contract #' . $contract->id);
+                        $message->attachData($mergedPdfContent, $remoteFilename, ['mime' => 'application/pdf']);
+                    });
+
+                    Log::info('Contract email sent with merged PDF', ['contract_id' => $id, 'email' => $email]);
+                    $messages[] = 'Contract emailed to customer successfully.';
+                }
+            } catch (\Exception $e) {
+                Log::error('Failed to send contract email during finalization', [
+                    'contract_id' => $id,
+                    'email' => $email,
+                    'error' => $e->getMessage()
+                ]);
+                $messages[] = 'Contract emailing failed: ' . $e->getMessage();
+            }
+        }
+
+        // Cleanup files after successful upload
+        $cleanupService = new ContractFileCleanupService();
+        if ($cleanupService->canCleanup($contract)) {
+            $cleanupResult = $cleanupService->cleanupContractFiles($contract);
+            Log::info('Contract files cleaned up', [
+                'contract_id' => $id,
+                'deleted_count' => $cleanupResult['deleted_count'],
+                'files' => $cleanupResult['deleted_files']
+            ]);
+
+            $messages[] = sprintf('%d sensitive file(s) securely deleted.', $cleanupResult['deleted_count']);
+        }
+
+        return redirect()->route('contracts.view', $id)->with('success', implode(' ', $messages));
     }
 	
     public function createRevision($id)
@@ -1227,9 +1287,9 @@ class ContractController extends Controller
             
             $contract->refresh();
             $this->generateFinancingPdf($contract);
-            
-            return redirect()->route('contracts.financing.index', $id)
-                ->with('success', 'Financing form signed successfully');
+
+            return redirect()->route('contracts.financing.csr-initial', $id)
+                ->with('success', 'Financing form signed successfully. Please initial as CSR.');
                
         } catch (\Exception $e) {
             Log::error('Error in storeFinancingSignature', ['contract_id' => $id, 'error' => $e->getMessage()]);
@@ -1243,68 +1303,31 @@ class ContractController extends Controller
             'subscriber.mobilityAccount.ivueAccount.customer',
             'bellDevice'
         ])->findOrFail($id);
-        
+
         if ($contract->financing_status !== 'csr_initialed') {
             return redirect()->route('contracts.financing.index', $id)
                 ->with('error', 'Financing form must be initialed by CSR before finalizing.');
         }
-        
+
         $contract->update([
             'financing_status' => 'finalized',
             'updated_by' => auth()->id(),
         ]);
-        
+
         $this->generateFinancingPdf($contract);
-        
+
         Log::info('Financing form finalized', ['contract_id' => $id]);
-        
-        $ftpService = new VaultFtpService();
-        $remoteFilename = $ftpService->getRemoteFilename($contract);
-        $remoteFilename = str_replace('.pdf', '_financing.pdf', $remoteFilename);
-        
-        $result = $ftpService->uploadToVault($contract->financing_pdf_path, $remoteFilename);
-        
-        if ($result['success']) {
-            Log::info('Financing form uploaded to vault', [
-                'contract_id' => $id,
-                'vault_filename' => $remoteFilename,
-                'test_mode' => $result['test_mode'] ?? false
-            ]);
-            
-            $cleanupService = new ContractFileCleanupService();
-            if ($cleanupService->canCleanup($contract)) {
-                $deletedFiles = [];
-                
-                if ($contract->financing_pdf_path && Storage::disk('public')->exists($contract->financing_pdf_path)) {
-                    Storage::disk('public')->delete($contract->financing_pdf_path);
-                    $deletedFiles[] = $contract->financing_pdf_path;
-                }
-                
-                if ($contract->financing_signature_path) {
-                    $path = str_replace('storage/', '', $contract->financing_signature_path);
-                    if (Storage::disk('public')->exists($path)) {
-                        Storage::disk('public')->delete($path);
-                        $deletedFiles[] = $path;
-                    }
-                }
-                
-                if ($contract->financing_csr_initials_path) {
-                    $path = str_replace('storage/', '', $contract->financing_csr_initials_path);
-                    if (Storage::disk('public')->exists($path)) {
-                        Storage::disk('public')->delete($path);
-                        $deletedFiles[] = $path;
-                    }
-                }
-                
-                Log::info('Financing files cleaned up', [
-                    'contract_id' => $id,
-                    'deleted_count' => count($deletedFiles)
-                ]);
-            }
+
+        // Auto-redirect to next step based on what's required
+        if ($contract->requiresDro() && $contract->dro_status === 'pending') {
+            // Redirect to DRO signing
+            return redirect()->route('contracts.dro.sign', $id)
+                ->with('success', 'Financing form finalized. Please proceed with DRO signing.');
+        } else {
+            // Redirect to main contract signing
+            return redirect()->route('contracts.sign', $id)
+                ->with('success', 'Financing form finalized. Please proceed with contract signing.');
         }
-        
-        return redirect()->route('contracts.financing.index', $id)
-            ->with('success', 'Financing form finalized successfully.');
     }
    
     public function signCsrFinancing($id)
@@ -1499,9 +1522,9 @@ class ContractController extends Controller
 			
 			$contract->refresh();
 			$this->generateDroPdf($contract);
-			
-			return redirect()->route('contracts.dro.index', $id)
-				->with('success', 'DRO form signed successfully');
+
+			return redirect()->route('contracts.dro.csr-initial', $id)
+				->with('success', 'DRO form signed successfully. Please initial as CSR.');
 				
 		} catch (\Exception $e) {
 			Log::error('Error in storeDroSignature', ['contract_id' => $id, 'error' => $e->getMessage()]);
@@ -1572,68 +1595,24 @@ class ContractController extends Controller
 			'subscriber.mobilityAccount.ivueAccount.customer',
 			'bellDevice'
 		])->findOrFail($id);
-		
+
 		if ($contract->dro_status !== 'csr_initialed') {
 			return redirect()->route('contracts.dro.index', $id)
 				->with('error', 'DRO form must be initialed by CSR before finalizing.');
 		}
-		
+
 		$contract->update([
 			'dro_status' => 'finalized',
 			'updated_by' => auth()->id(),
 		]);
-		
+
 		$this->generateDroPdf($contract);
-		
+
 		Log::info('DRO form finalized', ['contract_id' => $id]);
-		
-		$ftpService = new VaultFtpService();
-		$remoteFilename = $ftpService->getRemoteFilename($contract);
-		$remoteFilename = str_replace('.pdf', '_dro.pdf', $remoteFilename);
-		
-		$result = $ftpService->uploadToVault($contract->dro_pdf_path, $remoteFilename);
-		
-		if ($result['success']) {
-			Log::info('DRO form uploaded to vault', [
-				'contract_id' => $id,
-				'vault_filename' => $remoteFilename,
-				'test_mode' => $result['test_mode'] ?? false
-			]);
-			
-			$cleanupService = new ContractFileCleanupService();
-			if ($cleanupService->canCleanup($contract)) {
-				$deletedFiles = [];
-				
-				if ($contract->dro_pdf_path && Storage::disk('public')->exists($contract->dro_pdf_path)) {
-					Storage::disk('public')->delete($contract->dro_pdf_path);
-					$deletedFiles[] = $contract->dro_pdf_path;
-				}
-				
-				if ($contract->dro_signature_path) {
-					$path = str_replace('storage/', '', $contract->dro_signature_path);
-					if (Storage::disk('public')->exists($path)) {
-						Storage::disk('public')->delete($path);
-						$deletedFiles[] = $path;
-					}
-				}
-				
-				if ($contract->dro_csr_initials_path) {
-					$path = str_replace('storage/', '', $contract->dro_csr_initials_path);
-					if (Storage::disk('public')->exists($path)) {
-						Storage::disk('public')->delete($path);
-						$deletedFiles[] = $path;
-					}
-				}
-				
-				Log::info('DRO files cleaned up', [
-					'contract_id' => $id,
-					'deleted_count' => count($deletedFiles)
-				]);
-			}
-		}
-		
-		return redirect()->route('contracts.dro.index', $id)
-			->with('success', 'DRO form finalized successfully.');
+
+		// Auto-redirect to main contract signing
+		return redirect()->route('contracts.sign', $id)
+			->with('success', 'DRO form finalized. Please proceed with contract signing.');
 	}
 
 	public function downloadDro($id)

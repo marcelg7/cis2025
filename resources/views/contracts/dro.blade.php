@@ -59,12 +59,12 @@
                 @if($contract->dro_status === 'csr_initialed')
                     <form action="{{ route('contracts.dro.finalize', $contract->id) }}" method="POST" class="inline">
                         @csrf
-                        <button type="submit" 
+                        <button type="submit"
                                 class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700">
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                             </svg>
-                            Finalize DRO Form
+                            Finalize DRO & Continue
                         </button>
                     </form>
                 @endif
