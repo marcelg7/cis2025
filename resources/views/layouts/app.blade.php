@@ -308,6 +308,9 @@
                                         <a href="{{ route('changelog') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                             Changelog
                                         </a>
+                                        <a href="{{ route('readme') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                            Documentation
+                                        </a>
                                     </div>
                                 </div>
                             </div>
@@ -471,7 +474,10 @@
                             <x-responsive-nav-link :href="route('changelog')" :active="request()->routeIs('changelog')">
                                 Changelog
                             </x-responsive-nav-link>
-                            
+                            <x-responsive-nav-link :href="route('readme')" :active="request()->routeIs('readme')">
+                                Documentation
+                            </x-responsive-nav-link>
+
                             <div class="border-t border-gray-200 my-1 mx-4"></div>
                             
                             <x-responsive-nav-link :href="route('users.settings.edit')" :active="request()->routeIs('users.settings.edit')">

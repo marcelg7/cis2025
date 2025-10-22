@@ -16,6 +16,7 @@ use App\Http\Controllers\CellularPricingController;
 use App\Http\Controllers\RatePlanController;
 use App\Http\Controllers\MobileInternetPlanController;
 use App\Http\Controllers\ChangelogController;
+use App\Http\Controllers\ReadmeController;
 use App\Http\Controllers\TermsOfServiceController;
 use App\Http\Controllers\LogController;
 use App\Http\Controllers\SettingsController;
@@ -179,6 +180,7 @@ Route::middleware(['auth', 'throttle:60,1'])->group(function () {  // CHANGED FR
     Route::get('/change-password', fn() => view('auth.change-password'))->name('password.custom_change');
     Route::get('/search', [SearchController::class, 'search'])->name('search');
     Route::get('/changelog', [ChangelogController::class, 'index'])->name('changelog');
+    Route::get('/readme', [ReadmeController::class, 'index'])->name('readme');
 
     /*
     |--------------------------------------------------------------------------
