@@ -98,10 +98,11 @@ class ImportCellularPricePlans extends Command
 					$dataAmount = $this->extractDataAmount($planName);
 
 					try {
+						// Find the most recent plan with this SOC code to preserve custom features
 						$existingPlan = RatePlan::where('soc_code', $socCode)
-							->where('effective_date', $effectiveDate)
+							->orderBy('effective_date', 'desc')
 							->first();
-						
+
 						$planData = [
 							'plan_name' => $planName,
 							'plan_type' => 'byod',
@@ -159,10 +160,11 @@ class ImportCellularPricePlans extends Command
 					$dataAmount = $this->extractDataAmount($planName);
 
 					try {
+						// Find the most recent plan with this SOC code to preserve custom features
 						$existingPlan = RatePlan::where('soc_code', $socCode)
-							->where('effective_date', $effectiveDate)
+							->orderBy('effective_date', 'desc')
 							->first();
-						
+
 						$planData = [
 							'plan_name' => $planName,
 							'plan_type' => 'smartpay',
@@ -236,12 +238,13 @@ class ImportCellularPricePlans extends Command
             
             $category = isset($row[3]) ? trim($row[3]) : null;
             $promoGroup = isset($row[4]) ? trim($row[4]) : null;
-            
+
             try {
+                // Find the most recent plan with this SOC code to preserve custom description
                 $existingPlan = MobileInternetPlan::where('soc_code', $socCode)
-                    ->where('effective_date', $effectiveDate)
+                    ->orderBy('effective_date', 'desc')
                     ->first();
-                
+
                 $planData = [
                     'plan_name' => $planName,
                     'monthly_rate' => $monthlyRate,
