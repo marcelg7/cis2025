@@ -361,6 +361,9 @@ class ContractController extends Controller
 	
 	public function edit(Contract $contract)
 	{
+		// Authorization check - prevent IDOR vulnerability
+		$this->authorize('update', $contract);
+
 		$customers = Customer::orderBy('last_name')->get();
 		$users = User::orderBy('name')->get();
 		$activityTypes = ActivityType::orderBy('name')->get();
@@ -419,6 +422,9 @@ class ContractController extends Controller
 	   
 	public function update(Request $request, Contract $contract)
 	{
+		// Authorization check - prevent IDOR vulnerability
+		$this->authorize('update', $contract);
+
 		$validated = $request->validate([
 			'start_date' => 'required|date',
 			'end_date' => 'required|date|after:start_date',
@@ -570,6 +576,9 @@ class ContractController extends Controller
     {
         $contract = Contract::with('subscriber.mobilityAccount.ivueAccount.customer')->findOrFail($id);
 
+        // Authorization check - prevent IDOR vulnerability
+        $this->authorize('sign', $contract);
+
         if ($contract->status !== 'draft') {
             Log::warning('Contract cannot be signed due to status', ['contract_id' => $id, 'status' => $contract->status]);
             return redirect()->route('contracts.view', $id)->with('error', 'Contract cannot be signed.');
@@ -593,7 +602,10 @@ class ContractController extends Controller
 	public function storeSignature(Request $request, $id)
 	{
 		$contract = Contract::with('subscriber.mobilityAccount.ivueAccount.customer')->findOrFail($id);
-		
+
+		// Authorization check - prevent IDOR vulnerability
+		$this->authorize('sign', $contract);
+
 		if ($contract->status !== 'draft') {
 			Log::warning('Contract cannot be signed due to status in storeSignature', ['contract_id' => $id, 'status' => $contract->status]);
 			return redirect()->route('contracts.view', $id)->with('error', 'Contract cannot be signed.');
@@ -739,7 +751,10 @@ class ContractController extends Controller
 	public function finalize($id)
 	{
 		$contract = Contract::with('subscriber.mobilityAccount.ivueAccount.customer')->findOrFail($id);
-		
+
+		// Authorization check - prevent IDOR vulnerability
+		$this->authorize('finalize', $contract);
+
 		if ($contract->status !== 'signed') {
 			return redirect()->route('contracts.view', $id)->with('error', 'Contract must be signed before finalizing.');
 		}
@@ -956,7 +971,10 @@ class ContractController extends Controller
     public function createRevision($id)
     {
         $originalContract = Contract::with('subscriber.mobilityAccount.ivueAccount.customer')->findOrFail($id);
-        
+
+        // Authorization check - prevent IDOR vulnerability
+        $this->authorize('update', $originalContract);
+
         if ($originalContract->status !== 'finalized') {
             return redirect()->route('contracts.view', $id)->with('error', 'Only finalized contracts can have revisions.');
         }
@@ -984,7 +1002,10 @@ class ContractController extends Controller
     public function ftp($id)
     {
         $contract = Contract::with('subscriber.mobilityAccount.ivueAccount.customer')->findOrFail($id);
-       
+
+        // Authorization check - prevent IDOR vulnerability
+        $this->authorize('download', $contract);
+
         if ($contract->status !== 'finalized') {
             return redirect()->back()->with('error', 'Only finalized contracts can be uploaded to vault.');
         }
@@ -1033,7 +1054,10 @@ class ContractController extends Controller
     public function download($id)
     {
         $contract = Contract::findOrFail($id);
-       
+
+        // Authorization check - prevent IDOR vulnerability
+        $this->authorize('download', $contract);
+
         if ($contract->status !== 'finalized') {
             return redirect()->back()->with('error', 'Contract must be finalized to download.');
         }
@@ -1062,7 +1086,7 @@ class ContractController extends Controller
 	public function view($id)
 	{
 		Log::debug('Starting ContractController@view', ['id' => $id]);
-		
+
 		$contract = Contract::with([
 			'ratePlan',
 			'mobileInternetPlan',
@@ -1073,6 +1097,9 @@ class ContractController extends Controller
 			'commitmentPeriod',
 			'bellDevice'
 		])->findOrFail($id);
+
+		// Authorization check - prevent IDOR vulnerability
+		$this->authorize('view', $contract);
 		
 		$config = HTMLPurifier_Config::createDefault();
 		$config->set('Core.Encoding', 'UTF-8');
@@ -1159,7 +1186,10 @@ class ContractController extends Controller
     public function email($id)
     {
         $contract = Contract::with('subscriber.mobilityAccount.ivueAccount.customer')->findOrFail($id);
-        
+
+        // Authorization check - prevent IDOR vulnerability
+        $this->authorize('download', $contract);
+
         if ($contract->status !== 'finalized') {
             return redirect()->back()->with('error', 'Contract must be finalized to email.');
         }
@@ -1211,7 +1241,10 @@ class ContractController extends Controller
             'subscriber.mobilityAccount.ivueAccount.customer',
             'bellDevice'
         ])->findOrFail($id);
-        
+
+        // Authorization check - prevent IDOR vulnerability
+        $this->authorize('sign', $contract);
+
         if (!$contract->requiresFinancing()) {
             return redirect()->route('contracts.view', $id)
                 ->with('error', 'This contract does not require a financing form.');
@@ -1226,7 +1259,10 @@ class ContractController extends Controller
             'subscriber.mobilityAccount.ivueAccount.customer',
             'bellDevice'
         ])->findOrFail($id);
-        
+
+        // Authorization check - prevent IDOR vulnerability
+        $this->authorize('sign', $contract);
+
         if (!$contract->requiresFinancing()) {
             return redirect()->route('contracts.view', $id)
                 ->with('error', 'This contract does not require a financing form.');
@@ -1243,7 +1279,10 @@ class ContractController extends Controller
     public function storeFinancingSignature(Request $request, $id)
     {
         $contract = Contract::with('subscriber.mobilityAccount.ivueAccount.customer')->findOrFail($id);
-        
+
+        // Authorization check - prevent IDOR vulnerability
+        $this->authorize('sign', $contract);
+
         if ($contract->financing_status !== 'pending') {
             Log::warning('Financing form cannot be signed - wrong status', [
                 'contract_id' => $id,
@@ -1307,6 +1346,9 @@ class ContractController extends Controller
             'bellDevice'
         ])->findOrFail($id);
 
+        // Authorization check - prevent IDOR vulnerability
+        $this->authorize('finalize', $contract);
+
         if ($contract->financing_status !== 'csr_initialed') {
             return redirect()->route('contracts.financing.index', $id)
                 ->with('error', 'Financing form must be initialed by CSR before finalizing.');
@@ -1339,7 +1381,10 @@ class ContractController extends Controller
             'subscriber.mobilityAccount.ivueAccount.customer',
             'bellDevice'
         ])->findOrFail($id);
-        
+
+        // Authorization check - prevent IDOR vulnerability
+        $this->authorize('sign', $contract);
+
         if (!$contract->requiresFinancing() || $contract->financing_status !== 'customer_signed') {
             return redirect()->route('contracts.financing.index', $id)
                 ->with('error', 'Financing form cannot be initialed at this time.');
@@ -1351,7 +1396,10 @@ class ContractController extends Controller
     public function storeCsrFinancingInitials(Request $request, $id)
     {
         $contract = Contract::with('subscriber.mobilityAccount.ivueAccount.customer')->findOrFail($id);
-        
+
+        // Authorization check - prevent IDOR vulnerability
+        $this->authorize('sign', $contract);
+
         if ($contract->financing_status !== 'customer_signed') {
             return redirect()->route('contracts.financing.index', $id)
                 ->with('error', 'Financing form cannot be initialed at this time.');
@@ -1396,7 +1444,10 @@ class ContractController extends Controller
             'subscriber.mobilityAccount.ivueAccount.customer',
             'bellDevice'
         ])->findOrFail($id);
-        
+
+        // Authorization check - prevent IDOR vulnerability
+        $this->authorize('download', $contract);
+
         if ($contract->financing_status !== 'finalized') {
             return redirect()->back()->with('error', 'Financing form must be finalized to download.');
         }
@@ -1463,7 +1514,10 @@ class ContractController extends Controller
 			'subscriber.mobilityAccount.ivueAccount.customer',
 			'bellDevice'
 		])->findOrFail($id);
-		
+
+		// Authorization check - prevent IDOR vulnerability
+		$this->authorize('sign', $contract);
+
 		if (!$contract->requiresDro()) {
 			return redirect()->route('contracts.view', $id)
 				->with('error', 'This contract does not require a DRO form.');
@@ -1478,7 +1532,10 @@ class ContractController extends Controller
 			'subscriber.mobilityAccount.ivueAccount.customer',
 			'bellDevice'
 		])->findOrFail($id);
-		
+
+		// Authorization check - prevent IDOR vulnerability
+		$this->authorize('sign', $contract);
+
 		if (!$contract->requiresDro()) {
 			return redirect()->route('contracts.view', $id)
 				->with('error', 'This contract does not require a DRO form.');
@@ -1495,7 +1552,10 @@ class ContractController extends Controller
 	public function storeDroSignature(Request $request, $id)
 	{
 		$contract = Contract::with('subscriber.mobilityAccount.ivueAccount.customer')->findOrFail($id);
-		
+
+		// Authorization check - prevent IDOR vulnerability
+		$this->authorize('sign', $contract);
+
 		if ($contract->dro_status !== 'pending') {
 			return redirect()->route('contracts.dro.index', $id)
 				->with('error', 'DRO form cannot be signed at this time.');
@@ -1541,7 +1601,10 @@ class ContractController extends Controller
 			'subscriber.mobilityAccount.ivueAccount.customer',
 			'bellDevice'
 		])->findOrFail($id);
-		
+
+		// Authorization check - prevent IDOR vulnerability
+		$this->authorize('sign', $contract);
+
 		if (!$contract->requiresDro() || $contract->dro_status !== 'customer_signed') {
 			return redirect()->route('contracts.dro.index', $id)
 				->with('error', 'DRO form cannot be initialed at this time.');
@@ -1553,7 +1616,10 @@ class ContractController extends Controller
 	public function storeCsrDroInitials(Request $request, $id)
 	{
 		$contract = Contract::with('subscriber.mobilityAccount.ivueAccount.customer')->findOrFail($id);
-		
+
+		// Authorization check - prevent IDOR vulnerability
+		$this->authorize('sign', $contract);
+
 		if ($contract->dro_status !== 'customer_signed') {
 			return redirect()->route('contracts.dro.index', $id)
 				->with('error', 'DRO form cannot be initialed at this time.');
@@ -1599,6 +1665,9 @@ class ContractController extends Controller
 			'bellDevice'
 		])->findOrFail($id);
 
+		// Authorization check - prevent IDOR vulnerability
+		$this->authorize('finalize', $contract);
+
 		if ($contract->dro_status !== 'csr_initialed') {
 			return redirect()->route('contracts.dro.index', $id)
 				->with('error', 'DRO form must be initialed by CSR before finalizing.');
@@ -1624,7 +1693,10 @@ class ContractController extends Controller
 			'subscriber.mobilityAccount.ivueAccount.customer',
 			'bellDevice'
 		])->findOrFail($id);
-		
+
+		// Authorization check - prevent IDOR vulnerability
+		$this->authorize('download', $contract);
+
 		if ($contract->dro_status !== 'finalized') {
 			return redirect()->back()->with('error', 'DRO form must be finalized to download.');
 		}

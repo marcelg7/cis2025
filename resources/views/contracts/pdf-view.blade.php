@@ -171,7 +171,7 @@
             @endif
             <p><strong>Monthly Rate Plan Charge:</strong> ${{ number_format($contract->rate_plan_price ?? $contract->bell_plan_cost ?? 0, 2) }}</p>
             @if($contract->ratePlan && $contract->ratePlan->features)
-                {!! Str::markdown($contract->ratePlan->features) !!}
+                {!! \App\Helpers\MarkdownHelper::sanitize(Str::markdown($contract->ratePlan->features)) !!}
             @endif
             <p style="font-weight: bold;">Note: This plan may be subject to rate increases by the provider, which will apply during your term.</p>
             <p style="font-size: 5pt;">See hay.net/cellular-service for additional usage charges.</p>
@@ -186,7 +186,7 @@
                 <p><strong>Plan:</strong> {{ $contract->mobileInternetPlan->plan_name }}</p>
                 <p><strong>Monthly Charge:</strong> ${{ number_format($contract->mobile_internet_price ?? 0, 2) }}</p>
                 @if($contract->mobileInternetPlan->description)
-                    {!! Str::markdown($contract->mobileInternetPlan->description) !!}
+                    {!! \App\Helpers\MarkdownHelper::sanitize(Str::markdown($contract->mobileInternetPlan->description)) !!}
                 @endif
             </div>
         </div>

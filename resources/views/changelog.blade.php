@@ -52,7 +52,7 @@
                         @if (!empty($commit['body']))
                             <div class="px-6 py-4 bg-gray-50">
                                 <div class="changelog-content">
-                                    {!! Str::markdown($commit['body']) !!}
+                                    {!! \App\Helpers\MarkdownHelper::sanitize(Str::markdown($commit['body'])) !!}
                                 </div>
                             </div>
                         @endif

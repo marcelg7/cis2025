@@ -42,10 +42,26 @@ class CellularPricingController extends Controller
 			$allowedMimeTypes = [
 				'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
 				'application/vnd.ms-excel', // .xls
-				'application/zip', // .xlsx files may also be detected as zip
 			];
 
-			if (!in_array($mimeType, $allowedMimeTypes)) {
+			// Special handling for xlsx files that may be detected as zip
+			if ($mimeType === 'application/zip') {
+				// Verify it's actually an xlsx file by checking for Excel-specific markers
+				$zip = new \ZipArchive();
+				if ($zip->open($file->getRealPath()) === true) {
+					// Check for Excel content types file
+					$hasExcelMarker = $zip->locateName('[Content_Types].xml') !== false;
+					$zip->close();
+
+					if (!$hasExcelMarker) {
+						return redirect()->route('cellular-pricing.upload')
+							->with('error', 'Invalid file type. Only Excel files (.xlsx, .xls) are allowed.');
+					}
+				} else {
+					return redirect()->route('cellular-pricing.upload')
+						->with('error', 'Invalid file type. Only Excel files (.xlsx, .xls) are allowed.');
+				}
+			} elseif (!in_array($mimeType, $allowedMimeTypes)) {
 				return redirect()->route('cellular-pricing.upload')
 					->with('error', 'Invalid file type. Only Excel files (.xlsx, .xls) are allowed.');
 			}

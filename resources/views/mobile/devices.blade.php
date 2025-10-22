@@ -4,7 +4,7 @@
         @foreach ($devices as $device)
             <li>
                 <h2>{{ $device->post_title }}</h2>
-                <p>{!! Str::markdown($device->post_content) !!}</p>
+                <p>{!! \App\Helpers\MarkdownHelper::sanitize(Str::markdown($device->post_content)) !!}</p>
                 @if ($device->meta->price)
                     <p>Price: {{ $device->meta->price }}</p>
                 @endif

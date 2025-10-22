@@ -7,11 +7,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class IvueAccount extends Model
 {
-    protected $guarded = [];
-
     use HasFactory;
 
-	
     protected $fillable = [
         'ivue_account',
         'status',

@@ -9,7 +9,8 @@ use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Auth\VerifyEmailController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware('guest')->group(function () {
+// Rate limit login and password reset to prevent brute force attacks
+Route::middleware(['guest', 'throttle:5,1'])->group(function () {
     Route::get('login', [AuthenticatedSessionController::class, 'create'])
                 ->name('login');
     Route::post('login', [AuthenticatedSessionController::class, 'store']);

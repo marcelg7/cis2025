@@ -85,7 +85,7 @@
                 <p class="text-sm text-gray-500 mt-1">These features will appear on contracts for this plan</p>
             </div>
             <div class="px-6 py-4 prose prose-sm max-w-none">
-                {!! Str::markdown($plan->features) !!}
+                {!! \App\Helpers\MarkdownHelper::sanitize(Str::markdown($plan->features)) !!}
             </div>
         </div>
     @endif

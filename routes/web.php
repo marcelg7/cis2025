@@ -31,7 +31,8 @@ use App\Http\Controllers\PermissionController;
 */
 
 // Password Reset Routes (must be outside auth middleware)
-Route::middleware('guest')->group(function () {
+// Rate limited to prevent brute force attacks
+Route::middleware(['guest', 'throttle:10,1'])->group(function () {
     Route::get('reset-password/{token}', [NewPasswordController::class, 'create'])
         ->name('password.reset');
     Route::post('reset-password', [NewPasswordController::class, 'store'])
@@ -47,7 +48,8 @@ Route::get('/test-alpine', fn() => view('test-alpine'))->name('test.alpine');
 |--------------------------------------------------------------------------
 */
 
-Route::middleware('auth')->group(function () {  // CHANGED FROM 'admin' to 'auth'
+// Apply rate limiting to authenticated routes (60 requests per minute)
+Route::middleware(['auth', 'throttle:60,1'])->group(function () {  // CHANGED FROM 'admin' to 'auth'
     
     /*
     |--------------------------------------------------------------------------

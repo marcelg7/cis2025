@@ -41,10 +41,15 @@ class SearchController extends Controller
         ];
 
         if ($query && strlen($query) >= 2) { // Minimum 2 characters
-            
+
             // Normalize phone number for searching (remove all non-numeric characters)
             $normalizedPhone = preg_replace('/[^0-9]/', '', $query);
-            $isPhoneSearch = strlen($normalizedPhone) >= 7; // At least 7 digits suggests phone search
+
+            // Additional validation: ensure normalized phone is not empty and contains only digits
+            // This prevents SQL injection by ensuring only numeric values are used in whereRaw
+            $isPhoneSearch = !empty($normalizedPhone) &&
+                            ctype_digit($normalizedPhone) &&
+                            strlen($normalizedPhone) >= 7; // At least 7 digits suggests phone search
             
             // Search Customers
             $customersQuery = Customer::where(function($q) use ($query) {
