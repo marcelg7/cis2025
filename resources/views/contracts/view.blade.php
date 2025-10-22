@@ -2,6 +2,18 @@
 
 @section('content')
 <style>
+    /* Plan features and return policy formatting */
+    .prose p {
+        margin-bottom: 0.75rem;
+    }
+    .prose ul, .prose ol {
+        margin-bottom: 0.75rem;
+        padding-left: 1.5rem;
+    }
+    .prose li {
+        margin-bottom: 0.375rem;
+    }
+
     @media print {
         .no-print { display: none; }
         img { max-height: 50px; }
@@ -234,7 +246,7 @@
                 <div class="bg-gray-50 p-4 rounded-lg">
                     <p class="text-sm text-gray-700"><span class="font-semibold">Monthly Rate Plan Charge:</span> ${{ number_format($contract->rate_plan_price ?? $contract->bell_plan_cost ?? 0, 2) }}</p>
                 </div>
-                <div class="col-span-2 bg-gray-50 p-4 rounded-lg">
+                <div class="col-span-1 md:col-span-2 bg-gray-50 p-4 rounded-lg">
                     @if($contract->ratePlan && $contract->ratePlan->features)
                         <div class="prose prose-sm max-w-none text-gray-700">
                             {!! $contract->ratePlan->features ?? '<p>No features available</p>' !!}
@@ -261,7 +273,7 @@
                         <p class="text-sm text-gray-700"><span class="font-semibold">Monthly Charge:</span> ${{ number_format($contract->mobile_internet_price ?? 0, 2) }}</p>
                     </div>
                     @if($contract->mobileInternetPlan->description)
-                        <div class="col-span-2 bg-gray-50 p-4 rounded-lg">
+                        <div class="col-span-1 md:col-span-2 bg-gray-50 p-4 rounded-lg">
                             <div class="prose prose-sm max-w-none text-gray-700">
                                 {!! $contract->mobileInternetPlan->description !!}
                             </div>
@@ -302,8 +314,7 @@
             <h3 class="text-lg font-semibold text-gray-900">Total Monthly Charges</h3>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
                 <div class="bg-gray-50 p-4 rounded-lg">
-                    <p class="text-lg font-semibold text-gray-900">Total Monthly Charges</p>
-                    <p class="text-xs text-gray-600 mt-1">(Taxes and additional usage charges are extra.)</p>
+                    <p class="text-xs text-gray-600">(Taxes and additional usage charges are extra.)</p>
                 </div>
                 <div class="bg-gray-50 p-4 rounded-lg text-right">
                     <p class="text-lg font-semibold text-gray-900">${{ number_format($minimumMonthlyCharge + $totalAddOnCost, 2) }}</p>
@@ -744,23 +755,26 @@
         <div class="px-6 py-6 flex flex-wrap gap-4 no-print">
             <a href="{{ route('contracts.download', $contract->id) }}"
                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 {{ $contract->status !== 'finalized' ? 'opacity-50 cursor-not-allowed' : '' }}"
+               title="Download PDF"
                {{ $contract->status !== 'finalized' ? 'disabled' : '' }}>
                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                Download PDF
+                PDF
             </a>
             <form action="{{ route('contracts.email', $contract->id) }}" method="POST">
                 @csrf
                 <button type="submit"
                         class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 {{ $contract->status !== 'finalized' ? 'opacity-50 cursor-not-allowed' : '' }}"
+                        title="Email Contract"
                         {{ $contract->status !== 'finalized' ? 'disabled' : '' }}>
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
-                    Email Contract
+                    Email
                 </button>
             </form>
             <a href="{{ route('contracts.index') }}"
-               class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+               class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+               title="Back to Contracts">
                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
-                Back to Contracts
+                Contracts
             </a>
             @if ($contract->status === 'draft')
                 <a href="{{ route('contracts.edit', $contract->id) }}"
@@ -789,11 +803,12 @@
                     @csrf
                     <button type="submit"
                             class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                            style="background-color: #2563eb !important; color: #ffffff !important;">
+                            style="background-color: #2563eb !important; color: #ffffff !important;"
+                            title="Create Revision">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/>
                         </svg>
-                        Create Revision
+                        Revision
                     </button>
                 </form>
             @endif
@@ -808,13 +823,14 @@
             @elseif($contract->status === 'finalized')
                 <form action="{{ route('contracts.ftp', $contract->id) }}" method="POST" class="inline">
                     @csrf
-                    <button type="submit" 
+                    <button type="submit"
                             class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-purple-600 hover:bg-purple-700"
-                            style="background-color: #9333ea !important; color: #ffffff !important;">
+                            style="background-color: #9333ea !important; color: #ffffff !important;"
+                            title="Upload to Vault">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
                         </svg>
-                        Upload to Vault
+                        Vault
                     </button>
                 </form>
                 @if($contract->ftp_error)

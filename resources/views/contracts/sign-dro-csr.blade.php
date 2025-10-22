@@ -40,7 +40,7 @@
                     this.signaturePad.clear();
                 }
             }" @resize.window="resizeCanvas">
-                <canvas x-ref="canvas" class="w-full h-32 border border-gray-300 rounded-md bg-gray-50"></canvas>
+                <canvas x-ref="canvas" class="w-full border border-gray-300 rounded-md bg-gray-50" style="height: 250px; min-height: 250px;"></canvas>
                 <div class="flex justify-between mt-4">
                     <button @click="clear" class="px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300">Clear</button>
                     <button @click="save" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Save Initials</button>

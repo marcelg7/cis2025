@@ -41,7 +41,7 @@
                 }
             }" @resize.window="resizeCanvas">
 
-                <canvas x-ref="canvas" class="w-full h-32 border border-gray-300 rounded-md bg-gray-50"></canvas>
+                <canvas x-ref="canvas" class="w-full border border-gray-300 rounded-md bg-gray-50" style="height: 250px; min-height: 250px;"></canvas>
 
                 <div class="flex justify-between mt-4">
                     <button @click="clear" class="px-4 py-2 bg-gray-200 rounded-md">Clear</button>

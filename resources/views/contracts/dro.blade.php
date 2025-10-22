@@ -13,14 +13,9 @@
 
     <div class="bg-white shadow rounded-lg overflow-hidden">
         <div class="px-6 py-4 border-b border-gray-200 no-print">
-            <div class="flex justify-between items-center">
-                <div>
-                    <h2 class="text-2xl font-bold text-gray-900">Device Return Option (DRO) Form</h2>
-                    <p class="mt-1 text-sm text-gray-600">
-                        Contract #{{ $contract->id }} - {{ $contract->subscriber->first_name }} {{ $contract->subscriber->last_name }}
-                    </p>
-                </div>
-                <div>
+            <div>
+                <div class="flex items-center gap-3">
+                    <h2 class="text-2xl font-bold text-gray-900">DRO Form</h2>
                     <span class="px-3 py-1 text-sm font-semibold rounded-full
                         {{ $contract->dro_status === 'pending' ? 'bg-yellow-100 text-yellow-800' : '' }}
                         {{ $contract->dro_status === 'customer_signed' ? 'bg-blue-100 text-blue-800' : '' }}
@@ -29,6 +24,9 @@
                         {{ ucfirst(str_replace('_', ' ', $contract->dro_status)) }}
                     </span>
                 </div>
+                <p class="mt-1 text-sm text-gray-600">
+                    Contract #{{ $contract->id }} - {{ $contract->subscriber->first_name }} {{ $contract->subscriber->last_name }}
+                </p>
             </div>
         </div>
 

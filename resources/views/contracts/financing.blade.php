@@ -61,10 +61,10 @@
     </div>
     @endif
 
-	<div class="{{ $isPdf ? '' : 'bg-white shadow rounded-lg overflow-hidden' }}" style="{{ $isPdf ? 'padding: 5px 10px;' : '' }}">		
+	<div class="{{ $isPdf ? '' : 'bg-white shadow rounded-lg overflow-hidden' }}" style="{{ $isPdf ? 'padding: 5px 10px;' : '' }}">
 		<!-- Logo -->
 		<div class="{{ $isPdf ? '' : 'px-6 py-4 border-b border-gray-200' }}" style="{{ $isPdf ? 'text-align: center; margin-bottom: 5px;' : '' }}">
-			<img src="{{ public_path('images/hayLogo.png') }}" alt="Hay Communications" style="{{ $isPdf ? 'max-width: 120px; height: auto;' : 'max-width: 250px; height: auto;' }}">
+			<img src="{{ $isPdf ? public_path('images/hayLogo.png') : asset('images/hayLogo.png') }}" alt="Hay Communications" style="{{ $isPdf ? 'max-width: 120px; height: auto;' : 'max-width: 250px; height: auto;' }}">
 		</div>
 
 		<!-- Title -->

@@ -38,7 +38,7 @@
                 <div class="mb-6">
                     <label class="block text-sm font-medium text-gray-700 mb-2">Customer Signature</label>
                     <div class="border border-gray-300 rounded-md bg-gray-50">
-                        <canvas id="signature-pad" class="w-full" style="height: 200px; touch-action: none;"></canvas>
+                        <canvas id="signature-pad" class="w-full" style="height: 300px; min-height: 300px; touch-action: none;"></canvas>
                     </div>
                     <div class="mt-2 flex justify-between items-center">
                         <button type="button" id="clear-signature" class="text-sm text-gray-600 hover:text-gray-900">
