@@ -686,24 +686,26 @@ function addAddOn() {
             let requiredUpfront = parseFloat(document.getElementById('required_upfront_payment').value) || 0;
             let optionalDown = parseFloat(document.getElementById('optional_down_payment').value) || 0;
             let deferred = parseFloat(document.getElementById('deferred_payment_amount').value) || 0;
-          
+
             let ratePlanPrice = parseFloat(document.getElementById('rate_plan_price').value) || 0;
             let mobileInternetPrice = parseFloat(document.getElementById('mobile_internet_price').value) || 0;
             let planPrice = ratePlanPrice + mobileInternetPrice;
-          
+
             let addOnTotal = 0;
             document.querySelectorAll('[name^="add_ons["][name$="[cost]"]').forEach(input => {
                 addOnTotal += parseFloat(input.value) || 0;
             });
-          
-            let feeTotal = 0;
-            document.querySelectorAll('[name^="one_time_fees["][name$="[cost]"]').forEach(input => {
-                feeTotal += parseFloat(input.value) || 0;
-            });
-          
-            let financingTotal = requiredUpfront + optionalDown + deferred;
-            let total = devicePrice + planPrice + addOnTotal + feeTotal + financingTotal - agreementCredit;
-          
+
+            // Calculate monthly device payment correctly
+            // Formula: (Device Price - Agreement Credit - Required Upfront - Optional Down - Deferred) / 24
+            let deviceAmount = devicePrice - agreementCredit;
+            let totalFinancedAmount = deviceAmount - requiredUpfront - optionalDown;
+            let remainingBalance = totalFinancedAmount - deferred;
+            let monthlyDevicePayment = remainingBalance / 24;
+
+            // Monthly total = monthly device payment + plan + add-ons (NOT including one-time fees)
+            let total = monthlyDevicePayment + planPrice + addOnTotal;
+
             document.getElementById('total-cost').textContent = '$' + total.toFixed(2);
         }
       
