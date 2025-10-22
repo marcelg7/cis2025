@@ -11,10 +11,12 @@
 A comprehensive security audit was conducted on the Hay Contract Information System. The application demonstrates strong security practices overall, with proper authentication, authorization, input validation, and protection against common vulnerabilities.
 
 **Total Issues Found:** 3
-- **CRITICAL:** 1
+- **CRITICAL:** 1 (OPEN)
 - **HIGH:** 0
-- **MEDIUM:** 2
+- **MEDIUM:** 2 (RESOLVED)
 - **LOW:** 0
+
+**Resolved Since Audit:** 2 medium issues fixed (test routes removed, .env permissions corrected)
 
 **Previous Issues Resolved:** 17 vulnerabilities from prior audits have been successfully remediated.
 
@@ -112,7 +114,7 @@ Route::middleware(['auth', 'throttle:60,1'])->group(function () {
 // Delete or comment out the route entirely
 ```
 
-**Status:** OPEN
+**Status:** RESOLVED - Test routes removed in commit 41fb782
 
 ---
 
@@ -135,20 +137,22 @@ The `.env` file has permissions `644` (world-readable):
 - GitHub tokens visible to all users
 
 **Remediation:**
-Restrict permissions to owner-only:
+Restrict permissions to owner and web server group only:
 
 ```bash
-chmod 600 /var/www/mg_apps/cis4/.env
-chown marcelg:marcelg /var/www/mg_apps/cis4/.env
+chmod 640 /var/www/mg_apps/cis4/.env
+chgrp apache /var/www/mg_apps/cis4/.env
 ```
+
+**Note:** Permissions must be `640` (not `600`) to allow the Apache web server (running as `apache` user) to read the file. Setting to `600` will cause the application to fail with "No application encryption key has been specified" error.
 
 Verify:
 ```bash
 ls -la /var/www/mg_apps/cis4/.env
-# Should show: -rw------- 1 marcelg marcelg
+# Should show: -rw-r----- 1 marcelg apache
 ```
 
-**Status:** OPEN
+**Status:** RESOLVED
 
 ---
 
