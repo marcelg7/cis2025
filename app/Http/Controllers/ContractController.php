@@ -271,15 +271,15 @@ class ContractController extends Controller
         $requiredUpfront = $contract->required_upfront_payment ?? 0;
         $optionalUpfront = $contract->optional_down_payment ?? 0;
         $deferredPayment = $contract->deferred_payment_amount ?? 0;
-        
+
         $totalFinancedAmount = $deviceAmount - $requiredUpfront - $optionalUpfront;
         $remainingBalance = $totalFinancedAmount - $deferredPayment;
         $monthlyDevicePayment = $remainingBalance / 24;
         $earlyCancellationFee = $totalFinancedAmount + ($contract->bell_dro_amount ?? 0);
         $monthlyReduction = $monthlyDevicePayment;
-        
-        // Calculate buyout cost using CSR's formula
-        $buyoutCost = ($devicePrice - $deferredPayment) / 24;
+
+        // Calculate buyout cost - factors in upfront payments customer already made
+        $buyoutCost = ($devicePrice - $requiredUpfront - $optionalUpfront - $deferredPayment) / 24;
         
         // Get and format the cancellation policy
         $cancellationPolicy = '';
@@ -662,15 +662,15 @@ class ContractController extends Controller
 			$requiredUpfront = $contract->required_upfront_payment ?? 0;
 			$optionalUpfront = $contract->optional_down_payment ?? 0;
 			$deferredPayment = $contract->deferred_payment_amount ?? 0;
-			
+
 			$totalFinancedAmount = $deviceAmount - $requiredUpfront - $optionalUpfront;
 			$remainingBalance = $totalFinancedAmount - $deferredPayment;
 			$monthlyDevicePayment = $remainingBalance / 24;
 			$earlyCancellationFee = $totalFinancedAmount + ($contract->bell_dro_amount ?? 0);
 			$monthlyReduction = $monthlyDevicePayment;
-			
-			// Calculate buyout cost using CSR's formula
-			$buyoutCost = ($devicePrice - $deferredPayment) / 24;
+
+			// Calculate buyout cost - factors in upfront payments customer already made
+			$buyoutCost = ($devicePrice - $requiredUpfront - $optionalUpfront - $deferredPayment) / 24;
 			
 			// Get and format the cancellation policy
 			$cancellationPolicy = '';
@@ -780,24 +780,24 @@ class ContractController extends Controller
 			'status' => 'finalized',
 			'updated_by' => auth()->id(),
 		]);
-		
+
 		$contract->load('addOns', 'oneTimeFees', 'subscriber.mobilityAccount.ivueAccount.customer', 'activityType', 'commitmentPeriod', 'ratePlan', 'mobileInternetPlan', 'bellDevice');
-		
+
 		// CALCULATE ALL REQUIRED VARIABLES
 		$devicePrice = $contract->bell_retail_price ?? $contract->device_price ?? 0;
 		$deviceAmount = $devicePrice - ($contract->agreement_credit_amount ?? 0);
 		$requiredUpfront = $contract->required_upfront_payment ?? 0;
 		$optionalUpfront = $contract->optional_down_payment ?? 0;
 		$deferredPayment = $contract->deferred_payment_amount ?? 0;
-		
+
 		$totalFinancedAmount = $deviceAmount - $requiredUpfront - $optionalUpfront;
 		$remainingBalance = $totalFinancedAmount - $deferredPayment;
 		$monthlyDevicePayment = $remainingBalance / 24;
 		$earlyCancellationFee = $totalFinancedAmount + ($contract->bell_dro_amount ?? 0);
 		$monthlyReduction = $monthlyDevicePayment;
-		
-		// Calculate buyout cost using CSR's formula
-		$buyoutCost = ($devicePrice - $deferredPayment) / 24;
+
+		// Calculate buyout cost - factors in upfront payments customer already made
+		$buyoutCost = ($devicePrice - $requiredUpfront - $optionalUpfront - $deferredPayment) / 24;
 		
 		// Get and format the cancellation policy
 		$cancellationPolicy = '';
@@ -1132,15 +1132,15 @@ class ContractController extends Controller
 		$requiredUpfront = $contract->required_upfront_payment ?? 0;
 		$optionalUpfront = $contract->optional_down_payment ?? 0;
 		$deferredPayment = $contract->deferred_payment_amount ?? 0;
-		
+
 		$totalFinancedAmount = $deviceAmount - $requiredUpfront - $optionalUpfront;
 		$remainingBalance = $totalFinancedAmount - $deferredPayment;
 		$monthlyDevicePayment = $remainingBalance / 24;
 		$earlyCancellationFee = $totalFinancedAmount + ($contract->bell_dro_amount ?? 0);
 		$monthlyReduction = $monthlyDevicePayment;
-		
-		// Calculate buyout cost using CSR's formula
-		$buyoutCost = ($devicePrice - $deferredPayment) / 24;
+
+		// Calculate buyout cost - factors in upfront payments customer already made
+		$buyoutCost = ($devicePrice - $requiredUpfront - $optionalUpfront - $deferredPayment) / 24;
 		
 		// Get and format the cancellation policy from CommitmentPeriod
 		$cancellationPolicy = '';
