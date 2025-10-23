@@ -23,6 +23,7 @@ use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\PermissionController;
+use App\Http\Controllers\BackupController;
 
 
 /*
@@ -219,8 +220,18 @@ Route::middleware(['auth', 'throttle:60,1'])->group(function () {  // CHANGED FR
             Route::post('/seed-test-data', [AdminController::class, 'seedTestData'])->name('seed-test-data');
             Route::get('/settings', [SettingsController::class, 'edit'])->name('settings');
             Route::post('/settings', [SettingsController::class, 'update']);
+
+            // Backup Management
+            Route::prefix('backups')->name('backups.')->group(function () {
+                Route::get('/', [BackupController::class, 'index'])->name('index');
+                Route::post('/run', [BackupController::class, 'run'])->name('run');
+                Route::get('/settings', [BackupController::class, 'settings'])->name('settings');
+                Route::post('/settings', [BackupController::class, 'updateSettings'])->name('update-settings');
+                Route::get('/download/{filename}', [BackupController::class, 'download'])->name('download');
+                Route::delete('/delete/{filename}', [BackupController::class, 'delete'])->name('delete');
+            });
         });
-        
+
         // Resource Controllers
         Route::resource('activity-types', ActivityTypeController::class);
         Route::resource('commitment-periods', CommitmentPeriodController::class);

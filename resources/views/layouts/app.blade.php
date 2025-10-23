@@ -269,6 +269,9 @@
                                             <a href="{{ route('admin.settings') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                                 Settings
                                             </a>
+                                            <a href="{{ route('admin.backups.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                                Database Backups
+                                            </a>
                                             <a href="{{ route('roles.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                                 Manage Roles
                                             </a>
@@ -433,6 +436,9 @@
                                 </x-responsive-nav-link>
                                 <x-responsive-nav-link :href="route('admin.settings')" :active="request()->routeIs('admin.settings')">
                                     Settings
+                                </x-responsive-nav-link>
+                                <x-responsive-nav-link :href="route('admin.backups.index')" :active="request()->routeIs('admin.backups.*')">
+                                    Database Backups
                                 </x-responsive-nav-link>
                                 <x-responsive-nav-link :href="route('roles.index')" :active="request()->routeIs('roles.*')">
                                     Manage Roles
