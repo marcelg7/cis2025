@@ -283,17 +283,36 @@ class CustomerController extends Controller
 
             $data = json_decode($response->getBody(), true);
 
+            Log::info('Customer search response', ['data' => $data]);
+
             // Transform the data for frontend
             $customers = [];
-            if (isset($data['customerList']) && is_array($data['customerList'])) {
-                foreach ($data['customerList'] as $customer) {
-                    $customers[] = [
-                        'customerNumber' => $customer['customerNumber'] ?? '',
-                        'displayName' => $customer['displayName'] ?? 'N/A',
-                        'address' => $this->formatAddress($customer),
-                    ];
+
+            // Check if response is an array of customers (not wrapped in customerList)
+            if (is_array($data)) {
+                // If it's a direct array of customers
+                if (isset($data[0])) {
+                    foreach ($data as $customer) {
+                        $customers[] = [
+                            'customerNumber' => $customer['customerNumber'] ?? '',
+                            'displayName' => $customer['displayName'] ?? 'N/A',
+                            'address' => $this->formatAddress($customer),
+                        ];
+                    }
+                }
+                // Or if it's wrapped in customerList
+                else if (isset($data['customerList']) && is_array($data['customerList'])) {
+                    foreach ($data['customerList'] as $customer) {
+                        $customers[] = [
+                            'customerNumber' => $customer['customerNumber'] ?? '',
+                            'displayName' => $customer['displayName'] ?? 'N/A',
+                            'address' => $this->formatAddress($customer),
+                        ];
+                    }
                 }
             }
+
+            Log::info('Transformed customers', ['customers' => $customers, 'count' => count($customers)]);
 
             return response()->json([
                 'success' => true,

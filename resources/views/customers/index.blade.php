@@ -1,7 +1,41 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 py-6 px-2" x-data="{ searchModalOpen: false, searchQuery: { lastName: '', firstName: '', businessName: '', address: '' }, searchResults: [], searching: false, searchError: '' }"> <!-- Added px-2 -->		
+    <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 py-6 px-2" x-data="{
+        searchModalOpen: false,
+        searchQuery: { lastName: '', firstName: '', businessName: '', address: '' },
+        searchResults: [],
+        searching: false,
+        searchError: '',
+        performSearch() {
+            this.searching = true;
+            this.searchError = '';
+            this.searchResults = [];
+
+            const params = new URLSearchParams();
+            if (this.searchQuery.lastName) params.append('lastName', this.searchQuery.lastName);
+            if (this.searchQuery.firstName) params.append('firstName', this.searchQuery.firstName);
+            if (this.searchQuery.businessName) params.append('businessName', this.searchQuery.businessName);
+            if (this.searchQuery.address) params.append('address', this.searchQuery.address);
+
+            fetch('{{ route('customers.search') }}?' + params.toString())
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        this.searchResults = data.customers;
+                    } else {
+                        this.searchError = data.message || 'An error occurred while searching.';
+                    }
+                })
+                .catch(error => {
+                    this.searchError = 'Failed to search customers. Please try again.';
+                    console.error('Search error:', error);
+                })
+                .finally(() => {
+                    this.searching = false;
+                });
+        }
+    }"> <!-- Added px-2 -->		
 		<!-- Active Users Bar -->
 	
 		@if($activeUsers->count() > 0)
@@ -181,35 +215,4 @@
             </div>
         </div>
     </div>
-
-    <script>
-        function performSearch() {
-            this.searching = true;
-            this.searchError = '';
-            this.searchResults = [];
-
-            const params = new URLSearchParams();
-            if (this.searchQuery.lastName) params.append('lastName', this.searchQuery.lastName);
-            if (this.searchQuery.firstName) params.append('firstName', this.searchQuery.firstName);
-            if (this.searchQuery.businessName) params.append('businessName', this.searchQuery.businessName);
-            if (this.searchQuery.address) params.append('address', this.searchQuery.address);
-
-            fetch(`{{ route('customers.search') }}?${params.toString()}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        this.searchResults = data.customers;
-                    } else {
-                        this.searchError = data.message || 'An error occurred while searching.';
-                    }
-                })
-                .catch(error => {
-                    this.searchError = 'Failed to search customers. Please try again.';
-                    console.error('Search error:', error);
-                })
-                .finally(() => {
-                    this.searching = false;
-                });
-        }
-    </script>
 @endsection
