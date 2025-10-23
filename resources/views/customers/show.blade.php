@@ -53,6 +53,7 @@
                     <div>
                         <h3 class="text-lg font-medium text-gray-900">Contact Information</h3>
                         <p class="mt-1 text-sm text-gray-600"><strong>Email:</strong> {{ $customer->email ?? 'N/A' }}</p>
+                        <p class="text-sm text-gray-600"><strong>Phone:</strong> {{ $customer->phone ?? 'N/A' }}</p>
                         <p class="text-sm text-gray-600"><strong>Address:</strong> {{ $customer->address }}, {{ $customer->city }}, {{ $customer->state }} {{ $customer->zip_code }}</p>
                     </div>
                 </div>
