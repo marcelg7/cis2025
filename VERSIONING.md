@@ -81,10 +81,12 @@ git push origin v5.2026.1
    ```bash
    cd /var/www/mg_apps/cis4
    git pull origin main
+   git fetch --tags
    ```
 
-2. Clear caches:
+2. Cache the version and clear caches:
    ```bash
+   php artisan version:cache
    php artisan optimize:clear
    ```
 
@@ -100,8 +102,18 @@ The version is automatically displayed in the footer of every page:
 You can also check the version via command line:
 
 ```bash
-php artisan tinker --execute="echo app_version();"
+# View current version
+php artisan tinker
+>>> app_version();
+
+# Cache the current version (run after deployment)
+php artisan version:cache
 ```
+
+**How it works:**
+- Development: Reads git tags directly via shell_exec
+- Production: Reads from cached `storage/framework/version.txt` file
+- The `version:cache` command must be run after each deployment to update the cached version
 
 ## Viewing All Tags
 

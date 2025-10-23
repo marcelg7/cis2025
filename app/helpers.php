@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Get the application version from git tag or commit hash
+ * Get the application version from cached file or git tag
  *
  * @return string
  */
@@ -9,14 +9,24 @@ if (!function_exists('app_version')) {
     function app_version(): string
     {
         try {
-            // Try to get the latest git tag
+            // Try to read from cached version file (production)
+            $versionFile = storage_path('framework/version.txt');
+
+            if (file_exists($versionFile)) {
+                $version = trim(file_get_contents($versionFile));
+                if (!empty($version)) {
+                    return $version;
+                }
+            }
+
+            // Fallback: Try to get the latest git tag (development)
             $tag = trim(shell_exec('git describe --tags --abbrev=0 2>/dev/null') ?? '');
 
             if (!empty($tag)) {
                 return $tag;
             }
 
-            // Fallback to short commit hash
+            // Fallback: short commit hash
             $hash = trim(shell_exec('git rev-parse --short HEAD 2>/dev/null') ?? '');
 
             if (!empty($hash)) {
@@ -24,9 +34,9 @@ if (!function_exists('app_version')) {
             }
 
             // Final fallback
-            return 'v1.0.0';
+            return 'v4.2025.1';
         } catch (\Exception $e) {
-            return 'v1.0.0';
+            return 'v4.2025.1';
         }
     }
 }
