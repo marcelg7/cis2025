@@ -294,7 +294,7 @@ class CustomerController extends Controller
                 if (isset($data[0])) {
                     foreach ($data as $customer) {
                         $customers[] = [
-                            'customerNumber' => $customer['customerNumber'] ?? '',
+                            'customerNumber' => $customer['customer'] ?? $customer['customerNumber'] ?? '',
                             'displayName' => $customer['displayName'] ?? 'N/A',
                             'address' => $this->formatAddress($customer),
                         ];
@@ -304,7 +304,7 @@ class CustomerController extends Controller
                 else if (isset($data['customerList']) && is_array($data['customerList'])) {
                     foreach ($data['customerList'] as $customer) {
                         $customers[] = [
-                            'customerNumber' => $customer['customerNumber'] ?? '',
+                            'customerNumber' => $customer['customer'] ?? $customer['customerNumber'] ?? '',
                             'displayName' => $customer['displayName'] ?? 'N/A',
                             'address' => $this->formatAddress($customer),
                         ];
@@ -337,18 +337,43 @@ class CustomerController extends Controller
     private function formatAddress($customer): string
     {
         $parts = [];
-        if (!empty($customer['address'])) {
-            $parts[] = $customer['address'];
+
+        // Check if address is a nested object
+        if (isset($customer['address']) && is_array($customer['address'])) {
+            $address = $customer['address'];
+            if (!empty($address['lineOne'])) {
+                $parts[] = $address['lineOne'];
+            }
+            if (!empty($address['lineTwo'])) {
+                $parts[] = $address['lineTwo'];
+            }
+            if (!empty($address['city'])) {
+                $parts[] = $address['city'];
+            }
+            if (!empty($address['state'])) {
+                $parts[] = $address['state'];
+            }
+            if (!empty($address['zipCode']) && !empty($address['zip4'])) {
+                $parts[] = $address['zipCode'] . '-' . $address['zip4'];
+            } else if (!empty($address['zipCode'])) {
+                $parts[] = $address['zipCode'];
+            }
+        } else {
+            // Fallback for flat structure
+            if (!empty($customer['address'])) {
+                $parts[] = $customer['address'];
+            }
+            if (!empty($customer['city'])) {
+                $parts[] = $customer['city'];
+            }
+            if (!empty($customer['state'])) {
+                $parts[] = $customer['state'];
+            }
+            if (!empty($customer['zipCode'])) {
+                $parts[] = $customer['zipCode'];
+            }
         }
-        if (!empty($customer['city'])) {
-            $parts[] = $customer['city'];
-        }
-        if (!empty($customer['state'])) {
-            $parts[] = $customer['state'];
-        }
-        if (!empty($customer['zipCode'])) {
-            $parts[] = $customer['zipCode'];
-        }
+
         return !empty($parts) ? implode(', ', $parts) : 'N/A';
     }
 }
