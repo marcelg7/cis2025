@@ -508,6 +508,15 @@
         <main class="px-2 sm:px-0">
             @yield('content')
         </main>
+
+        <!-- Footer with Version -->
+        <footer class="mt-8 py-4 text-center text-sm text-gray-500 border-t border-gray-200">
+            <div class="max-w-7xl mx-auto px-4">
+                {{ config('app.name') }} &copy; {{ date('Y') }}
+                <span class="mx-2">|</span>
+                Version: {{ app_version() }}
+            </div>
+        </footer>
     </div>
 </body>
 </html>
