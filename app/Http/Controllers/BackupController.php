@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Storage;
-use Spatie\Backup\Tasks\Monitor\BackupDestinationStatusFactory;
 use App\Models\Setting;
 
 class BackupController extends Controller
@@ -17,47 +16,62 @@ class BackupController extends Controller
 
     public function index()
     {
-        // Get backup status
-        $statuses = BackupDestinationStatusFactory::createForMonitorConfig(config('backup.monitor_backups'));
-
-        $backups = [];
-        foreach ($statuses as $status) {
-            $backups[] = [
-                'name' => $status->backupDestination()->backupName(),
-                'disk' => $status->backupDestination()->diskName(),
-                'reachable' => $status->backupDestination()->isReachable(),
-                'healthy' => $status->isHealthy(),
-                'amount' => $status->backupDestination()->backups()->count(),
-                'newest' => $status->backupDestination()->newestBackup()
-                    ? $status->backupDestination()->newestBackup()->date()->diffForHumans()
-                    : 'No backups yet',
-                'usedStorage' => $status->backupDestination()->usedStorage(),
-            ];
-        }
-
         // Get list of backup files
         $backupFiles = [];
         $backupName = config('backup.backup.name');
         $disk = Storage::disk('local');
         $path = "private/{$backupName}";
 
+        // Build backup statistics
+        $backupStats = [
+            'name' => $backupName,
+            'disk' => 'local',
+            'reachable' => true,
+            'healthy' => true,
+            'amount' => 0,
+            'newest' => 'No backups yet',
+            'usedStorage' => 0,
+        ];
+
         if ($disk->exists($path)) {
             $files = $disk->files($path);
+            $totalSize = 0;
+            $latestTimestamp = 0;
+
             foreach ($files as $file) {
                 if (pathinfo($file, PATHINFO_EXTENSION) === 'zip') {
+                    $fileSize = $disk->size($file);
+                    $fileDate = $disk->lastModified($file);
+
+                    $totalSize += $fileSize;
+
+                    if ($fileDate > $latestTimestamp) {
+                        $latestTimestamp = $fileDate;
+                    }
+
                     $backupFiles[] = [
                         'path' => $file,
                         'name' => basename($file),
-                        'size' => $disk->size($file),
-                        'date' => $disk->lastModified($file),
+                        'size' => $fileSize,
+                        'date' => $fileDate,
                     ];
                 }
             }
+
             // Sort by date descending
             usort($backupFiles, function($a, $b) {
                 return $b['date'] - $a['date'];
             });
+
+            $backupStats['amount'] = count($backupFiles);
+            $backupStats['usedStorage'] = $totalSize;
+
+            if ($latestTimestamp > 0) {
+                $backupStats['newest'] = \Carbon\Carbon::createFromTimestamp($latestTimestamp)->diffForHumans();
+            }
         }
+
+        $backups = [$backupStats];
 
         return view('admin.backups.index', compact('backups', 'backupFiles'));
     }
