@@ -25,6 +25,7 @@
 									data-promo-price="{{ $plan->promo_price }}"
 									data-tier="{{ $plan->tier }}"
 									data-plan-type="byod"
+									data-soc="{{ $plan->soc ?? 'N/A' }}"
 									data-credit-eligible="{{ $plan->credit_eligible ? 'true' : 'false' }}"
 									data-credit-amount="{{ $plan->credit_amount ?? 0 }}"
 									data-credit-type="{{ $plan->credit_type ?? 'Credit' }}">
@@ -48,6 +49,7 @@
 									data-promo-price="{{ $plan->promo_price }}"
 									data-tier="{{ $plan->tier }}"
 									data-plan-type="smartpay"
+									data-soc="{{ $plan->soc ?? 'N/A' }}"
 									data-credit-eligible="{{ $plan->credit_eligible ? 'true' : 'false' }}"
 									data-credit-amount="{{ $plan->credit_amount ?? 0 }}"
 									data-credit-type="{{ $plan->credit_type ?? 'Credit' }}">
@@ -289,7 +291,15 @@ document.getElementById('apply_plan_btn').addEventListener('click', function() {
         if (bellPlanCostField) {
             bellPlanCostField.value = currentSelectedPlan.price;
         }
-      
+
+        // Debug logging for rate plan selection
+        console.log('✓ Rate Plan Applied:');
+        console.log('  Plan Name:', currentSelectedPlan.name);
+        console.log('  Plan ID:', currentSelectedPlan.id);
+        console.log('  Price:', '$' + currentSelectedPlan.price.toFixed(2));
+        console.log('  Tier:', currentSelectedPlan.tier || 'N/A');
+        console.log('  SOC (from select):', document.querySelector('#cellular_plan_selector option:checked')?.dataset.soc || 'Not found');
+
     } else if (currentSelectedPlan.type === 'mobile_internet') {
         document.getElementById('mobile_internet_plan_id').value = currentSelectedPlan.id;
         document.getElementById('mobile_internet_price').value = currentSelectedPlan.price;

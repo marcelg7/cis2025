@@ -629,11 +629,26 @@ function addAddOn() {
                         tier: tier,
                         pricing: data.pricing
                     };
-                  
+
 					document.getElementById('display-retail-price').textContent = '$' + parseFloat(data.pricing.retail_price).toFixed(2);
 					document.getElementById('display-agreement-credit').textContent = data.pricing.agreement_credit ? '$' + parseFloat(data.pricing.agreement_credit).toFixed(2) : '$0.00';
 					document.getElementById('display-monthly-device').textContent = '$' + parseFloat(data.pricing.monthly_device_cost_pre_tax).toFixed(2);
-					document.getElementById('display-plan-device').textContent = '$' + parseFloat(data.pricing.plan_plus_device_pre_tax).toFixed(2);
+
+					// Calculate Plan + Device using actual selected rate plan price (not Bell's suggested price)
+					let selectedRatePlanPrice = parseFloat(document.getElementById('rate_plan_price').value) || 0;
+					let monthlyDeviceCost = parseFloat(data.pricing.monthly_device_cost_pre_tax) || 0;
+					let actualPlanPlusDevice = selectedRatePlanPrice + monthlyDeviceCost;
+
+					// Show actual plan + device cost (not Bell's suggested price)
+					document.getElementById('display-plan-device').textContent = '$' + actualPlanPlusDevice.toFixed(2);
+
+					// Debug logging
+					console.log('Bell Pricing Details:');
+					console.log('  Selected Rate Plan Price:', '$' + selectedRatePlanPrice.toFixed(2));
+					console.log('  Monthly Device Cost:', '$' + monthlyDeviceCost.toFixed(2));
+					console.log('  Total (Plan + Device):', '$' + actualPlanPlusDevice.toFixed(2));
+					console.log('  Bell Suggested Plan Cost:', '$' + parseFloat(data.pricing.plan_cost).toFixed(2));
+					console.log('  Bell Suggested Total:', '$' + parseFloat(data.pricing.plan_plus_device_pre_tax).toFixed(2));
                   
                     if (pricingType === 'dro') {
                         document.getElementById('dro-amount-display').classList.remove('hidden');
@@ -932,7 +947,27 @@ function addAddOn() {
 				if (typeof calculateTotal === 'function') calculateTotal();
 			}
 		});
-	}	
-	
+	}
+
+	// Form submission logging for debugging
+	document.getElementById('contract-form').addEventListener('submit', function(e) {
+		const ratePlanId = document.getElementById('rate_plan_id').value;
+		const ratePlanPrice = document.getElementById('rate_plan_price').value;
+		const selectedTier = document.getElementById('selected_tier').value;
+
+		console.log('');
+		console.log('==========================================');
+		console.log('📋 CONTRACT FORM SUBMISSION');
+		console.log('==========================================');
+		console.log('Rate Plan ID:', ratePlanId || '(not selected)');
+		console.log('Rate Plan Price:', ratePlanPrice ? '$' + parseFloat(ratePlanPrice).toFixed(2) : '(not set)');
+		console.log('Selected Tier:', selectedTier || '(not set)');
+		console.log('Bell Plan Cost:', document.getElementById('hidden_bell_plan_cost').value || '(not set)');
+		console.log('');
+		console.log('If the SOC code is wrong on the contract PDF,');
+		console.log('check that the correct Rate Plan ID is listed above.');
+		console.log('==========================================');
+	});
+
 </script>
 @endsection
