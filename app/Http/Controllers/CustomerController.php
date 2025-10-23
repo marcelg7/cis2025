@@ -73,6 +73,12 @@ class CustomerController extends Controller
                 return view('customers.index', compact('latestContracts', 'activeUsers', 'recentCustomers'))
                     ->withErrors(['customer_number' => 'Customer not found. Please check the customer number and try again.']);
             }
+            // Merge zipCode and zip4 for full postal code
+            $zipCode = $data['address']['zipCode'] ?? null;
+            if ($zipCode && !empty($data['address']['zip4'])) {
+                $zipCode .= '-' . $data['address']['zip4'];
+            }
+
             $customer = Customer::updateOrCreate(
                 ['ivue_customer_number' => $data['customer']],
                 [
@@ -82,7 +88,7 @@ class CustomerController extends Controller
                     'address' => $data['address']['lineOne'] . ($data['address']['lineTwo'] ? ' ' . $data['address']['lineTwo'] : ''),
                     'city' => $data['address']['city'] ?? null,
                     'state' => $data['address']['state'] ?? null,
-                    'zip_code' => $data['address']['zipCode'] ?? null,
+                    'zip_code' => $zipCode,
                     'display_name' => $data['displayName'] ?? ($data['firstName'] . ' ' . $data['lastName']),
                     'is_individual' => $data['isIndividual'] ?? true,
                     'customer_json' => json_encode($data),
