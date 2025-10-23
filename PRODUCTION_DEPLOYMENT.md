@@ -636,3 +636,163 @@ For issues, check:
 4. `sudo systemctl status cis-queue-worker`
 
 Good luck with your production deployment!
+
+
+
+-----------------
+> Usually I make a second user named marcelg.   What should the permissions on /var/www and subfolders be? 
+
+● Great question! Here's the proper permission structure for a production web server with a marcelg user:
+
+  📁 Directory Permission Structure
+
+  Root Web Directory
+
+  # /var/www
+  # Owner: root, Group: root
+  # Permissions: 755 (rwxr-xr-x)
+  sudo chown root:root /var/www
+  sudo chmod 755 /var/www
+
+  Applications Directory
+
+  # /var/www/mg_apps
+  # Owner: marcelg, Group: apache
+  # Permissions: 755 (rwxr-xr-x)
+  sudo mkdir -p /var/www/mg_apps
+  sudo chown marcelg:apache /var/www/mg_apps
+  sudo chmod 755 /var/www/mg_apps
+
+  Application Directory (CIS4)
+
+  # /var/www/mg_apps/cis4
+  # Owner: marcelg, Group: apache
+  # Directories: 755, Files: 644
+  sudo chown -R marcelg:apache /var/www/mg_apps/cis4
+
+  # Set directory permissions
+  sudo find /var/www/mg_apps/cis4 -type d -exec chmod 755 {} \;
+
+  # Set file permissions
+  sudo find /var/www/mg_apps/cis4 -type f -exec chmod 644 {} \;
+
+  Special Directories (Storage & Cache)
+
+  # storage/ and bootstrap/cache/ - NEED WRITE ACCESS
+  # Owner: apache, Group: apache
+  # Permissions: 775 (rwxrwxr-x)
+  sudo chown -R apache:apache /var/www/mg_apps/cis4/storage
+  sudo chown -R apache:apache /var/www/mg_apps/cis4/bootstrap/cache
+  sudo chmod -R 775 /var/www/mg_apps/cis4/storage
+  sudo chmod -R 775 /var/www/mg_apps/cis4/bootstrap/cache
+
+  Special Files
+
+  # .env file - CRITICAL!
+  # Owner: marcelg, Group: apache
+  # Permissions: 640 (rw-r-----)
+  sudo chown marcelg:apache /var/www/mg_apps/cis4/.env
+  sudo chmod 640 /var/www/mg_apps/cis4/.env
+
+  # artisan command - should be executable
+  sudo chmod 755 /var/www/mg_apps/cis4/artisan
+
+  Default Apache Document Root (if used)
+
+  # /var/www/html (usually not used with Laravel)
+  sudo chown apache:apache /var/www/html
+  sudo chmod 755 /var/www/html
+
+  ---
+  🔐 Security Model Explained
+
+  | Directory/File                | Owner   | Group  | Permissions | Why                                           |
+  |-------------------------------|---------|--------|-------------|-----------------------------------------------|
+  | /var/www                      | root    | root   | 755         | Root web directory - system managed           |
+  | /var/www/mg_apps              | marcelg | apache | 755         | Developer owns, Apache can read               |
+  | /var/www/mg_apps/cis4 (dirs)  | marcelg | apache | 755         | Developer owns, Apache can read               |
+  | /var/www/mg_apps/cis4 (files) | marcelg | apache | 644         | Developer owns, Apache can read               |
+  | storage/                      | apache  | apache | 775         | Apache needs to write logs, cache, uploads    |
+  | bootstrap/cache/              | apache  | apache | 775         | Apache needs to write compiled files          |
+  | .env                          | marcelg | apache | 640         | Developer owns, Apache can read, others can't |
+
+  ---
+  ✅ Complete Setup Commands
+
+  Here's the complete sequence to run after cloning:
+
+  # 1. Set base ownership
+  sudo chown -R marcelg:apache /var/www/mg_apps/cis4
+
+  # 2. Set directory permissions (755)
+  sudo find /var/www/mg_apps/cis4 -type d -exec chmod 755 {} \;
+
+  # 3. Set file permissions (644)
+  sudo find /var/www/mg_apps/cis4 -type f -exec chmod 644 {} \;
+
+  # 4. Make artisan executable
+  sudo chmod 755 /var/www/mg_apps/cis4/artisan
+
+  # 5. Give Apache write access to storage and cache
+  sudo chown -R apache:apache /var/www/mg_apps/cis4/storage
+  sudo chown -R apache:apache /var/www/mg_apps/cis4/bootstrap/cache
+  sudo chmod -R 775 /var/www/mg_apps/cis4/storage
+  sudo chmod -R 775 /var/www/mg_apps/cis4/bootstrap/cache
+
+  # 6. Secure .env file (AFTER creating it)
+  sudo chown marcelg:apache /var/www/mg_apps/cis4/.env
+  sudo chmod 640 /var/www/mg_apps/cis4/.env
+
+  ---
+  🔍 Verification Commands
+
+  # Check /var/www structure
+  ls -la /var/www/
+  # Should show: drwxr-xr-x root root for /var/www
+
+  # Check mg_apps
+  ls -la /var/www/mg_apps/
+  # Should show: drwxr-xr-x marcelg apache for cis4/
+
+  # Check storage
+  ls -la /var/www/mg_apps/cis4/
+  # Should show: drwxrwxr-x apache apache for storage/
+
+  # Check .env
+  ls -la /var/www/mg_apps/cis4/.env
+  # Should show: -rw-r----- marcelg apache
+
+  ---
+  💡 Why This Structure?
+
+  1. marcelg owns application files
+    - Can edit files, run git pull, composer update
+    - Maintains files via SSH/terminal
+  2. apache group has read access
+    - Web server can read PHP files
+    - Can execute application code
+  3. apache owns storage/cache
+    - Web server writes logs, sessions, cache
+    - Prevents permission errors when writing
+  4. .env is group-readable only
+    - Apache can read database credentials
+    - Other users can't read secrets
+    - Not world-readable (security)
+
+  ---
+  ⚠️ Common Mistakes to Avoid
+
+  ❌ Don't do this:
+  # DON'T make everything 777!
+  sudo chmod -R 777 /var/www/mg_apps/cis4  # INSECURE!
+
+  # DON'T set .env to 600
+  sudo chmod 600 .env  # Apache can't read = site crash
+
+  # DON'T leave storage owned by marcelg
+  # Apache won't be able to write = errors
+
+  ✅ Do this instead: Use the commands above!
+
+  ---
+  Ready to proceed with the installation? Let me know when you've set up the directory structure!
