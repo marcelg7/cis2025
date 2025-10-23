@@ -234,8 +234,102 @@ class CustomerController extends Controller
             ->with('success', 'Subscriber added successfully.');
     }
 
+    public function search(Request $request)
+    {
+        try {
+            // Build query parameters
+            $queryParams = [];
+            if ($request->has('lastName')) {
+                $queryParams['lastName'] = $request->input('lastName');
+            }
+            if ($request->has('firstName')) {
+                $queryParams['firstName'] = $request->input('firstName');
+            }
+            if ($request->has('businessName')) {
+                $queryParams['businessName'] = $request->input('businessName');
+            }
+            if ($request->has('address')) {
+                $queryParams['address'] = $request->input('address');
+            }
 
+            // Require at least one search parameter
+            if (empty($queryParams)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Please provide at least one search criteria.'
+                ]);
+            }
 
+            $client = new Client([
+                'timeout' => 120,
+                'connect_timeout' => 10,
+                'verify' => true,
+                'http_errors' => true,
+                'force_ip_resolve' => 'v4',
+            ]);
 
+            // Build query string
+            $queryString = http_build_query($queryParams);
+            $url = 'https://hay.cloud.coop/services/secured/customer/summary?' . $queryString;
 
+            Log::info('Searching customers with: ' . $queryString);
+
+            $response = $client->get($url, [
+                'headers' => [
+                    'Authorization' => 'Basic ' . config('services.customer_api.token'),
+                    'Accept' => 'application/json',
+                ]
+            ]);
+
+            $data = json_decode($response->getBody(), true);
+
+            // Transform the data for frontend
+            $customers = [];
+            if (isset($data['customerList']) && is_array($data['customerList'])) {
+                foreach ($data['customerList'] as $customer) {
+                    $customers[] = [
+                        'customerNumber' => $customer['customerNumber'] ?? '',
+                        'displayName' => $customer['displayName'] ?? 'N/A',
+                        'address' => $this->formatAddress($customer),
+                    ];
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'customers' => $customers
+            ]);
+
+        } catch (RequestException $e) {
+            Log::error('Customer search failed: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to search customers. Please try again.'
+            ], 500);
+        } catch (\Exception $e) {
+            Log::error('Customer search error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'An unexpected error occurred.'
+            ], 500);
+        }
+    }
+
+    private function formatAddress($customer): string
+    {
+        $parts = [];
+        if (!empty($customer['address'])) {
+            $parts[] = $customer['address'];
+        }
+        if (!empty($customer['city'])) {
+            $parts[] = $customer['city'];
+        }
+        if (!empty($customer['state'])) {
+            $parts[] = $customer['state'];
+        }
+        if (!empty($customer['zipCode'])) {
+            $parts[] = $customer['zipCode'];
+        }
+        return !empty($parts) ? implode(', ', $parts) : 'N/A';
+    }
 }
