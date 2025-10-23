@@ -18,9 +18,34 @@ We use **Calendar Versioning**: `vMAJOR.YEAR.RELEASE`
 
 ## How to Create a New Version
 
-### When to Tag
+### Automatic Versioning (Enabled)
 
-Tag a new version when you're ready to deploy to production:
+**Versions are now automatically incremented on every commit!**
+
+When you commit changes, the git post-commit hook will:
+1. Read the current version tag (e.g., `v4.2025.1`)
+2. Increment the release number (e.g., `v4.2025.2`)
+3. Create the new tag locally
+4. Cache the version for display
+
+```bash
+# Simply commit as normal
+git add .
+git commit -m "Your commit message"
+# ✓ Version automatically incremented to v4.2025.2
+
+# Push the new tag to remote
+git push origin v4.2025.2
+```
+
+The hook handles:
+- **Year changes**: If the year changes, resets to `.1` (e.g., `v4.2025.5` → `v4.2026.1`)
+- **First commit**: Creates initial tag `v4.2025.1` if no tags exist
+- **Version caching**: Automatically runs `php artisan version:cache`
+
+### Manual Tagging (If Needed)
+
+You can still manually create tags if you want to skip auto-increment:
 
 ```bash
 # After all commits are pushed to main
@@ -169,11 +194,20 @@ Track your versions in CHANGELOG.md:
 - Security audit and monitoring
 ```
 
-## Automated Versioning (Future Enhancement)
+## Automated Versioning (Implemented ✓)
 
-If you want automatic version bumping in the future, you can set up:
-- GitHub Actions to auto-increment on merge to main
-- npm version commands
-- Conventional commits with semantic-release
+Automatic version bumping is now enabled via git post-commit hook!
 
-For now, manual tagging gives you full control over version numbers.
+The hook is located at: `.git/hooks/post-commit`
+
+**To disable auto-versioning:**
+```bash
+# Remove or rename the hook
+mv .git/hooks/post-commit .git/hooks/post-commit.disabled
+```
+
+**To re-enable:**
+```bash
+# Restore the hook
+mv .git/hooks/post-commit.disabled .git/hooks/post-commit
+```
