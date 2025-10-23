@@ -15,6 +15,20 @@ class DatabaseSeeder extends Seeder
 {
     public function run()
     {
+        // Insert default activity types FIRST (required by contracts)
+        $activityTypes = [
+            ['id' => 1, 'name' => 'New Postpaid Activation', 'is_active' => 1, 'created_at' => now(), 'updated_at' => now()],
+            // ... (other activity types)
+        ];
+        DB::table('activity_types')->insertOrIgnore($activityTypes);
+
+        // Insert default commitment periods FIRST (required by contracts)
+        $commitmentPeriods = [
+            ['id' => 1, 'name' => '2 Year Term Smart Pay', 'cancellation_policy' => 'Remaining Device Balance: {balance}...', 'is_active' => 1, 'created_at' => now(), 'updated_at' => now()],
+            ['id' => 2, 'name' => 'No Term', 'cancellation_policy' => 'There is no cancellation fee...', 'is_active' => 1, 'created_at' => now(), 'updated_at' => now()],
+        ];
+        DB::table('commitment_periods')->insertOrIgnore($commitmentPeriods);
+
         // Create 5 customers with is_test = 1, each with related records
         Customer::factory()
             ->count(5)
@@ -43,20 +57,6 @@ class DatabaseSeeder extends Seeder
                     });
                 });
             });
-
-        // Insert default activity types only if they don't exist
-        $activityTypes = [
-            ['id' => 1, 'name' => 'New Postpaid Activation', 'is_active' => 1, 'created_at' => now(), 'updated_at' => now()],
-            // ... (other activity types)
-        ];
-        DB::table('activity_types')->insertOrIgnore($activityTypes);
-
-        // Insert default commitment periods only if they don't exist
-        $commitmentPeriods = [
-            ['id' => 1, 'name' => '2 Year Term Smart Pay', 'cancellation_policy' => 'Remaining Device Balance: {balance}...', 'is_active' => 1, 'created_at' => now(), 'updated_at' => now()],
-            ['id' => 2, 'name' => 'No Term', 'cancellation_policy' => 'There is no cancellation fee...', 'is_active' => 1, 'created_at' => now(), 'updated_at' => now()],
-        ];
-        DB::table('commitment_periods')->insertOrIgnore($commitmentPeriods);
 
 		$this->call(PermissionSeeder::class);
     }
