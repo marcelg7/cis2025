@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Storage;
-use App\Models\Setting;
+use App\Helpers\SettingsHelper as Setting;
 
 class BackupController extends Controller
 {
@@ -99,17 +99,18 @@ class BackupController extends Controller
 
     public function settings()
     {
+        // Provide defaults in case migration hasn't been run yet
         $settings = [
-            'backup_enabled' => Setting::get('backup_enabled') === 'true',
-            'backup_schedule_time' => Setting::get('backup_schedule_time') ?: '02:00',
-            'backup_keep_daily' => Setting::get('backup_keep_daily') ?: 7,
-            'backup_keep_weekly' => Setting::get('backup_keep_weekly') ?: 4,
-            'backup_keep_monthly' => Setting::get('backup_keep_monthly') ?: 6,
-            'backup_vault_ftp_enabled' => Setting::get('backup_vault_ftp_enabled') === 'true',
-            'backup_notification_email' => Setting::get('backup_notification_email') ?: '',
-            'backup_notification_slack_webhook' => Setting::get('backup_notification_slack_webhook') ?: '',
-            'backup_notification_on_success' => Setting::get('backup_notification_on_success') === 'true',
-            'backup_notification_on_failure' => Setting::get('backup_notification_on_failure') === 'true',
+            'backup_enabled' => Setting::get('backup_enabled', 'true') === 'true',
+            'backup_schedule_time' => Setting::get('backup_schedule_time', '02:00'),
+            'backup_keep_daily' => Setting::get('backup_keep_daily', '7'),
+            'backup_keep_weekly' => Setting::get('backup_keep_weekly', '4'),
+            'backup_keep_monthly' => Setting::get('backup_keep_monthly', '6'),
+            'backup_vault_ftp_enabled' => Setting::get('backup_vault_ftp_enabled', 'false') === 'true',
+            'backup_notification_email' => Setting::get('backup_notification_email', ''),
+            'backup_notification_slack_webhook' => Setting::get('backup_notification_slack_webhook', ''),
+            'backup_notification_on_success' => Setting::get('backup_notification_on_success', 'false') === 'true',
+            'backup_notification_on_failure' => Setting::get('backup_notification_on_failure', 'true') === 'true',
         ];
 
         return view('admin.backups.settings', compact('settings'));
