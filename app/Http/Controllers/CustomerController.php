@@ -48,11 +48,19 @@ class CustomerController extends Controller
 					]);
             
 
-			$response = $client->get(config('services.customer_api.url') . $customerNumber, [
+			// Fetch basic customer summary
+            $response = $client->get(config('services.customer_api.url') . $customerNumber, [
                 'headers' => ['Authorization' => 'Basic ' . config('services.customer_api.token')]
             ]);
 
 			$data = json_decode($response->getBody(), true);
+
+            // Fetch detailed customer information including contact methods
+            $detailResponse = $client->get('https://hay.cloud.coop/services/secured/customerInformation/customer?customerId=' . $customerNumber, [
+                'headers' => ['Authorization' => 'Basic ' . config('services.customer_api.token')]
+            ]);
+
+            $detailData = json_decode($detailResponse->getBody(), true);
             // Log only non-sensitive data (removed full API response to protect PII)
             Log::info('API response received for customer', ['customer_number' => $customerNumber, 'has_data' => !empty($data)]);
             if (empty($data) || !isset($data['customer'])) {
@@ -75,8 +83,21 @@ class CustomerController extends Controller
             }
             // Merge zipCode and zip4 for full postal code
             $zipCode = $data['address']['zipCode'] ?? null;
-            if ($zipCode && !empty($data['address']['zip4'])) {
-                $zipCode .= '-' . $data['address']['zip4'];
+            $zip4 = $data['address']['zip4'] ?? null;
+
+            if ($zipCode && !empty($zip4) && $zip4 !== '0') {
+                // Check if it's a Canadian postal code (contains letters)
+                if (preg_match('/[A-Za-z]/', $zipCode)) {
+                    // Canadian postal code: format as "A1A 1A1"
+                    // Combine zipCode and zip4, then add space after 3rd character
+                    $fullPostal = $zipCode . $zip4;
+                    if (strlen($fullPostal) >= 6) {
+                        $zipCode = substr($fullPostal, 0, 3) . ' ' . substr($fullPostal, 3, 3);
+                    }
+                } else {
+                    // US ZIP code: format as "12345-6789"
+                    $zipCode .= '-' . $zip4;
+                }
             }
 
             $customer = Customer::updateOrCreate(
@@ -92,6 +113,8 @@ class CustomerController extends Controller
                     'display_name' => $data['displayName'] ?? ($data['firstName'] . ' ' . $data['lastName']),
                     'is_individual' => $data['isIndividual'] ?? true,
                     'customer_json' => json_encode($data),
+                    'contact_methods' => $detailData['contactMethods'] ?? null,
+                    'additional_contacts' => $detailData['additionalContacts'] ?? null,
                     'last_fetched_at' => now(),
                 ]
             );
@@ -108,6 +131,7 @@ class CustomerController extends Controller
                 ['ivue_account'],
                 ['status']
             );
+
             return view('customers.show', compact('customer'));
         } catch (RequestException $e) {
             Log::error('API fetch error: ' . $e->getMessage() . "\n" . $e->getTraceAsString());

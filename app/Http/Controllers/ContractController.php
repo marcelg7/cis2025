@@ -73,7 +73,7 @@ class ContractController extends Controller
 		
 		$subscriber = null;
 		if ($subscriberId) {
-			$subscriber = Subscriber::findOrFail($subscriberId);
+			$subscriber = Subscriber::with('mobilityAccount.ivueAccount.customer')->findOrFail($subscriberId);
 		}
 		
 		$tiers = $ratePlans->pluck('tier')->unique()->sort()->values()->toArray();
@@ -129,6 +129,7 @@ class ContractController extends Controller
 			'activity_type_id' => 'required|exists:activity_types,id',
 			'contract_date' => 'required|date',
 			'location' => 'required|in:zurich,exeter,grand_bend',
+			'customer_phone' => 'nullable|string|max:100',
 			'bell_device_id' => 'nullable|exists:bell_devices,id',
 			'bell_pricing_type' => 'nullable|in:smartpay,dro,byod',
 			'bell_tier' => 'nullable|in:Ultra,Max,Select,Lite',
@@ -193,6 +194,7 @@ class ContractController extends Controller
             'activity_type_id' => $request->activity_type_id,
             'contract_date' => $request->contract_date,
             'location' => $request->location,
+            'customer_phone' => $request->customer_phone,
             'bell_device_id' => $request->bell_device_id,
             'bell_pricing_type' => $request->bell_pricing_type,
             'bell_tier' => $request->bell_tier,
@@ -364,6 +366,9 @@ class ContractController extends Controller
 		// Authorization check - prevent IDOR vulnerability
 		$this->authorize('update', $contract);
 
+		// Load customer relationship for contact methods
+		$contract->load('subscriber.mobilityAccount.ivueAccount.customer');
+
 		$customers = Customer::orderBy('last_name')->get();
 		$users = User::orderBy('name')->get();
 		$activityTypes = ActivityType::orderBy('name')->get();
@@ -431,6 +436,7 @@ class ContractController extends Controller
 			'activity_type_id' => 'required|exists:activity_types,id',
 			'contract_date' => 'required|date',
 			'location' => 'required|in:zurich,exeter,grand_bend',
+			'customer_phone' => 'nullable|string|max:100',
 			'bell_device_id' => 'nullable|exists:bell_devices,id',
 			'bell_pricing_type' => 'nullable|in:smartpay,dro,byod',
 			'bell_tier' => 'nullable|in:Ultra,Max,Select,Lite',
@@ -492,6 +498,7 @@ class ContractController extends Controller
 			'activity_type_id' => $request->activity_type_id,
 			'contract_date' => $request->contract_date,
 			'location' => $request->location,
+			'customer_phone' => $request->customer_phone,
 			'bell_device_id' => $request->bell_device_id,
 			'bell_pricing_type' => $request->bell_pricing_type,
 			'bell_tier' => $request->bell_tier,

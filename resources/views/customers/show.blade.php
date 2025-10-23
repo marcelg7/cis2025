@@ -53,8 +53,55 @@
                     <div>
                         <h3 class="text-lg font-medium text-gray-900">Contact Information</h3>
                         <p class="mt-1 text-sm text-gray-600"><strong>Email:</strong> {{ $customer->email ?? 'N/A' }}</p>
-                        <p class="text-sm text-gray-600"><strong>Phone:</strong> {{ $customer->phone ?? 'N/A' }}</p>
                         <p class="text-sm text-gray-600"><strong>Address:</strong> {{ $customer->address }}, {{ $customer->city }}, {{ $customer->state }} {{ $customer->zip_code }}</p>
+
+                        @if($customer->contact_methods && count($customer->contact_methods) > 0)
+                            <div class="mt-3">
+                                <h4 class="text-sm font-semibold text-gray-700">Contact Methods:</h4>
+                                <ul class="mt-1 space-y-1">
+                                    @foreach($customer->contact_methods as $method)
+                                        @php
+                                            $contactInfo = $method['contactInfo'] ?? '';
+                                            $contactMethod = $method['contactMethod'] ?? '';
+                                            $formatted = \App\Helpers\PhoneHelper::formatDisplay($contactInfo);
+                                        @endphp
+                                        <li class="text-sm text-gray-600">
+                                            <strong>{{ $contactMethod }}:</strong> {{ $formatted }}
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @endif
+
+                        @if($customer->additional_contacts && count($customer->additional_contacts) > 0)
+                            <div class="mt-3">
+                                <h4 class="text-sm font-semibold text-gray-700">Additional Contacts:</h4>
+                                <ul class="mt-1 space-y-2">
+                                    @foreach($customer->additional_contacts as $contact)
+                                        <li class="text-sm text-gray-600">
+                                            <strong>{{ $contact['contactName'] ?? 'N/A' }}</strong>
+                                            @if(isset($contact['contactType']) && $contact['contactType'])
+                                                <span class="text-gray-500">({{ $contact['contactType'] }})</span>
+                                            @endif
+                                            @if(isset($contact['contactMethods']) && is_array($contact['contactMethods']) && count($contact['contactMethods']) > 0)
+                                                <ul class="ml-4 mt-1 space-y-1">
+                                                    @foreach($contact['contactMethods'] as $method)
+                                                        @php
+                                                            $contactInfo = $method['contactInfo'] ?? '';
+                                                            $contactMethod = $method['contactMethod'] ?? '';
+                                                            $formatted = \App\Helpers\PhoneHelper::formatDisplay($contactInfo);
+                                                        @endphp
+                                                        <li class="text-xs text-gray-500">
+                                                            {{ $contactMethod }}: {{ $formatted }}
+                                                        </li>
+                                                    @endforeach
+                                                </ul>
+                                            @endif
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @endif
                     </div>
                 </div>
             </div>

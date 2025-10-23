@@ -72,6 +72,35 @@
                         <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
                     @enderror
                 </div>
+                @if($contract->subscriber && $contract->subscriber->mobilityAccount && $contract->subscriber->mobilityAccount->ivueAccount && $contract->subscriber->mobilityAccount->ivueAccount->customer)
+                    @php
+                        $customer = $contract->subscriber->mobilityAccount->ivueAccount->customer;
+                        $phoneNumbers = collect($customer->contact_methods ?? [])
+                            ->filter(function($method) {
+                                return stripos($method['contactMethod'], 'phone') !== false ||
+                                       stripos($method['contactMethod'], 'cellular') !== false ||
+                                       stripos($method['contactMethod'], 'mobile') !== false;
+                            })
+                            ->map(function($method) {
+                                $info = $method['contactInfo'] ?? '';
+                                return \App\Helpers\PhoneHelper::formatDisplay($info);
+                            })
+                            ->values();
+                    @endphp
+                    @if($phoneNumbers->count() > 0)
+                        <div>
+                            <label for="customer_phone" class="block text-sm font-medium text-gray-700">Customer Contact Number</label>
+                            <select name="customer_phone" id="customer_phone" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                                @foreach($phoneNumbers as $phone)
+                                    <option value="{{ $phone }}" {{ old('customer_phone', $contract->customer_phone) == $phone ? 'selected' : '' }}>{{ $phone }}</option>
+                                @endforeach
+                            </select>
+                            @error('customer_phone')
+                                <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+                    @endif
+                @endif
             </div>
         </div>
         

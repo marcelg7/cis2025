@@ -49,16 +49,20 @@
 					@foreach ($contracts as $contract)
 						<tr class="hover:bg-gray-50">
 							<td class="py-3 px-4 text-sm">
-								<span class="font-medium text-gray-900">#{{ $contract->id }}</span>
+								<a href="{{ route('contracts.view', $contract->id) }}" class="font-medium text-blue-600 hover:text-blue-800 hover:underline">#{{ $contract->id }}</a>
 							</td>
 							<td class="py-3 px-4 text-sm">
-								<div class="text-gray-900">{{ $contract->subscriber->mobilityAccount->ivueAccount->customer->display_name ?? 'N/A' }}</div>
+								<a href="{{ route('customers.show', $contract->subscriber->mobilityAccount->ivueAccount->customer->id) }}" class="text-gray-900 hover:text-blue-600 hover:underline">
+									{{ $contract->subscriber->mobilityAccount->ivueAccount->customer->display_name ?? 'N/A' }}
+								</a>
 								<div class="text-xs text-gray-500">{{ $contract->subscriber->mobile_number }}</div>
 							</td>
 							<td class="py-3 px-4 text-sm">
 								@if($contract->bell_device_id && $contract->bellDevice)
 									<!-- Bell Device -->
-									<div class="text-gray-900 font-medium">{{ $contract->bellDevice->name }}</div>
+									<a href="{{ route('bell-pricing.show', $contract->bell_device_id) }}" class="text-gray-900 font-medium hover:text-blue-600 hover:underline">
+										{{ $contract->bellDevice->name }}
+									</a>
 									<div class="text-xs text-gray-500 space-x-2">
 										<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
 											{{ ucfirst($contract->bell_pricing_type ?? 'N/A') }}

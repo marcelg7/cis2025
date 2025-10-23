@@ -19,6 +19,7 @@ class Contract extends Model
         'activity_type_id',
         'contract_date',
         'location',
+        'customer_phone',
         'shortcode_id',
         'agreement_credit_amount',
         'required_upfront_payment',

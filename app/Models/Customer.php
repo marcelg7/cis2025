@@ -12,10 +12,12 @@ class Customer extends Model
         'updated_at' => 'datetime',
         'last_fetched_at' => 'datetime',
 		'is_test' => 'boolean',
-    ];	
+        'contact_methods' => 'array',
+        'additional_contacts' => 'array',
+    ];
 
     use HasFactory;
-	
+
     protected $fillable = [
         'ivue_customer_number',
         'first_name',
@@ -29,6 +31,8 @@ class Customer extends Model
         'display_name',
         'is_individual',
         'customer_json',
+        'contact_methods',
+        'additional_contacts',
         'last_fetched_at',
 		'is_test',
     ];	
