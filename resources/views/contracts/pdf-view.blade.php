@@ -108,10 +108,10 @@
                     <p><strong>Device Retail Price:</strong> ${{ number_format($devicePrice, 2) }}</p>
                     <p><strong>Agreement Credit:</strong> ${{ number_format($contract->agreement_credit_amount ?? 0, 2) }}</p>
                     <!-- REMOVED: Device Amount line -->
-                    <p><strong>Total Financed Amount (before tax):</strong> ${{ number_format($totalFinancedAmount, 2) }}</p>
+                    <p><strong>Deferred Payment Amount:</strong> ${{ number_format($contract->deferred_payment_amount ?? 0, 2) }}</p>
                     <p><strong>Up-front Payment Required:</strong> ${{ number_format($contract->required_upfront_payment ?? 0, 2) }}</p>
                     <p><strong>Optional Up-front Payment:</strong> ${{ number_format($contract->optional_down_payment ?? 0, 2) }}</p>
-                    <p><strong>Deferred Payment Amount:</strong> ${{ number_format($contract->deferred_payment_amount ?? 0, 2) }}</p>
+                    <p><strong>Total Financed Amount (before tax):</strong> ${{ number_format($totalFinancedAmount, 2) }}</p>
                     <p><strong>Remaining Device Balance:</strong> ${{ number_format($totalFinancedAmount - ($contract->deferred_payment_amount ?? 0), 2) }}</p>
                 </div>
                 <div style="float: left; width: 48%;">

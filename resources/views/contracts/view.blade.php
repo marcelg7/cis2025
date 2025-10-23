@@ -187,10 +187,10 @@
                 <p class="mt-2 italic text-xs text-gray-600">All amounts are before taxes.</p>
                 <p class="text-sm text-gray-700 mt-2"><span class="font-semibold">Device Retail Price:</span> ${{ number_format($devicePrice, 2) }}</p>
                 <p class="text-sm text-gray-700"><span class="font-semibold">Agreement Credit:</span> ${{ number_format($contract->agreement_credit_amount ?? 0, 2) }}</p>
-                <p class="text-sm text-gray-700"><span class="font-semibold">Total Financed Amount:</span> ${{ number_format($totalFinancedAmount, 2) }}</p>
+                <p class="text-sm text-gray-700"><span class="font-semibold">Deferred Payment Amount:</span> ${{ number_format($contract->deferred_payment_amount ?? 0, 2) }}</p>
                 <p class="text-sm text-gray-700"><span class="font-semibold">Up-front Payment Required:</span> ${{ number_format($contract->required_upfront_payment ?? 0, 2) }}</p>
                 <p class="text-sm text-gray-700"><span class="font-semibold">Optional Up-front Payment:</span> ${{ number_format($contract->optional_down_payment ?? 0, 2) }}</p>
-                <p class="text-sm text-gray-700"><span class="font-semibold">Deferred Payment Amount:</span> ${{ number_format($contract->deferred_payment_amount ?? 0, 2) }}</p>
+                <p class="text-sm text-gray-700"><span class="font-semibold">Total Financed Amount:</span> ${{ number_format($totalFinancedAmount, 2) }}</p>
                 <p class="text-sm text-gray-700"><span class="font-semibold">Remaining Device Balance:</span> ${{ number_format($totalFinancedAmount - ($contract->deferred_payment_amount ?? 0), 2) }}</p>
             </div>
             
