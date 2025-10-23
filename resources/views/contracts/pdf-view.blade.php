@@ -142,7 +142,7 @@
             <p><strong>Rate Plan</strong></p>
             <p>{{ $contract->bell_pricing_type === 'dro' ? 'DRO' : strtoupper($contract->bell_pricing_type ?? 'SMARTPAY') }} {{ $contract->bell_tier ?? 'Lite' }}</p>
             <p>{{ $contract->commitmentPeriod->name ?? '2yr 60GB Lite' }}</p>
-            <p><strong>SOC:</strong> {{ $contract->ratePlan->soc ?? 'BRPT00142' }}</p>
+            <p><strong>SOC:</strong> {{ $contract->ratePlan->soc_code ?? 'BRPT00142' }}</p>
             <p>{{ $contract->ratePlan->data ?? '60GB' }}</p>
             <p>${{ number_format($contract->rate_plan_price ?? 85.00, 2) }} per month</p>
             <p><strong>Selected Device Tier:</strong> {{ $contract->bell_tier ?? 'Lite' }}</p>

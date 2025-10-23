@@ -25,7 +25,7 @@
 									data-promo-price="{{ $plan->promo_price }}"
 									data-tier="{{ $plan->tier }}"
 									data-plan-type="byod"
-									data-soc="{{ $plan->soc ?? 'N/A' }}"
+									data-soc="{{ $plan->soc_code ?? 'N/A' }}"
 									data-credit-eligible="{{ $plan->credit_eligible ? 'true' : 'false' }}"
 									data-credit-amount="{{ $plan->credit_amount ?? 0 }}"
 									data-credit-type="{{ $plan->credit_type ?? 'Credit' }}">
@@ -49,7 +49,7 @@
 									data-promo-price="{{ $plan->promo_price }}"
 									data-tier="{{ $plan->tier }}"
 									data-plan-type="smartpay"
-									data-soc="{{ $plan->soc ?? 'N/A' }}"
+									data-soc="{{ $plan->soc_code ?? 'N/A' }}"
 									data-credit-eligible="{{ $plan->credit_eligible ? 'true' : 'false' }}"
 									data-credit-amount="{{ $plan->credit_amount ?? 0 }}"
 									data-credit-type="{{ $plan->credit_type ?? 'Credit' }}">
