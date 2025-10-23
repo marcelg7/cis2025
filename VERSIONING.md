@@ -1,14 +1,20 @@
 # Version Management Guide
 
-This application uses **git tags** for version management with semantic versioning.
+This application uses **git tags** for version management with a custom calendar versioning scheme.
 
 ## Version Format
 
-We use **Semantic Versioning (SemVer)**: `vMAJOR.MINOR.PATCH`
+We use **Calendar Versioning**: `vMAJOR.YEAR.RELEASE`
 
-- **MAJOR** (v2.0.0): Breaking changes, major features
-- **MINOR** (v1.1.0): New features, backward compatible
-- **PATCH** (v1.0.1): Bug fixes, small improvements
+- **MAJOR** (v4.x.x): Major version of the system
+- **YEAR** (vx.2025.x): Year of release
+- **RELEASE** (vx.x.1): Release number within that year
+
+**Examples:**
+- `v4.2025.1` - Initial production release (2025, release #1)
+- `v4.2025.2` - Second release in 2025
+- `v4.2026.1` - First release in 2026
+- `v5.2026.1` - Major version upgrade in 2026
 
 ## How to Create a New Version
 
@@ -18,34 +24,34 @@ Tag a new version when you're ready to deploy to production:
 
 ```bash
 # After all commits are pushed to main
-git tag v1.0.0
-git push origin v1.0.0
+git tag v4.2025.2
+git push origin v4.2025.2
 ```
 
 ### Versioning Workflow
 
-**Initial Release:**
+**Initial Release (2025):**
 ```bash
-git tag v1.0.0
-git push origin v1.0.0
+git tag v4.2025.1
+git push origin v4.2025.1
 ```
 
-**Bug Fix (Patch):**
+**Next Release (Bug fixes, features, improvements):**
 ```bash
-git tag v1.0.1
-git push origin v1.0.1
+git tag v4.2025.2
+git push origin v4.2025.2
 ```
 
-**New Feature (Minor):**
+**First Release of 2026:**
 ```bash
-git tag v1.1.0
-git push origin v1.1.0
+git tag v4.2026.1
+git push origin v4.2026.1
 ```
 
-**Breaking Change (Major):**
+**Major Version Upgrade:**
 ```bash
-git tag v2.0.0
-git push origin v2.0.0
+git tag v5.2026.1
+git push origin v5.2026.1
 ```
 
 ## Deployment Process with Versions
@@ -65,8 +71,8 @@ git push origin v2.0.0
 
 3. When ready to deploy, create a version tag:
    ```bash
-   git tag v1.0.1
-   git push origin v1.0.1
+   git tag v4.2025.2
+   git push origin v4.2025.2
    ```
 
 ### Production Server
@@ -88,7 +94,7 @@ git push origin v2.0.0
 
 The version is automatically displayed in the footer of every page:
 
-- **With tags**: Shows `v1.0.0`
+- **With tags**: Shows `v4.2025.1`
 - **Without tags**: Shows `dev-abc1234` (commit hash)
 
 You can also check the version via command line:
@@ -107,17 +113,17 @@ git tag
 git tag -n
 
 # Show specific tag details
-git show v1.0.0
+git show v4.2025.1
 ```
 
 ## Deleting a Tag (if needed)
 
 ```bash
 # Delete local tag
-git tag -d v1.0.0
+git tag -d v4.2025.2
 
 # Delete remote tag
-git push origin --delete v1.0.0
+git push origin --delete v4.2025.2
 ```
 
 ## Best Practices
@@ -125,8 +131,8 @@ git push origin --delete v1.0.0
 1. **Tag after testing**: Only tag versions that have been tested
 2. **Use annotated tags** (optional but recommended):
    ```bash
-   git tag -a v1.0.0 -m "Release version 1.0.0 - Initial production release"
-   git push origin v1.0.0
+   git tag -a v4.2025.2 -m "Release v4.2025.2 - Bug fixes and improvements"
+   git push origin v4.2025.2
    ```
 
 3. **Keep a changelog**: Update CHANGELOG.md with each version
@@ -138,16 +144,17 @@ git push origin --delete v1.0.0
 Track your versions in CHANGELOG.md:
 
 ```markdown
-## v1.0.1 - 2025-10-23
+## v4.2025.2 - 2025-10-25
 ### Fixed
 - Fixed invisible buttons on login page
 - Fixed migration ordering issues
 
-## v1.0.0 - 2025-10-23
+## v4.2025.1 - 2025-10-23
 ### Added
 - Initial production release
 - Contract management system
 - WCOC compliance features
+- Security audit and monitoring
 ```
 
 ## Automated Versioning (Future Enhancement)
