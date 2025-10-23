@@ -33,7 +33,7 @@ use App\Http\Controllers\PermissionController;
 
 // Password Reset Routes (must be outside auth middleware)
 // Rate limited to prevent brute force attacks
-Route::middleware(['guest', 'throttle:10,1'])->group(function () {
+Route::middleware(['guest', 'throttle:20,1'])->group(function () {
     Route::get('reset-password/{token}', [NewPasswordController::class, 'create'])
         ->name('password.reset');
     Route::post('reset-password', [NewPasswordController::class, 'store'])
