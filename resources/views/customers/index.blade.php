@@ -7,6 +7,34 @@
         searchResults: [],
         searching: false,
         searchError: '',
+        customerInput: '{{ old('customer_number') }}',
+        handleFormSubmit(event) {
+            const input = this.customerInput.trim();
+
+            // Check if input starts with 502 (customer number)
+            if (input.startsWith('502')) {
+                // Submit the form normally
+                event.target.submit();
+            } else {
+                // It's a search term - open search modal and search
+                this.searchModalOpen = true;
+
+                // Try to guess if it's first name, last name, or business name
+                // If it contains spaces, assume it's a full name (first last)
+                if (input.includes(' ')) {
+                    const parts = input.split(' ');
+                    this.searchQuery.firstName = parts[0];
+                    this.searchQuery.lastName = parts.slice(1).join(' ');
+                } else {
+                    // Single word - could be last name or business name
+                    this.searchQuery.lastName = input;
+                    this.searchQuery.businessName = input;
+                }
+
+                // Automatically trigger search
+                this.performSearch();
+            }
+        },
         performSearch() {
             this.searching = true;
             this.searchError = '';
@@ -79,11 +107,12 @@
 		@endif
 
 
-        <form method="POST" action="{{ route('customers.fetch') }}" class="mt-6">
+        <form method="POST" action="{{ route('customers.fetch') }}" class="mt-6" @submit.prevent="handleFormSubmit($event)">
             @csrf
             <div class="mb-4">
-                <label for="customer_number" class="block text-sm font-medium text-gray-700">Customer Number</label>
-                <input type="text" name="customer_number" id="customer_number" value="{{ old('customer_number') }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required>
+                <label for="customer_number" class="block text-sm font-medium text-gray-700">Customer Number or Name</label>
+                <input type="text" name="customer_number" id="customer_number" x-model="customerInput" value="{{ old('customer_number') }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required placeholder="502xxxxx or customer name">
+                <p class="mt-1 text-xs text-gray-500">Enter a customer number (502xxxxx) or a name to search</p>
                 @error('customer_number')
                     <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
                 @enderror

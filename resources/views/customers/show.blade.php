@@ -5,9 +5,9 @@
             <div class="px-4 py-5 sm:px-6 flex justify-between items-center">
                 <div>
                     <h1 class="text-2xl font-semibold text-gray-900">{{ $customer->display_name }}</h1>
-                    <p class="mt-1 text-sm text-gray-600 flex items-center">
+                    <div class="mt-1 text-sm text-gray-600 flex items-center">
                         <span>Customer Number: {{ $customer->ivue_customer_number }}</span>
-                        <form method="POST" action="{{ route('customers.fetch') }}" class="inline ml-2" x-ref="refreshForm">
+                        <form method="POST" action="{{ route('customers.fetch') }}" class="inline-flex ml-2" x-ref="refreshForm">
                             @csrf
                             <input type="hidden" name="customer_number" value="{{ $customer->ivue_customer_number }}">
                             <button
@@ -28,7 +28,7 @@
                                 </svg>
                             </button>
                         </form>
-                    </p>
+                    </div>
                 </div>
                 <div class="flex space-x-4">
                     @php
