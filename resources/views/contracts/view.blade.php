@@ -77,10 +77,10 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <div class="mt-2 text-sm text-gray-600">
-                        <p><strong>Account Name:</strong> {{ $contract->subscriber->first_name }} {{ $contract->subscriber->last_name }}</p>
+                        <p><strong>Account Name:</strong> {{ $contract->subscriber->mobilityAccount->ivueAccount->customer->display_name }}</p>
                         <p><strong>Company Name:</strong> {{ $contract->subscriber->mobilityAccount->ivueAccount->customer->is_individual ? 'N/A' : $contract->subscriber->mobilityAccount->ivueAccount->customer->display_name }}</p>
                         <p><strong>Mobile Account #:</strong> {{ $contract->subscriber->mobilityAccount->mobility_account }}</p>
-                        <p><strong>Contact Number:</strong> {{ $contract->subscriber->mobile_number }}</p>
+                        <p><strong>Contact Number:</strong> {{ $contract->subscriber->mobilityAccount->ivueAccount->customer->phone ?? $contract->subscriber->mobile_number }}</p>
                         <p><strong>Mobile Number:</strong> {{ $contract->subscriber->mobile_number }}</p>
                         <p><strong>Subscriber:</strong> {{ $contract->subscriber->first_name }} {{ $contract->subscriber->last_name }}</p>
                         <p><strong>Hay Account #:</strong> {{ $contract->subscriber->mobilityAccount->ivueAccount->ivue_account }}</p>
@@ -93,7 +93,7 @@
                         <p><strong>Monthly Payment Method:</strong> Pre-Authorized</p>
                         <p><strong>First Bill Date:</strong> {{ $contract->first_bill_date->format('M d, Y') }}</p>
                         <p class="mt-2"><strong>To view your monthly usage register at:</strong><br><a href="https://mybell.bell.ca/registration" class="text-indigo-600 hover:underline">https://mybell.bell.ca/registration</a></p>
-                        <p><strong>Bill Date for My Bell registration:</strong> {{ $contract->first_bill_date->day }}{{ $contract->first_bill_date->day == 1 ? 'st' : ($contract->first_bill_date->day == 2 ? 'nd' : ($contract->first_bill_date->day == 3 ? 'rd' : 'th')) }}</p>
+                        <p><strong>Bill Date for My Bell registration:</strong> {{ $contract->start_date->day }}{{ $contract->start_date->day == 1 ? 'st' : ($contract->start_date->day == 2 ? 'nd' : ($contract->start_date->day == 3 ? 'rd' : 'th')) }}</p>
                         
                         @php
                             // Calculate proration details

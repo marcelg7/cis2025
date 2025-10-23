@@ -25,10 +25,10 @@
         <table width="100%" style="table-layout: fixed; font-size: 7pt; color: #333; line-height: 1.0;">
             <tr>
                 <td width="50%" style="padding-right: 0.1rem;">
-                    <p><strong>Account Name:</strong> {{ $contract->subscriber->first_name }} {{ $contract->subscriber->last_name }}</p>
+                    <p><strong>Account Name:</strong> {{ $contract->subscriber->mobilityAccount->ivueAccount->customer->display_name }}</p>
                     <p><strong>Company Name:</strong> {{ $contract->subscriber->mobilityAccount->ivueAccount->customer->is_individual ? 'N/A' : $contract->subscriber->mobilityAccount->ivueAccount->customer->display_name }}</p>
                     <p><strong>Mobile Account #:</strong> {{ $contract->subscriber->mobilityAccount->mobility_account }}</p>
-                    <p><strong>Contact Number:</strong> {{ $contract->subscriber->mobile_number }}</p>
+                    <p><strong>Contact Number:</strong> {{ $contract->subscriber->mobilityAccount->ivueAccount->customer->phone ?? $contract->subscriber->mobile_number }}</p>
                     <p><strong>Mobile Number:</strong> {{ $contract->subscriber->mobile_number }}</p>
                     <p><strong>Subscriber:</strong> {{ $contract->subscriber->first_name }} {{ $contract->subscriber->last_name }}</p>
                     <p><strong>Hay Account #:</strong> {{ $contract->subscriber->mobilityAccount->ivueAccount->ivue_account }}</p>
@@ -39,7 +39,7 @@
                     <p><strong>Monthly Payment Method:</strong> Pre-Authorized</p>
                     <p><strong>First Bill Date:</strong> {{ $contract->first_bill_date->format('M d, Y') }}</p>
                     <p><strong>To view your monthly usage register at:</strong><br>https://mybell.bell.ca/registration</p>
-                    <p><strong>Bill Date for My Bell registration:</strong> {{ $contract->first_bill_date->day }}{{ $contract->first_bill_date->day == 1 ? 'st' : ($contract->first_bill_date->day == 2 ? 'nd' : ($contract->first_bill_date->day == 3 ? 'rd' : 'th')) }}</p>
+                    <p><strong>Bill Date for My Bell registration:</strong> {{ $contract->start_date->day }}{{ $contract->start_date->day == 1 ? 'st' : ($contract->start_date->day == 2 ? 'nd' : ($contract->start_date->day == 3 ? 'rd' : 'th')) }}</p>
                     
                     @php
                         // Calculate proration details
