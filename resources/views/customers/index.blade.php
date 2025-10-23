@@ -19,6 +19,9 @@
                 // It's a search term - open search modal and search
                 this.searchModalOpen = true;
 
+                // Clear previous search
+                this.searchQuery = { lastName: '', firstName: '', businessName: '', address: '' };
+
                 // Try to guess if it's first name, last name, or business name
                 // If it contains spaces, assume it's a full name (first last)
                 if (input.includes(' ')) {
@@ -26,16 +29,15 @@
                     this.searchQuery.firstName = parts[0];
                     this.searchQuery.lastName = parts.slice(1).join(' ');
                 } else {
-                    // Single word - could be last name or business name
+                    // Single word - search lastName only (user can manually add to other fields if needed)
                     this.searchQuery.lastName = input;
-                    this.searchQuery.businessName = input;
                 }
 
                 // Automatically trigger search
                 this.performSearch();
             }
         },
-        performSearch() {
+        async performSearch() {
             this.searching = true;
             this.searchError = '';
             this.searchResults = [];
@@ -46,22 +48,60 @@
             if (this.searchQuery.businessName) params.append('businessName', this.searchQuery.businessName);
             if (this.searchQuery.address) params.append('address', this.searchQuery.address);
 
-            fetch('{{ route('customers.search') }}?' + params.toString())
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        this.searchResults = data.customers;
-                    } else {
-                        this.searchError = data.message || 'An error occurred while searching.';
-                    }
-                })
-                .catch(error => {
+            // If it's a single-field search from auto-fill, search multiple fields
+            const isSingleWordSearch = this.searchQuery.lastName && !this.searchQuery.firstName && !this.searchQuery.businessName && !this.searchQuery.address;
+
+            if (isSingleWordSearch) {
+                // Search lastName, firstName, and businessName separately and combine results
+                try {
+                    const searchTerm = this.searchQuery.lastName;
+                    const [lastNameResults, firstNameResults, businessNameResults] = await Promise.all([
+                        fetch('{{ route('customers.search') }}?' + new URLSearchParams({ lastName: searchTerm })).then(r => r.json()),
+                        fetch('{{ route('customers.search') }}?' + new URLSearchParams({ firstName: searchTerm })).then(r => r.json()),
+                        fetch('{{ route('customers.search') }}?' + new URLSearchParams({ businessName: searchTerm })).then(r => r.json())
+                    ]);
+
+                    // Combine results and remove duplicates based on customerNumber
+                    const allResults = [];
+                    const seen = new Set();
+
+                    [lastNameResults, firstNameResults, businessNameResults].forEach(result => {
+                        if (result.success && result.customers) {
+                            result.customers.forEach(customer => {
+                                if (!seen.has(customer.customerNumber)) {
+                                    seen.add(customer.customerNumber);
+                                    allResults.push(customer);
+                                }
+                            });
+                        }
+                    });
+
+                    this.searchResults = allResults;
+                } catch (error) {
                     this.searchError = 'Failed to search customers. Please try again.';
                     console.error('Search error:', error);
-                })
-                .finally(() => {
+                } finally {
                     this.searching = false;
-                });
+                }
+            } else {
+                // Normal search with provided parameters
+                fetch('{{ route('customers.search') }}?' + params.toString())
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            this.searchResults = data.customers;
+                        } else {
+                            this.searchError = data.message || 'An error occurred while searching.';
+                        }
+                    })
+                    .catch(error => {
+                        this.searchError = 'Failed to search customers. Please try again.';
+                        console.error('Search error:', error);
+                    })
+                    .finally(() => {
+                        this.searching = false;
+                    });
+            }
         }
     }"> <!-- Added px-2 -->		
 		<!-- Active Users Bar -->
