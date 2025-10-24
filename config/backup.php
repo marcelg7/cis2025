@@ -202,14 +202,23 @@ return [
      * the `Spatie\Backup\Notifications\Notifications` classes.
      */
     'notifications' => [
-        'notifications' => [
-            \Spatie\Backup\Notifications\Notifications\BackupHasFailedNotification::class => ['mail'],
-            \Spatie\Backup\Notifications\Notifications\UnhealthyBackupWasFoundNotification::class => ['mail'],
-            \Spatie\Backup\Notifications\Notifications\CleanupHasFailedNotification::class => ['mail'],
-            \Spatie\Backup\Notifications\Notifications\BackupWasSuccessfulNotification::class => ['mail'],
-            \Spatie\Backup\Notifications\Notifications\HealthyBackupWasFoundNotification::class => ['mail'],
-            \Spatie\Backup\Notifications\Notifications\CleanupWasSuccessfulNotification::class => ['mail'],
-        ],
+        'notifications' => array_filter([
+            // Failure notifications (always enabled if notification email is set)
+            \Spatie\Backup\Notifications\Notifications\BackupHasFailedNotification::class =>
+                env('BACKUP_NOTIFICATION_EMAIL') ? ['mail'] : [],
+            \Spatie\Backup\Notifications\Notifications\UnhealthyBackupWasFoundNotification::class =>
+                env('BACKUP_NOTIFICATION_EMAIL') ? ['mail'] : [],
+            \Spatie\Backup\Notifications\Notifications\CleanupHasFailedNotification::class =>
+                env('BACKUP_NOTIFICATION_EMAIL') ? ['mail'] : [],
+
+            // Success notifications (only if enabled)
+            \Spatie\Backup\Notifications\Notifications\BackupWasSuccessfulNotification::class =>
+                (env('BACKUP_NOTIFICATION_EMAIL') && filter_var(env('BACKUP_NOTIFICATION_ON_SUCCESS', false), FILTER_VALIDATE_BOOLEAN)) ? ['mail'] : [],
+            \Spatie\Backup\Notifications\Notifications\HealthyBackupWasFoundNotification::class =>
+                (env('BACKUP_NOTIFICATION_EMAIL') && filter_var(env('BACKUP_NOTIFICATION_ON_SUCCESS', false), FILTER_VALIDATE_BOOLEAN)) ? ['mail'] : [],
+            \Spatie\Backup\Notifications\Notifications\CleanupWasSuccessfulNotification::class =>
+                (env('BACKUP_NOTIFICATION_EMAIL') && filter_var(env('BACKUP_NOTIFICATION_ON_SUCCESS', false), FILTER_VALIDATE_BOOLEAN)) ? ['mail'] : [],
+        ]),
 
         /*
          * Here you can specify the notifiable to which the notifications should be sent. The default

@@ -154,6 +154,18 @@ class BackupController extends Controller
         Setting::set('backup_notification_email', $validated['backup_notification_email'] ?? '');
         Setting::set('backup_notification_slack_webhook', $validated['backup_notification_slack_webhook'] ?? '');
 
+        // Update .env file with notification settings
+        $this->updateEnvFile([
+            'BACKUP_NOTIFICATION_EMAIL' => $validated['backup_notification_email'] ?? '',
+            'BACKUP_NOTIFICATION_SLACK_WEBHOOK' => $validated['backup_notification_slack_webhook'] ?? '',
+            'BACKUP_NOTIFICATION_ON_SUCCESS' => $request->boolean('backup_notification_on_success') ? 'true' : 'false',
+            'BACKUP_NOTIFICATION_ON_FAILURE' => $request->boolean('backup_notification_on_failure') ? 'true' : 'false',
+            'BACKUP_VAULT_FTP_ENABLED' => $request->boolean('backup_vault_ftp_enabled') ? 'true' : 'false',
+            'BACKUP_KEEP_DAILY' => $validated['backup_keep_daily'],
+            'BACKUP_KEEP_WEEKLY' => $validated['backup_keep_weekly'],
+            'BACKUP_KEEP_MONTHLY' => $validated['backup_keep_monthly'],
+        ]);
+
         // Clear config cache so new settings take effect
         Artisan::call('config:clear');
 
@@ -189,5 +201,39 @@ class BackupController extends Controller
 
         return redirect()->route('admin.backups.index')
             ->with('success', 'Backup deleted successfully!');
+    }
+
+    /**
+     * Update .env file with new values
+     */
+    protected function updateEnvFile(array $data)
+    {
+        $envFile = base_path('.env');
+
+        if (!file_exists($envFile)) {
+            return;
+        }
+
+        $env = file_get_contents($envFile);
+
+        foreach ($data as $key => $value) {
+            // Escape special characters in value
+            $value = str_replace('"', '\"', $value);
+
+            // Check if key exists in .env
+            if (preg_match("/^{$key}=/m", $env)) {
+                // Update existing key
+                $env = preg_replace(
+                    "/^{$key}=.*/m",
+                    "{$key}=\"{$value}\"",
+                    $env
+                );
+            } else {
+                // Add new key at the end
+                $env .= "\n{$key}=\"{$value}\"";
+            }
+        }
+
+        file_put_contents($envFile, $env);
     }
 }
