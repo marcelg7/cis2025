@@ -201,9 +201,8 @@
 
     <!-- Activity Log Details -->
     @if($activities->count() > 1)
-        <div class="mt-8 pt-6 border-t border-gray-200">
+        <div class="mt-8 pt-6 border-t border-gray-200" x-data="{ expanded: false }">
             <button type="button"
-                    x-data="{ expanded: false }"
                     @click="expanded = !expanded"
                     class="flex items-center justify-between w-full text-left">
                 <h4 class="text-sm font-semibold text-gray-900">
