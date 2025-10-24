@@ -65,18 +65,17 @@
                             </div>
                         </div>
                         <div class="flex-shrink-0" x-data="{ enabled: {{ $preference['enabled'] ? 'true' : 'false' }} }">
-                            <label class="relative inline-flex items-center cursor-pointer">
+                            <label class="inline-flex items-center cursor-pointer">
                                 <input type="checkbox"
                                        name="notifications[{{ $type }}]"
-                                       class="sr-only peer"
-                                       x-model="enabled"
-                                       :checked="enabled">
-                                <div class="w-11 h-6 rounded-full peer peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 transition-colors"
+                                       class="sr-only"
+                                       x-model="enabled">
+                                <div class="relative w-11 h-6 rounded-full transition-colors"
                                      :class="enabled ? 'bg-indigo-600' : 'bg-gray-200'">
-                                    <div class="absolute top-[2px] left-[2px] bg-white border border-gray-300 rounded-full h-5 w-5 transition-transform"
-                                         :class="enabled ? 'translate-x-full' : 'translate-x-0'"></div>
+                                    <div class="absolute top-[2px] left-[2px] bg-white border border-gray-300 rounded-full h-5 w-5 transition-transform duration-200"
+                                         :class="enabled ? 'translate-x-5' : 'translate-x-0'"></div>
                                 </div>
-                                <span class="ms-3 text-sm font-medium"
+                                <span class="ml-3 text-sm font-medium"
                                       :class="enabled ? 'text-indigo-600' : 'text-gray-500'"
                                       x-text="enabled ? 'Enabled' : 'Disabled'">
                                 </span>
