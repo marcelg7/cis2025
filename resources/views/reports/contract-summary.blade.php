@@ -166,20 +166,20 @@
                     <tbody class="bg-white divide-y divide-gray-200">
                         @foreach($contracts as $contract)
                             @php
-                                $customer = $contract->subscriber->mobilityAccount->ivueAccount->customer ?? null;
+                                $customer = $contract->subscriber?->mobilityAccount?->ivueAccount?->customer;
                             @endphp
                             <tr class="hover:bg-gray-50">
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                     {{ $contract->contract_date->format('M d, Y') }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                    {{ $customer ? $customer->display_name : 'N/A' }}
+                                    {{ $customer?->display_name ?? 'N/A' }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                                    {{ $contract->activityType->name ?? 'N/A' }}
+                                    {{ $contract->activityType?->name ?? 'N/A' }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                                    {{ $contract->bellDevice->device_name ?? 'BYOD' }}
+                                    {{ $contract->bellDevice?->device_name ?? 'BYOD' }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                     ${{ number_format(($contract->rate_plan_price ?? 0) + ($contract->mobile_internet_price ?? 0), 2) }}
@@ -188,10 +188,10 @@
                                     ${{ number_format($contract->bell_retail_price ?? 0, 2) }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                                    {{ $contract->locationModel->name ?? 'N/A' }}
+                                    {{ $contract->locationModel?->name ?? 'N/A' }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                                    {{ $contract->updatedBy->name ?? 'N/A' }}
+                                    {{ $contract->updatedBy?->name ?? 'N/A' }}
                                 </td>
                             </tr>
                         @endforeach

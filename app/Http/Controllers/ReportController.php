@@ -231,15 +231,15 @@ class ReportController extends Controller
 
         $row++;
         foreach ($data['contracts'] as $contract) {
-            $customer = $contract->subscriber->mobilityAccount->ivueAccount->customer ?? null;
+            $customer = $contract->subscriber?->mobilityAccount?->ivueAccount?->customer;
             $sheet->setCellValue('A' . $row, $contract->contract_date->format('Y-m-d'));
-            $sheet->setCellValue('B' . $row, $customer ? $customer->display_name : 'N/A');
-            $sheet->setCellValue('C' . $row, $contract->activityType->name ?? 'N/A');
-            $sheet->setCellValue('D' . $row, $contract->bellDevice->device_name ?? 'BYOD');
+            $sheet->setCellValue('B' . $row, $customer?->display_name ?? 'N/A');
+            $sheet->setCellValue('C' . $row, $contract->activityType?->name ?? 'N/A');
+            $sheet->setCellValue('D' . $row, $contract->bellDevice?->device_name ?? 'BYOD');
             $sheet->setCellValue('E' . $row, '$' . number_format(($contract->rate_plan_price ?? 0) + ($contract->mobile_internet_price ?? 0), 2));
             $sheet->setCellValue('F' . $row, '$' . number_format($contract->bell_retail_price ?? 0, 2));
-            $sheet->setCellValue('G' . $row, $contract->locationModel->name ?? 'N/A');
-            $sheet->setCellValue('H' . $row, $contract->updatedBy->name ?? 'N/A');
+            $sheet->setCellValue('G' . $row, $contract->locationModel?->name ?? 'N/A');
+            $sheet->setCellValue('H' . $row, $contract->updatedBy?->name ?? 'N/A');
             $row++;
         }
 
