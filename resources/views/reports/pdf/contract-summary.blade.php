@@ -139,8 +139,8 @@
                 @endphp
                 <tr>
                     <td>{{ $contract->contract_date->format('M d, Y') }}</td>
-                    <td>{{ $customer ? $customer->name : 'N/A' }}</td>
-                    <td>{{ $contract->activityType->activity ?? 'N/A' }}</td>
+                    <td>{{ $customer ? $customer->display_name : 'N/A' }}</td>
+                    <td>{{ $contract->activityType->name ?? 'N/A' }}</td>
                     <td>{{ $contract->bellDevice->device_name ?? 'BYOD' }}</td>
                     <td>${{ number_format(($contract->rate_plan_price ?? 0) + ($contract->mobile_internet_price ?? 0), 2) }}</td>
                     <td>${{ number_format($contract->bell_retail_price ?? 0, 2) }}</td>

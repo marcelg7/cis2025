@@ -48,7 +48,7 @@ class ReportController extends Controller
         });
         $totalDeviceRevenue = $contracts->sum('bell_retail_price');
 
-        $contractsByType = $contracts->groupBy('activityType.activity')->map->count();
+        $contractsByType = $contracts->groupBy('activityType.name')->map->count();
         $contractsByLocation = $contracts->groupBy('locationModel.name')->map->count();
         $contractsByUser = $contracts->groupBy('updatedBy.name')->map->count();
 
@@ -233,8 +233,8 @@ class ReportController extends Controller
         foreach ($data['contracts'] as $contract) {
             $customer = $contract->subscriber->mobilityAccount->ivueAccount->customer ?? null;
             $sheet->setCellValue('A' . $row, $contract->contract_date->format('Y-m-d'));
-            $sheet->setCellValue('B' . $row, $customer ? $customer->name : 'N/A');
-            $sheet->setCellValue('C' . $row, $contract->activityType->activity ?? 'N/A');
+            $sheet->setCellValue('B' . $row, $customer ? $customer->display_name : 'N/A');
+            $sheet->setCellValue('C' . $row, $contract->activityType->name ?? 'N/A');
             $sheet->setCellValue('D' . $row, $contract->bellDevice->device_name ?? 'BYOD');
             $sheet->setCellValue('E' . $row, '$' . number_format(($contract->rate_plan_price ?? 0) + ($contract->mobile_internet_price ?? 0), 2));
             $sheet->setCellValue('F' . $row, '$' . number_format($contract->bell_retail_price ?? 0, 2));

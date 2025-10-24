@@ -173,10 +173,10 @@
                                     {{ $contract->contract_date->format('M d, Y') }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                    {{ $customer ? $customer->name : 'N/A' }}
+                                    {{ $customer ? $customer->display_name : 'N/A' }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                                    {{ $contract->activityType->activity ?? 'N/A' }}
+                                    {{ $contract->activityType->name ?? 'N/A' }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                                     {{ $contract->bellDevice->device_name ?? 'BYOD' }}
