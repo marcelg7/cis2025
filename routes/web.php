@@ -30,6 +30,8 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\BugReportController;
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\InventoryController;
+use App\Http\Controllers\CalculatorController;
 
 /*
 |--------------------------------------------------------------------------
@@ -211,6 +213,34 @@ Route::middleware(['auth', 'throttle:200,1'])->group(function () {  // CHANGED F
         Route::get('/contract-summary', [ReportController::class, 'contractSummary'])->name('contract-summary');
         Route::get('/device-sales', [ReportController::class, 'deviceSales'])->name('device-sales');
         Route::get('/plan-adoption', [ReportController::class, 'planAdoption'])->name('plan-adoption');
+    });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Inventory Test Routes
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('inventory')->name('inventory.')->group(function () {
+        Route::get('/test', [InventoryController::class, 'index'])->name('test');
+        Route::post('/test/equipment-by-id', [InventoryController::class, 'testEquipmentById'])->name('test-equipment-by-id');
+        Route::post('/test/equipment-by-name', [InventoryController::class, 'testEquipmentByName'])->name('test-equipment-by-name');
+        Route::post('/test/facility-equipment', [InventoryController::class, 'testFacilityEquipment'])->name('test-facility-equipment');
+        Route::post('/test/custom-endpoint', [InventoryController::class, 'testCustomEndpoint'])->name('test-custom-endpoint');
+    });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Calculator Routes
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('calculator')->name('calculator.')->group(function () {
+        Route::get('/', [CalculatorController::class, 'index'])->name('index');
+        Route::post('/calculate', [CalculatorController::class, 'calculate'])->name('calculate');
+        Route::post('/save', [CalculatorController::class, 'save'])->name('save');
+        Route::get('/load/{id}', [CalculatorController::class, 'load'])->name('load');
+        Route::delete('/delete/{id}', [CalculatorController::class, 'delete'])->name('delete');
+        Route::post('/export-pdf', [CalculatorController::class, 'exportPdf'])->name('export-pdf');
+        Route::post('/email', [CalculatorController::class, 'email'])->name('email');
     });
 
     /*
