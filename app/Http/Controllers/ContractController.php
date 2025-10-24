@@ -1112,7 +1112,8 @@ class ContractController extends Controller
 			'activityType',
 			'commitmentPeriod',
 			'bellDevice',
-			'locationModel'
+			'locationModel',
+			'updatedBy'
 		])->findOrFail($id);
 
 		// Authorization check - prevent IDOR vulnerability
