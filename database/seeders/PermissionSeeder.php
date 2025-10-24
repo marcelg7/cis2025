@@ -16,6 +16,7 @@ class PermissionSeeder extends Seeder
         Permission::firstOrCreate(['name' => 'manage-users']);
         Permission::firstOrCreate(['name' => 'view_all_logs']);
         Permission::firstOrCreate(['name' => 'manage-terms-of-service']);
+        Permission::firstOrCreate(['name' => 'view_all_analytics']);
 
         // Roles
         $admin = Role::findOrCreate('admin');

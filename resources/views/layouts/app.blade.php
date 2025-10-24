@@ -339,6 +339,9 @@
                                         <a href="{{ route('users.settings.edit') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                             User Settings
                                         </a>
+                                        <a href="{{ route('analytics') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                            Analytics
+                                        </a>
                                         <a href="{{ route('password.custom_change') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                             Change Password
                                         </a>
@@ -488,6 +491,9 @@
                             
                             <x-responsive-nav-link :href="route('users.settings.edit')" :active="request()->routeIs('users.settings.edit')">
                                 User Settings
+                            </x-responsive-nav-link>
+                            <x-responsive-nav-link :href="route('analytics')" :active="request()->routeIs('analytics')">
+                                Analytics
                             </x-responsive-nav-link>
                             <x-responsive-nav-link :href="route('password.custom_change')" :active="request()->routeIs('password.custom_change')">
                                 Change Password

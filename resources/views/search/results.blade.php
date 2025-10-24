@@ -11,20 +11,71 @@
 				<p class="text-sm text-gray-600 mt-1">No results found</p>
 			@endif
 
-			<!-- Test Data Toggle -->
-			<div class="flex items-center">
-				<form action="{{ route('search') }}" method="GET" class="flex items-center gap-2">
+			<!-- Filters -->
+			<div class="mt-4 bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+				<form action="{{ route('search') }}" method="GET" id="search-filters-form">
 					<input type="hidden" name="query" value="{{ $query }}">
 					<input type="hidden" name="submitted" value="1">
-					<label class="flex items-center cursor-pointer">
-						<input type="checkbox" 
-							   name="include_test" 
-							   value="1" 
-							   {{ $includeTest ? 'checked' : '' }}
-							   onchange="this.form.submit()"
-							   class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
-						<span class="ml-2 text-sm text-gray-700">Include test data</span>
-					</label>
+
+					<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+						<!-- Category Filter -->
+						<div>
+							<label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
+							<select name="category" onchange="this.form.submit()" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+								<option value="">All Categories</option>
+								<option value="customers" {{ $category === 'customers' ? 'selected' : '' }}>Customers</option>
+								<option value="subscribers" {{ $category === 'subscribers' ? 'selected' : '' }}>Subscribers</option>
+								<option value="contracts" {{ $category === 'contracts' ? 'selected' : '' }}>Contracts</option>
+								<option value="devices" {{ $category === 'devices' ? 'selected' : '' }}>Devices</option>
+								<option value="plans" {{ $category === 'plans' ? 'selected' : '' }}>Plans</option>
+								@hasrole('admin')
+									<option value="admin" {{ $category === 'admin' ? 'selected' : '' }}>Admin Items</option>
+								@endhasrole
+							</select>
+						</div>
+
+						<!-- Contract Status Filter -->
+						<div>
+							<label class="block text-sm font-medium text-gray-700 mb-1">Contract Status</label>
+							<select name="contract_status" onchange="this.form.submit()" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+								<option value="">All Statuses</option>
+								<option value="draft" {{ $contractStatus === 'draft' ? 'selected' : '' }}>Draft</option>
+								<option value="signed" {{ $contractStatus === 'signed' ? 'selected' : '' }}>Signed</option>
+								<option value="finalized" {{ $contractStatus === 'finalized' ? 'selected' : '' }}>Finalized</option>
+							</select>
+						</div>
+
+						<!-- Date From Filter -->
+						<div>
+							<label class="block text-sm font-medium text-gray-700 mb-1">Date From</label>
+							<input type="date" name="date_from" value="{{ $dateFrom }}" onchange="this.form.submit()" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+						</div>
+
+						<!-- Date To Filter -->
+						<div>
+							<label class="block text-sm font-medium text-gray-700 mb-1">Date To</label>
+							<input type="date" name="date_to" value="{{ $dateTo }}" onchange="this.form.submit()" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+						</div>
+					</div>
+
+					<!-- Test Data Toggle and Reset Filters -->
+					<div class="mt-4 flex items-center justify-between">
+						<label class="flex items-center cursor-pointer">
+							<input type="checkbox"
+								   name="include_test"
+								   value="1"
+								   {{ $includeTest ? 'checked' : '' }}
+								   onchange="this.form.submit()"
+								   class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+							<span class="ml-2 text-sm text-gray-700">Include test data</span>
+						</label>
+
+						@if($category || $contractStatus || $dateFrom || $dateTo || !$includeTest)
+							<a href="{{ route('search', ['query' => $query, 'submitted' => 1]) }}" class="text-sm text-indigo-600 hover:text-indigo-800">
+								Reset Filters
+							</a>
+						@endif
+					</div>
 				</form>
 			</div>
 

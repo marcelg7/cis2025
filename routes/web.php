@@ -24,6 +24,7 @@ use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\BackupController;
+use App\Http\Controllers\AnalyticsController;
 
 /*
 |--------------------------------------------------------------------------
@@ -190,6 +191,7 @@ Route::middleware(['auth', 'throttle:60,1'])->group(function () {  // CHANGED FR
     Route::get('/search', [SearchController::class, 'search'])->name('search');
     Route::get('/changelog', [ChangelogController::class, 'index'])->name('changelog');
     Route::get('/readme', [ReadmeController::class, 'index'])->name('readme');
+    Route::get('/analytics', [AnalyticsController::class, 'index'])->name('analytics');
 
     /*
     |--------------------------------------------------------------------------
