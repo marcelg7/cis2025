@@ -82,13 +82,20 @@ class BackupController extends Controller
         try {
             $onlyDb = $request->boolean('only_db');
 
+            // Check if email notifications are enabled
+            $notificationEmail = Setting::get('backup_notification_email', '');
+            $notifyOnSuccess = Setting::get('backup_notification_on_success', 'false') === 'true';
+            $emailSuffix = ($notificationEmail && $notifyOnSuccess)
+                ? ' You will receive an email when complete.'
+                : '';
+
             // Run backup in background to avoid timeout
             if ($onlyDb) {
                 Artisan::queue('backup:run', ['--only-db' => true]);
-                $message = 'Database-only backup started in background. You will receive an email when complete.';
+                $message = 'Database-only backup started in background.' . $emailSuffix;
             } else {
                 Artisan::queue('backup:run');
-                $message = 'Full backup started in background. You will receive an email when complete.';
+                $message = 'Full backup started in background.' . $emailSuffix;
             }
 
             return redirect()->route('admin.backups.index')
