@@ -47,7 +47,7 @@ class ContractPendingSignatureNotification extends Notification
             'message' => "Contract #{$this->contract->id} has been pending signature for {$this->hoursPending} hours",
             'contract_id' => $this->contract->id,
             'hours_pending' => $this->hoursPending,
-            'action_url' => route('contracts.show', $this->contract->id),
+            'action_url' => route('contracts.view', $this->contract->id),
             'action_text' => 'View Contract',
         ];
     }
