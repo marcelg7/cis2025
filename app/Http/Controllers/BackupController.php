@@ -218,7 +218,13 @@ class BackupController extends Controller
         $envFile = base_path('.env');
 
         if (!file_exists($envFile)) {
-            return;
+            \Log::warning('BackupController: .env file not found');
+            return false;
+        }
+
+        if (!is_writable($envFile)) {
+            \Log::error('BackupController: .env file is not writable. Please run: chmod 660 .env');
+            throw new \Exception('Cannot update backup settings: .env file is not writable. Please contact your system administrator.');
         }
 
         $env = file_get_contents($envFile);
@@ -242,5 +248,6 @@ class BackupController extends Controller
         }
 
         file_put_contents($envFile, $env);
+        return true;
     }
 }
