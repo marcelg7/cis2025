@@ -81,19 +81,20 @@ class BackupController extends Controller
         try {
             $onlyDb = $request->boolean('only_db');
 
+            // Run backup in background to avoid timeout
             if ($onlyDb) {
-                Artisan::call('backup:run', ['--only-db' => true]);
+                Artisan::queue('backup:run', ['--only-db' => true]);
+                $message = 'Database-only backup started in background. You will receive an email when complete.';
             } else {
-                Artisan::call('backup:run');
+                Artisan::queue('backup:run');
+                $message = 'Full backup started in background. You will receive an email when complete.';
             }
 
-            $output = Artisan::output();
-
             return redirect()->route('admin.backups.index')
-                ->with('success', 'Backup created successfully! ' . (strlen($output) > 200 ? substr($output, 0, 200) . '...' : $output));
+                ->with('success', $message);
         } catch (\Exception $e) {
             return redirect()->route('admin.backups.index')
-                ->with('error', 'Backup failed: ' . $e->getMessage());
+                ->with('error', 'Failed to start backup: ' . $e->getMessage());
         }
     }
 
