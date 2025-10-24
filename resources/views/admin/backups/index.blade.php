@@ -39,7 +39,7 @@
         </div>
     @endif
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
         <!-- Left Column: Actions -->
         <div class="lg:col-span-1">
             <!-- Manual Backup Card -->
@@ -145,7 +145,7 @@
         </div>
 
         <!-- Right Column: Backup Files -->
-        <div class="lg:col-span-2">
+        <div class="lg:col-span-3">
             <div class="bg-white rounded-lg shadow-md overflow-hidden">
                 <div class="bg-gradient-to-r from-purple-600 to-purple-700 px-6 py-4">
                     <h2 class="text-xl font-bold text-white">Backup Files</h2>
