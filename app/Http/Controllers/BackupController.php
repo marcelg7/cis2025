@@ -133,9 +133,26 @@ class BackupController extends Controller
             'backup_notification_on_failure' => 'boolean',
         ]);
 
-        foreach ($validated as $key => $value) {
-            Setting::set($key, is_bool($value) ? ($value ? 'true' : 'false') : $value);
+        // Handle boolean checkboxes (unchecked = not present in request)
+        $booleanFields = [
+            'backup_enabled',
+            'backup_vault_ftp_enabled',
+            'backup_notification_on_success',
+            'backup_notification_on_failure',
+        ];
+
+        foreach ($booleanFields as $field) {
+            $value = $request->boolean($field) ? 'true' : 'false';
+            Setting::set($field, $value);
         }
+
+        // Handle other fields
+        Setting::set('backup_schedule_time', $validated['backup_schedule_time']);
+        Setting::set('backup_keep_daily', $validated['backup_keep_daily']);
+        Setting::set('backup_keep_weekly', $validated['backup_keep_weekly']);
+        Setting::set('backup_keep_monthly', $validated['backup_keep_monthly']);
+        Setting::set('backup_notification_email', $validated['backup_notification_email'] ?? '');
+        Setting::set('backup_notification_slack_webhook', $validated['backup_notification_slack_webhook'] ?? '');
 
         // Clear config cache so new settings take effect
         Artisan::call('config:clear');
