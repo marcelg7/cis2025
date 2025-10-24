@@ -47,7 +47,7 @@ class FtpUploadFailedNotification extends Notification
             'message' => "Contract #{$this->contract->id} failed to upload to Vault: {$this->errorMessage}",
             'contract_id' => $this->contract->id,
             'error_message' => $this->errorMessage,
-            'action_url' => route('contracts.view', $this->contract->id),
+            'action_url' => '/contracts/' . $this->contract->id . '/view',
             'action_text' => 'View Contract',
         ];
     }

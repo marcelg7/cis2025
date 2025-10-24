@@ -46,7 +46,7 @@ class DevicePricingUploadedNotification extends Notification
             'message' => "{$this->deviceCount} device pricing records were uploaded by {$this->uploadedBy}",
             'device_count' => $this->deviceCount,
             'uploaded_by' => $this->uploadedBy,
-            'action_url' => route('bell-pricing.index'),
+            'action_url' => '/bell-pricing',
             'action_text' => 'View Devices',
         ];
     }

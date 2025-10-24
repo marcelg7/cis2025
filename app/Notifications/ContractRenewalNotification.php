@@ -48,7 +48,7 @@ class ContractRenewalNotification extends Notification
             'contract_id' => $this->contract->id,
             'days_until_expiry' => $this->daysUntilExpiry,
             'end_date' => $this->contract->end_date->format('M d, Y'),
-            'action_url' => route('contracts.view', $this->contract->id),
+            'action_url' => '/contracts/' . $this->contract->id . '/view',
             'action_text' => 'View Contract',
         ];
     }
