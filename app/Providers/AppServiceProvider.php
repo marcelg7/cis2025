@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Gate;
 use App\View\Composers\ThemeComposer;
 use App\Models\Contract;
 use App\Policies\ContractPolicy;
+use App\Models\BugReport;
+use App\Policies\BugReportPolicy;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -19,6 +21,7 @@ class AppServiceProvider extends ServiceProvider
      */
     protected $policies = [
         Contract::class => ContractPolicy::class,
+        BugReport::class => BugReportPolicy::class,
     ];
 
     public function register(): void

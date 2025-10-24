@@ -26,6 +26,7 @@ use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\BackupController;
 use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\BugReportController;
 
 /*
 |--------------------------------------------------------------------------
@@ -212,6 +213,16 @@ Route::middleware(['auth', 'throttle:60,1'])->group(function () {  // CHANGED FR
 
     /*
     |--------------------------------------------------------------------------
+    | Bug Report Routes (User Submission)
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('bug-reports')->name('bug-reports.')->group(function () {
+        Route::get('/create', [BugReportController::class, 'create'])->name('create');
+        Route::post('/', [BugReportController::class, 'store'])->name('store');
+    });
+
+    /*
+    |--------------------------------------------------------------------------
     | Mobile Routes
     |--------------------------------------------------------------------------
     */
@@ -259,6 +270,14 @@ Route::middleware(['auth', 'throttle:60,1'])->group(function () {  // CHANGED FR
                 Route::get('/download/{filename}', [BackupController::class, 'download'])->name('download');
                 Route::delete('/delete/{filename}', [BackupController::class, 'delete'])->name('delete');
             });
+        });
+
+        // Bug Report Management (Admin Only)
+        Route::prefix('bug-reports')->name('bug-reports.')->group(function () {
+            Route::get('/', [BugReportController::class, 'index'])->name('index');
+            Route::get('/{bugReport}', [BugReportController::class, 'show'])->name('show');
+            Route::patch('/{bugReport}', [BugReportController::class, 'update'])->name('update');
+            Route::delete('/{bugReport}', [BugReportController::class, 'destroy'])->name('destroy');
         });
 
         // Resource Controllers
