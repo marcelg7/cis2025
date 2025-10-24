@@ -62,8 +62,8 @@ Route::middleware(['guest', 'throttle:20,1'])->group(function () {
 |--------------------------------------------------------------------------
 */
 
-// Apply rate limiting to authenticated routes (60 requests per minute)
-Route::middleware(['auth', 'throttle:60,1'])->group(function () {  // CHANGED FROM 'admin' to 'auth'
+// Apply rate limiting to authenticated routes (200 requests per minute)
+Route::middleware(['auth', 'throttle:200,1'])->group(function () {  // CHANGED FROM 'admin' to 'auth'
     
     /*
     |--------------------------------------------------------------------------
@@ -101,13 +101,13 @@ Route::middleware(['auth', 'throttle:60,1'])->group(function () {  // CHANGED FR
         Route::get('/{contract}/sign', [ContractController::class, 'sign'])->name('sign');
         Route::post('/{contract}/sign', [ContractController::class, 'storeSignature'])->name('storeSignature');
         // SECURITY: Rate limit sensitive operations - balanced for workflow usability
-        Route::post('/{contract}/finalize', [ContractController::class, 'finalize'])->name('finalize')->middleware('throttle:30,1');
+        Route::post('/{contract}/finalize', [ContractController::class, 'finalize'])->name('finalize')->middleware('throttle:100,1');
         Route::post('/{contract}/revision', [ContractController::class, 'createRevision'])->name('revision');
 
         // Export & Communication
         Route::get('/{contract}/download', [ContractController::class, 'download'])->name('download');
-        Route::post('/{contract}/email', [ContractController::class, 'email'])->name('email')->middleware('throttle:15,1');
-        Route::get('/{contract}/ftp', [ContractController::class, 'ftp'])->name('ftp')->middleware('throttle:20,1');
+        Route::post('/{contract}/email', [ContractController::class, 'email'])->name('email')->middleware('throttle:50,1');
+        Route::get('/{contract}/ftp', [ContractController::class, 'ftp'])->name('ftp')->middleware('throttle:50,1');
         
         // Financing Form
         Route::prefix('{contract}/financing')->name('financing.')->group(function () {
