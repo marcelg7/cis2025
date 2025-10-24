@@ -31,6 +31,13 @@
             <div class="w-full sm:max-w-md mt-6 px-6 py-4 bg-white shadow-md overflow-hidden sm:rounded-lg">
                 {{ $slot }}
             </div>
+
+            <!-- Footer -->
+            <footer class="mt-8 py-4 text-center text-sm text-gray-500">
+                <div class="max-w-7xl mx-auto px-4">
+                    &copy; {{ date('Y') }} {{ config('app.name') }}. All rights reserved.
+                </div>
+            </footer>
         </div>
     </body>
 </html>

@@ -25,6 +25,16 @@ use App\Http\Controllers\RoleController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\BackupController;
 
+/*
+|--------------------------------------------------------------------------
+| Root Route
+|--------------------------------------------------------------------------
+*/
+
+// Redirect root to customers page
+Route::get('/', function () {
+    return redirect()->route('customers.index');
+});
 
 /*
 |--------------------------------------------------------------------------
