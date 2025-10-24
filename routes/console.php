@@ -11,3 +11,7 @@ Schedule::command('backup:run')->daily()->at('02:00');
 
 // Clean up old backups daily at 3 AM
 Schedule::command('backup:clean')->daily()->at('03:00');
+
+// Notification checks
+Schedule::command('notifications:check-pending-contracts')->hourly();
+Schedule::command('notifications:check-contract-renewals')->daily()->at('09:00');
