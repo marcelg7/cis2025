@@ -64,15 +64,21 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="flex-shrink-0">
+                        <div class="flex-shrink-0" x-data="{ enabled: {{ $preference['enabled'] ? 'true' : 'false' }} }">
                             <label class="relative inline-flex items-center cursor-pointer">
                                 <input type="checkbox"
                                        name="notifications[{{ $type }}]"
                                        class="sr-only peer"
-                                       {{ $preference['enabled'] ? 'checked' : '' }}>
-                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
-                                <span class="ms-3 text-sm font-medium text-gray-900">
-                                    {{ $preference['enabled'] ? 'Enabled' : 'Disabled' }}
+                                       x-model="enabled"
+                                       :checked="enabled">
+                                <div class="w-11 h-6 rounded-full peer peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 transition-colors"
+                                     :class="enabled ? 'bg-indigo-600' : 'bg-gray-200'">
+                                    <div class="absolute top-[2px] left-[2px] bg-white border border-gray-300 rounded-full h-5 w-5 transition-transform"
+                                         :class="enabled ? 'translate-x-full' : 'translate-x-0'"></div>
+                                </div>
+                                <span class="ms-3 text-sm font-medium"
+                                      :class="enabled ? 'text-indigo-600' : 'text-gray-500'"
+                                      x-text="enabled ? 'Enabled' : 'Disabled'">
                                 </span>
                             </label>
                         </div>
