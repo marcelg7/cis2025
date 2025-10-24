@@ -203,21 +203,39 @@ return [
      */
     'notifications' => [
         'notifications' => array_filter([
-            // Failure notifications (always enabled if notification email is set)
+            // Failure notifications (always enabled if notification email or slack webhook is set)
             \Spatie\Backup\Notifications\Notifications\BackupHasFailedNotification::class =>
-                env('BACKUP_NOTIFICATION_EMAIL') ? ['mail'] : [],
+                array_filter(array_merge(
+                    env('BACKUP_NOTIFICATION_EMAIL') ? ['mail'] : [],
+                    env('BACKUP_NOTIFICATION_SLACK_WEBHOOK') ? ['slack'] : []
+                )),
             \Spatie\Backup\Notifications\Notifications\UnhealthyBackupWasFoundNotification::class =>
-                env('BACKUP_NOTIFICATION_EMAIL') ? ['mail'] : [],
+                array_filter(array_merge(
+                    env('BACKUP_NOTIFICATION_EMAIL') ? ['mail'] : [],
+                    env('BACKUP_NOTIFICATION_SLACK_WEBHOOK') ? ['slack'] : []
+                )),
             \Spatie\Backup\Notifications\Notifications\CleanupHasFailedNotification::class =>
-                env('BACKUP_NOTIFICATION_EMAIL') ? ['mail'] : [],
+                array_filter(array_merge(
+                    env('BACKUP_NOTIFICATION_EMAIL') ? ['mail'] : [],
+                    env('BACKUP_NOTIFICATION_SLACK_WEBHOOK') ? ['slack'] : []
+                )),
 
             // Success notifications (only if enabled)
             \Spatie\Backup\Notifications\Notifications\BackupWasSuccessfulNotification::class =>
-                (env('BACKUP_NOTIFICATION_EMAIL') && filter_var(env('BACKUP_NOTIFICATION_ON_SUCCESS', false), FILTER_VALIDATE_BOOLEAN)) ? ['mail'] : [],
+                array_filter(array_merge(
+                    (env('BACKUP_NOTIFICATION_EMAIL') && filter_var(env('BACKUP_NOTIFICATION_ON_SUCCESS', false), FILTER_VALIDATE_BOOLEAN)) ? ['mail'] : [],
+                    (env('BACKUP_NOTIFICATION_SLACK_WEBHOOK') && filter_var(env('BACKUP_NOTIFICATION_ON_SUCCESS', false), FILTER_VALIDATE_BOOLEAN)) ? ['slack'] : []
+                )),
             \Spatie\Backup\Notifications\Notifications\HealthyBackupWasFoundNotification::class =>
-                (env('BACKUP_NOTIFICATION_EMAIL') && filter_var(env('BACKUP_NOTIFICATION_ON_SUCCESS', false), FILTER_VALIDATE_BOOLEAN)) ? ['mail'] : [],
+                array_filter(array_merge(
+                    (env('BACKUP_NOTIFICATION_EMAIL') && filter_var(env('BACKUP_NOTIFICATION_ON_SUCCESS', false), FILTER_VALIDATE_BOOLEAN)) ? ['mail'] : [],
+                    (env('BACKUP_NOTIFICATION_SLACK_WEBHOOK') && filter_var(env('BACKUP_NOTIFICATION_ON_SUCCESS', false), FILTER_VALIDATE_BOOLEAN)) ? ['slack'] : []
+                )),
             \Spatie\Backup\Notifications\Notifications\CleanupWasSuccessfulNotification::class =>
-                (env('BACKUP_NOTIFICATION_EMAIL') && filter_var(env('BACKUP_NOTIFICATION_ON_SUCCESS', false), FILTER_VALIDATE_BOOLEAN)) ? ['mail'] : [],
+                array_filter(array_merge(
+                    (env('BACKUP_NOTIFICATION_EMAIL') && filter_var(env('BACKUP_NOTIFICATION_ON_SUCCESS', false), FILTER_VALIDATE_BOOLEAN)) ? ['mail'] : [],
+                    (env('BACKUP_NOTIFICATION_SLACK_WEBHOOK') && filter_var(env('BACKUP_NOTIFICATION_ON_SUCCESS', false), FILTER_VALIDATE_BOOLEAN)) ? ['slack'] : []
+                )),
         ]),
 
         /*
