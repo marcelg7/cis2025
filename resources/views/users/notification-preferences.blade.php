@@ -64,22 +64,22 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="flex-shrink-0" x-data="{ enabled: {{ $preference['enabled'] ? 'true' : 'false' }} }">
-                            <label class="inline-flex items-center cursor-pointer">
-                                <input type="checkbox"
-                                       name="notifications[{{ $type }}]"
-                                       class="sr-only"
-                                       x-model="enabled">
-                                <div class="relative w-11 h-6 rounded-full transition-colors"
-                                     :class="enabled ? 'bg-indigo-600' : 'bg-gray-200'">
-                                    <div class="absolute top-[2px] left-[2px] bg-white border border-gray-300 rounded-full h-5 w-5 transition-transform duration-200"
-                                         :class="enabled ? 'translate-x-5' : 'translate-x-0'"></div>
-                                </div>
-                                <span class="ml-3 text-sm font-medium"
-                                      :class="enabled ? 'text-indigo-600' : 'text-gray-500'"
-                                      x-text="enabled ? 'Enabled' : 'Disabled'">
-                                </span>
-                            </label>
+                        <div class="flex-shrink-0 flex items-center gap-3" x-data="{ enabled: {{ $preference['enabled'] ? 'true' : 'false' }} }">
+                            <button type="button"
+                                    @click="enabled = !enabled"
+                                    class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                                    :class="enabled ? 'bg-indigo-600' : 'bg-gray-200'">
+                                <span class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"
+                                      :class="enabled ? 'translate-x-6' : 'translate-x-1'"></span>
+                            </button>
+                            <input type="checkbox"
+                                   name="notifications[{{ $type }}]"
+                                   class="hidden"
+                                   :checked="enabled">
+                            <span class="text-sm font-medium"
+                                  :class="enabled ? 'text-indigo-600' : 'text-gray-500'"
+                                  x-text="enabled ? 'Enabled' : 'Disabled'">
+                            </span>
                         </div>
                     </div>
                 </div>
