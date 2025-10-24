@@ -361,6 +361,37 @@
 			</div>
 		</div>
 		<hr class="border-gray-200">
+
+		<!-- Total Contract Cost Breakdown (Admin Setting) -->
+		@if(\App\Helpers\SettingsHelper::enabled('show_contract_cost_breakdown'))
+			<div class="section px-6 py-4 bg-white border-b border-gray-200">
+				<h3 class="text-lg font-semibold text-gray-900 mb-4">Total Contract Cost Breakdown</h3>
+				<div class="text-sm text-gray-700 space-y-2">
+					<ul class="list-disc list-inside space-y-1 mb-4">
+						<li>Device Cost (after ${{ number_format($contract->agreement_credit_amount ?? 0, 2) }} credit): ${{ number_format($deviceAmount, 2) }}</li>
+						<li>Rate Plan (24 months): ${{ number_format(($contract->rate_plan_price ?? $contract->bell_plan_cost ?? 0) * 24, 2) }}</li>
+						<li>Add-ons (24 months): ${{ number_format($totalAddOnCost * 24, 2) }}</li>
+						<li>One-Time Fees: ${{ number_format($totalOneTimeFeeCost, 2) }}</li>
+					</ul>
+					<div class="bg-gray-50 p-4 rounded-lg">
+						<div class="flex justify-between items-center mb-2">
+							<span class="font-semibold">Total Contract Cost (before taxes):</span>
+							<span class="font-semibold">${{ number_format($totalCost, 2) }}</span>
+						</div>
+						<div class="flex justify-between items-center text-xs mb-2">
+							<span>Estimated taxes (13% HST):</span>
+							<span>${{ number_format($totalCost * 0.13, 2) }}</span>
+						</div>
+						<div class="flex justify-between items-center text-xs border-t border-gray-300 pt-2">
+							<span>Total with estimated taxes:</span>
+							<span>${{ number_format($totalCost * 1.13, 2) }}</span>
+						</div>
+					</div>
+				</div>
+			</div>
+			<hr class="border-gray-200">
+		@endif
+
 		@if((auth()->user()->show_development_info ?? false) || \App\Helpers\SettingsHelper::enabled('show_development_info'))
 			<!-- Total Contract Cost Breakdown - Development/Calculation Check -->
 			<div class="section px-6 py-4 bg-yellow-50 border-b border-yellow-200">
