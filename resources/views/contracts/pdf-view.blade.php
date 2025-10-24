@@ -25,7 +25,7 @@
         <table width="100%" style="table-layout: fixed; font-size: 7pt; color: #333; line-height: 1.0;">
             <tr>
                 <td width="50%" style="padding-right: 0.1rem;">
-                    <p><strong>Account Name:</strong> {{ $contract->subscriber->mobilityAccount->ivueAccount->customer->display_name }}</p>
+                    <p><strong>Account Name:</strong> {{ $contract->subscriber->mobilityAccount->ivueAccount->customer->first_name }} {{ $contract->subscriber->mobilityAccount->ivueAccount->customer->last_name }}</p>
                     <p><strong>Company Name:</strong> {{ $contract->subscriber->mobilityAccount->ivueAccount->customer->is_individual ? 'N/A' : $contract->subscriber->mobilityAccount->ivueAccount->customer->display_name }}</p>
                     <p><strong>Mobile Account #:</strong> {{ $contract->subscriber->mobilityAccount->mobility_account }}</p>
                     <p><strong>Contact Number:</strong> {{ $contract->subscriber->mobilityAccount->ivueAccount->customer->phone ?? $contract->subscriber->mobile_number }}</p>

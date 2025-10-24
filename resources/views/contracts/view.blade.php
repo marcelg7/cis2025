@@ -77,7 +77,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <div class="mt-2 text-sm text-gray-600">
-                        <p><strong>Account Name:</strong> {{ $contract->subscriber->mobilityAccount->ivueAccount->customer->display_name }}</p>
+                        <p><strong>Account Name:</strong> {{ $contract->subscriber->mobilityAccount->ivueAccount->customer->first_name }} {{ $contract->subscriber->mobilityAccount->ivueAccount->customer->last_name }}</p>
                         <p><strong>Company Name:</strong> {{ $contract->subscriber->mobilityAccount->ivueAccount->customer->is_individual ? 'N/A' : $contract->subscriber->mobilityAccount->ivueAccount->customer->display_name }}</p>
                         <p><strong>Mobile Account #:</strong> {{ $contract->subscriber->mobilityAccount->mobility_account }}</p>
                         <p><strong>Contact Number:</strong> {{ \App\Helpers\PhoneHelper::formatDisplay($contract->customer_phone ?? $contract->subscriber->mobile_number) }}</p>
