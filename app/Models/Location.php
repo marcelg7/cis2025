@@ -11,6 +11,7 @@ class Location extends Model
         'name',
         'code',
         'address',
+        'phone',
         'active',
     ];
 

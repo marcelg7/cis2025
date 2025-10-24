@@ -27,6 +27,7 @@ use App\Http\Controllers\BackupController;
 use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\BugReportController;
+use App\Http\Controllers\LocationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -284,6 +285,7 @@ Route::middleware(['auth', 'throttle:60,1'])->group(function () {  // CHANGED FR
         Route::resource('activity-types', ActivityTypeController::class);
         Route::resource('commitment-periods', CommitmentPeriodController::class);
         Route::resource('users', UserController::class);
+        Route::resource('locations', LocationController::class);
         // Roles and Permissions
         Route::resource('roles', RoleController::class);
         Route::resource('permissions', PermissionController::class);		

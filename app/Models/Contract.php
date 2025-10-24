@@ -19,6 +19,7 @@ class Contract extends Model
         'activity_type_id',
         'contract_date',
         'location',
+        'location_id',
         'customer_phone',
         'shortcode_id',
         'agreement_credit_amount',
@@ -141,6 +142,14 @@ class Contract extends Model
     public function mobileInternetPlan(): BelongsTo
     {
         return $this->belongsTo(MobileInternetPlan::class);
+    }
+
+    /**
+     * Get the location for this contract
+     */
+    public function locationModel(): BelongsTo
+    {
+        return $this->belongsTo(Location::class, 'location_id');
     }
 
     /**

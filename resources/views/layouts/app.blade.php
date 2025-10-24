@@ -281,6 +281,9 @@
                                             <div class="border-t border-gray-200 my-1"></div>
                                             
                                             <div class="px-4 py-2 text-xs font-semibold text-gray-400 uppercase">Configuration</div>
+                                            <a href="{{ route('locations.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                                Locations
+                                            </a>
                                             <a href="{{ route('activity-types.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                                 Activity Types
                                             </a>
@@ -521,6 +524,9 @@
                                 <div class="border-t border-gray-200 my-1 mx-4"></div>
                                 
                                 <div class="px-4 py-2 text-xs font-semibold text-gray-400 uppercase">Configuration</div>
+                                <x-responsive-nav-link :href="route('locations.index')" :active="request()->routeIs('locations.*')">
+                                    Locations
+                                </x-responsive-nav-link>
                                 <x-responsive-nav-link :href="route('activity-types.index')" :active="request()->routeIs('activity-types.*')">
                                     Activity Types
                                 </x-responsive-nav-link>

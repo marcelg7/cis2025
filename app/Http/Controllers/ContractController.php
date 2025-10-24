@@ -15,6 +15,7 @@ use App\Models\User;
 use App\Models\RatePlan;
 use App\Models\MobileInternetPlan;
 use App\Models\PlanAddOn;
+use App\Models\Location;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -66,6 +67,7 @@ class ContractController extends Controller
 		$activityTypes = ActivityType::orderBy('name')->get();
 		$commitmentPeriods = CommitmentPeriod::orderBy('name')->get();
 		$bellDevices = BellDevice::orderBy('model')->get();
+		$locations = Location::active()->orderBy('name')->get();
 		
 		$ratePlans = RatePlan::current()->active()->orderBy('plan_type')->orderBy('tier')->orderBy('base_price')->get();
 		$mobileInternetPlans = MobileInternetPlan::current()->active()->orderBy('monthly_rate')->get();
@@ -117,7 +119,8 @@ class ContractController extends Controller
 			'tiers',
 			'defaultFirstBillDate',
 			'deviceTiers',
-			'defaultConnectionFee'
+			'defaultConnectionFee',
+			'locations'
 		));
 	}
 	
@@ -128,7 +131,8 @@ class ContractController extends Controller
 			'end_date' => 'nullable|date|after:start_date',
 			'activity_type_id' => 'required|exists:activity_types,id',
 			'contract_date' => 'required|date',
-			'location' => 'required|in:zurich,exeter,grand_bend',
+			'location' => 'nullable|in:zurich,exeter,grand_bend',
+			'location_id' => 'required|exists:locations,id',
 			'customer_phone' => 'nullable|string|max:100',
 			'bell_device_id' => 'nullable|exists:bell_devices,id',
 			'bell_pricing_type' => 'nullable|in:smartpay,dro,byod',
@@ -374,7 +378,8 @@ class ContractController extends Controller
 		$activityTypes = ActivityType::orderBy('name')->get();
 		$commitmentPeriods = CommitmentPeriod::orderBy('name')->get();
 		$bellDevices = BellDevice::orderBy('model')->get();
-		   
+		$locations = Location::active()->orderBy('name')->get();
+
 		$ratePlans = RatePlan::current()->active()->orderBy('plan_type')->orderBy('tier')->orderBy('base_price')->get();
 		$mobileInternetPlans = MobileInternetPlan::current()->active()->orderBy('monthly_rate')->get();
 		$planAddOns = PlanAddOn::current()->active()->orderBy('category')->orderBy('add_on_name')->get();
@@ -421,7 +426,8 @@ class ContractController extends Controller
 			'planAddOns',
 			'tiers',
 			'deviceTiers',
-			'defaultConnectionFee'
+			'defaultConnectionFee',
+			'locations'
 		));
 	}
 	   
@@ -435,7 +441,8 @@ class ContractController extends Controller
 			'end_date' => 'required|date|after:start_date',
 			'activity_type_id' => 'required|exists:activity_types,id',
 			'contract_date' => 'required|date',
-			'location' => 'required|in:zurich,exeter,grand_bend',
+			'location' => 'nullable|in:zurich,exeter,grand_bend',
+			'location_id' => 'required|exists:locations,id',
 			'customer_phone' => 'nullable|string|max:100',
 			'bell_device_id' => 'nullable|exists:bell_devices,id',
 			'bell_pricing_type' => 'nullable|in:smartpay,dro,byod',
@@ -1102,7 +1109,8 @@ class ContractController extends Controller
 			'subscriber.mobilityAccount.ivueAccount.customer',
 			'activityType',
 			'commitmentPeriod',
-			'bellDevice'
+			'bellDevice',
+			'locationModel'
 		])->findOrFail($id);
 
 		// Authorization check - prevent IDOR vulnerability

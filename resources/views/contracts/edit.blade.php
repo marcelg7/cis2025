@@ -62,13 +62,16 @@
                     @enderror
                 </div>
                 <div>
-                    <label for="location" class="block text-sm font-medium text-gray-700">Location</label>
-                    <select name="location" id="location" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required>
-                        <option value="zurich" {{ old('location', $contract->location) === 'zurich' ? 'selected' : '' }}>Zurich</option>
-                        <option value="exeter" {{ old('location', $contract->location) === 'exeter' ? 'selected' : '' }}>Exeter</option>
-                        <option value="grand_bend" {{ old('location', $contract->location) === 'grand_bend' ? 'selected' : '' }}>Grand Bend</option>
+                    <label for="location_id" class="block text-sm font-medium text-gray-700">Location</label>
+                    <select name="location_id" id="location_id" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required>
+                        <option value="">Select a location</option>
+                        @foreach($locations as $location)
+                            <option value="{{ $location->id }}" {{ old('location_id', $contract->location_id) == $location->id ? 'selected' : '' }}>
+                                {{ $location->name }}
+                            </option>
+                        @endforeach
                     </select>
-                    @error('location')
+                    @error('location_id')
                         <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
                     @enderror
                 </div>

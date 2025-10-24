@@ -62,7 +62,7 @@
                 <p><span class="font-semibold">Date:</span> {{ $contract->start_date->format('M d, Y') }}</p>
                 <p><span class="font-semibold">Activity:</span> {{ $contract->activityType->activity ?? 'Hardware Upgrade' }}</p>
                 <p><span class="font-semibold">Consultant:</span> {{ auth()->user()->name ?? 'Marcel Gelinas' }}</p>
-                <p><span class="font-semibold">Store Phone Number:</span> {{ $contract->location === 'zurich' ? '519-236-4333' : ($contract->location === 'exeter' ? '519-235-1234' : '519-238-5678') }}</p>
+                <p><span class="font-semibold">Location:</span> {{ $contract->locationModel->name ?? 'N/A' }} - {{ $contract->locationModel->phone ?? 'N/A' }}</p>
             </div>
         </div>
         <div class="px-6 py-4 text-center">
