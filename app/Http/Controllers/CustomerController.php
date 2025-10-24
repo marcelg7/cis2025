@@ -65,7 +65,7 @@ class CustomerController extends Controller
             Log::info('API response received for customer', ['customer_number' => $customerNumber, 'has_data' => !empty($data)]);
             if (empty($data) || !isset($data['customer'])) {
                 Log::warning('Empty or invalid API response for customer: ' . $customerNumber);
-                $latestContracts = Contract::with(['subscriber.mobilityAccount.ivueAccount.customer', 'device', 'activityType'])
+                $latestContracts = Contract::with(['subscriber.mobilityAccount.ivueAccount.customer', 'activityType'])
                     ->latest()
                     ->take(12)
                     ->get();
@@ -148,7 +148,7 @@ class CustomerController extends Controller
                 $errorMessage = 'Failed to fetch customer information. Please try again.';
             }
 
-            $latestContracts = Contract::with(['subscriber.mobilityAccount.ivueAccount.customer', 'device', 'activityType'])
+            $latestContracts = Contract::with(['subscriber.mobilityAccount.ivueAccount.customer', 'activityType'])
                 ->latest()
                 ->take(12)
                 ->get();
@@ -165,7 +165,7 @@ class CustomerController extends Controller
                 ->withErrors(['customer_number' => $errorMessage]);
         } catch (\Exception $e) {
             Log::error('Fetch error: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
-            $latestContracts = Contract::with(['subscriber.mobilityAccount.ivueAccount.customer', 'device', 'activityType'])
+            $latestContracts = Contract::with(['subscriber.mobilityAccount.ivueAccount.customer', 'activityType'])
                 ->latest()
                 ->take(12)
                 ->get();
