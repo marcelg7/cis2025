@@ -20,7 +20,8 @@ class BackupController extends Controller
         $backupFiles = [];
         $backupName = config('backup.backup.name');
         $disk = Storage::disk('local');
-        $path = "private/{$backupName}";
+        // Local disk root is already storage/app/private, so just use backup name
+        $path = $backupName;
 
         // Build backup statistics
         $backupStats = [
@@ -146,7 +147,8 @@ class BackupController extends Controller
     public function download($filename)
     {
         $backupName = config('backup.backup.name');
-        $path = "private/{$backupName}/{$filename}";
+        // Local disk root is already storage/app/private
+        $path = "{$backupName}/{$filename}";
 
         if (!Storage::disk('local')->exists($path)) {
             abort(404, 'Backup file not found');
@@ -158,7 +160,8 @@ class BackupController extends Controller
     public function delete($filename)
     {
         $backupName = config('backup.backup.name');
-        $path = "private/{$backupName}/{$filename}";
+        // Local disk root is already storage/app/private
+        $path = "{$backupName}/{$filename}";
 
         if (!Storage::disk('local')->exists($path)) {
             return redirect()->route('admin.backups.index')
