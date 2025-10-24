@@ -1,9 +1,13 @@
 import './bootstrap';
 import Alpine from 'alpinejs';
+import collapse from '@alpinejs/collapse';
 import tinymce from 'tinymce/tinymce';
 import 'tinymce/themes/silver';
 import 'tinymce/icons/default';
 import 'tinymce/skins/ui/oxide/skin.css';
+
+// Register Alpine plugins
+Alpine.plugin(collapse);
 
 // Initialize Alpine
 document.addEventListener('DOMContentLoaded', () => {

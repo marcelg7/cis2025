@@ -781,7 +781,13 @@
 			</div>
 			<hr class="border-gray-200">
 		@endif
- 
+
+        <!-- Contract Timeline -->
+        <div class="px-6 py-6 no-print">
+            <x-contract-timeline :contract="$contract" />
+        </div>
+        <hr class="border-gray-200">
+
         <!-- Buttons -->
         <div class="px-6 py-6 flex flex-wrap gap-4 no-print">
             <a href="{{ route('contracts.download', $contract->id) }}"
