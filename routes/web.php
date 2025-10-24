@@ -29,6 +29,7 @@ use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\BugReportController;
 use App\Http\Controllers\LocationController;
+use App\Http\Controllers\ReportController;
 
 /*
 |--------------------------------------------------------------------------
@@ -199,6 +200,18 @@ Route::middleware(['auth', 'throttle:200,1'])->group(function () {  // CHANGED F
     Route::get('/readme', [ReadmeController::class, 'index'])->name('readme');
     Route::get('/cheat-sheet', [CheatSheetController::class, 'index'])->name('cheat-sheet');
     Route::get('/analytics', [AnalyticsController::class, 'index'])->name('analytics');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Report Routes
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('reports')->name('reports.')->group(function () {
+        Route::get('/', [ReportController::class, 'index'])->name('index');
+        Route::get('/contract-summary', [ReportController::class, 'contractSummary'])->name('contract-summary');
+        Route::get('/device-sales', [ReportController::class, 'deviceSales'])->name('device-sales');
+        Route::get('/plan-adoption', [ReportController::class, 'planAdoption'])->name('plan-adoption');
+    });
 
     /*
     |--------------------------------------------------------------------------
