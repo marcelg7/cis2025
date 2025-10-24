@@ -25,6 +25,7 @@ use App\Http\Controllers\RoleController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\BackupController;
 use App\Http\Controllers\AnalyticsController;
+use App\Http\Controllers\NotificationController;
 
 /*
 |--------------------------------------------------------------------------
