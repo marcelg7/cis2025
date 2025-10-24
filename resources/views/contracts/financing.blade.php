@@ -94,6 +94,7 @@
             $credit = $contract->agreement_credit_amount ?? 0;
             $upfront = $contract->required_upfront_payment ?? 0;
             $downPayment = $contract->optional_down_payment ?? 0;
+            $deferredPayment = $contract->deferred_payment_amount ?? 0;
             $totalFinanced = $contract->getTotalFinancedAmount();
             $monthlyPayment = $contract->getMonthlyDevicePayment();
         @endphp
@@ -113,6 +114,9 @@
                                 <p style="margin: 3px 0;"><strong>Finance Agreement Credit:</strong> ${{ number_format($credit, 2) }}</p>
                                 <p style="margin: 3px 0;"><strong>Up-front Charges/Payments:</strong> ${{ number_format($upfront + $downPayment, 2) }}</p>
                                 <p style="margin: 3px 0;"><strong>Total Financed Amount (before tax):</strong> ${{ number_format($totalFinanced, 2) }}</p>
+                                @if($deferredPayment > 0)
+                                <p style="margin: 3px 0;"><strong>Deferred Payment (DRO):</strong> ${{ number_format($deferredPayment, 2) }}</p>
+                                @endif
                                 <p style="margin: 3px 0;"><strong>Remaining Device Payments:</strong> ${{ number_format($monthlyPayment, 2) }}</p>
                                 <p style="margin: 3px 0;"><strong>Installment Term:</strong> 24 months</p>
                                 <p style="margin: 3px 0;"><strong>Payment Schedule:</strong> Monthly for a maximum of 24 months</p>
@@ -216,6 +220,9 @@
                             <p><strong>Finance Agreement Credit:</strong> ${{ number_format($credit, 2) }}</p>
                             <p><strong>Up-front Charges/Payments:</strong> ${{ number_format($upfront + $downPayment, 2) }}</p>
                             <p><strong>Total Financed Amount (before tax):</strong> ${{ number_format($totalFinanced, 2) }}</p>
+                            @if($deferredPayment > 0)
+                            <p><strong>Deferred Payment (DRO):</strong> ${{ number_format($deferredPayment, 2) }}</p>
+                            @endif
                             <p><strong>Remaining Device Payments:</strong> ${{ number_format($monthlyPayment, 2) }}</p>
                             <p><strong>Installment Term:</strong> 24 months</p>
                             <p><strong>Payment Schedule:</strong> Monthly for a maximum of 24 months</p>
