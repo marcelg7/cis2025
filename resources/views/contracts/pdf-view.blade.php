@@ -267,6 +267,7 @@
     <hr style="margin: 0; border-color: #ccc;">
 
     <!-- Total Contract Cost -->
+    @if(\App\Helpers\SettingsHelper::enabled('show_contract_cost_breakdown'))
     <div style="padding: 0; background: #fff; border-bottom: 1px solid #ccc;">
         <h3 style="font-size: 8pt; margin: 0;">Total Contract Cost Breakdown</h3>
         <div style="font-size: 6pt; color: #333; line-height: 1.0;">
@@ -290,6 +291,7 @@
         </div>
     </div>
     <hr style="margin: 0; border-color: #ccc;">
+    @endif
 
     <!-- Signature -->
     @if ($contract->signature_path)

@@ -11,11 +11,13 @@ class SettingsController extends Controller
         $logPruneDays = SettingsHelper::get('log_prune_days', 90);
         $supervisorEmail = SettingsHelper::get('cellular_supervisor_email', 'supervisor@hay.net');
         $connectionFee = SettingsHelper::get('default_connection_fee', 80);
+        $showContractCostBreakdown = SettingsHelper::enabled('show_contract_cost_breakdown');
 
         return view('admin.settings', compact(
             'logPruneDays',
             'supervisorEmail',
-            'connectionFee'
+            'connectionFee',
+            'showContractCostBreakdown'
         ));
     }
 
@@ -30,6 +32,7 @@ class SettingsController extends Controller
         SettingsHelper::set('log_prune_days', $request->log_prune_days);
         SettingsHelper::set('cellular_supervisor_email', $request->cellular_supervisor_email);
         SettingsHelper::set('default_connection_fee', $request->default_connection_fee);
+        SettingsHelper::set('show_contract_cost_breakdown', $request->boolean('show_contract_cost_breakdown') ? 'true' : 'false');
 
         return redirect()->route('admin.settings')->with('success', 'Settings updated successfully!');
     }

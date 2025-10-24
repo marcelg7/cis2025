@@ -101,11 +101,11 @@
 					<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
 						<span class="text-gray-500 text-sm">$</span>
 					</div>
-					<input 
-						type="number" 
+					<input
+						type="number"
 						id="default_connection_fee"
-						name="default_connection_fee" 
-						value="{{ old('default_connection_fee', $connectionFee) }}" 
+						name="default_connection_fee"
+						value="{{ old('default_connection_fee', $connectionFee) }}"
 						min="0"
 						max="500"
 						step="0.01"
@@ -123,6 +123,38 @@
 				@error('default_connection_fee')
 					<p class="mt-2 text-sm text-red-600">{{ $message }}</p>
 				@enderror
+			</div>
+
+			<!-- Show Contract Cost Breakdown -->
+			<div>
+				<label class="block text-sm font-semibold text-gray-700 mb-2">
+					Contract Display Options
+				</label>
+				<div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+					<div class="flex items-start">
+						<div class="flex items-center h-5">
+							<input
+								type="checkbox"
+								id="show_contract_cost_breakdown"
+								name="show_contract_cost_breakdown"
+								value="1"
+								{{ $showContractCostBreakdown ? 'checked' : '' }}
+								class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+							>
+						</div>
+						<div class="ml-3">
+							<label for="show_contract_cost_breakdown" class="text-sm font-medium text-gray-700 cursor-pointer">
+								Show "Total Contract Cost Breakdown" section on contracts
+							</label>
+							<p class="text-sm text-gray-500 mt-1">
+								<svg class="inline w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+									<path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+								</svg>
+								When enabled, contracts will display a detailed breakdown showing device cost, rate plan total, add-ons, and overall contract cost with estimated taxes
+							</p>
+						</div>
+					</div>
+				</div>
 			</div>
 
             <!-- Form Actions -->
