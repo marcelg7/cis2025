@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\Location;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
@@ -23,7 +24,7 @@ class UserController extends Controller
             abort(403, 'Unauthorized action.');
         }
 
-        $users = User::all();
+        $users = User::with('location')->get();
         return view('users.index', compact('users'));
     }
 
@@ -35,7 +36,8 @@ class UserController extends Controller
         }
 
         $roles = Role::pluck('name', 'name');
-        return view('users.create', compact('roles'));
+        $locations = Location::active()->orderBy('name')->get();
+        return view('users.create', compact('roles', 'locations'));
     }
 
     public function store(Request $request)
@@ -49,11 +51,13 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'role' => 'required|exists:roles,name',
+            'location_id' => 'nullable|exists:locations,id',
         ]);
 
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
+            'location_id' => $request->location_id,
         ]);
 
         $user->assignRole($request->role);
@@ -73,7 +77,8 @@ class UserController extends Controller
         }
 
         $roles = Role::pluck('name', 'name');
-        return view('users.edit', compact('user', 'roles'));
+        $locations = Location::active()->orderBy('name')->get();
+        return view('users.edit', compact('user', 'roles', 'locations'));
     }
 
     public function update(Request $request, User $user)
@@ -87,6 +92,7 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
             'role' => 'required|exists:roles,name',
+            'location_id' => 'nullable|exists:locations,id',
             // SECURITY: Strong password requirements (12+ chars, mixed case, numbers, special chars)
             'password' => [
                 'nullable',
@@ -102,6 +108,7 @@ class UserController extends Controller
         $user->update([
             'name' => $request->name,
             'email' => $request->email,
+            'location_id' => $request->location_id,
             'password' => $request->password ? Hash::make($request->password) : $user->password,
         ]);
 

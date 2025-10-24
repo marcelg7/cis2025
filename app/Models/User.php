@@ -17,6 +17,7 @@ class User extends Authenticatable implements MustVerifyEmail
     protected $fillable = [
         'name',
         'email',
+        'location_id',
         'password',
 		'component_styles',
 		'session_lifetime',
@@ -48,5 +49,13 @@ class User extends Authenticatable implements MustVerifyEmail
     public function notificationPreferences()
     {
         return $this->hasMany(NotificationPreference::class);
+    }
+
+    /**
+     * Get the location assigned to this user
+     */
+    public function location()
+    {
+        return $this->belongsTo(Location::class);
     }
 }
