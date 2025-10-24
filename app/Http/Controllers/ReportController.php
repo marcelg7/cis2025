@@ -87,7 +87,9 @@ class ReportController extends Controller
             ->get();
 
         // Group by device
-        $salesByDevice = $deviceSales->groupBy('bellDevice.device_name')->map(function($contracts) {
+        $salesByDevice = $deviceSales->groupBy(function($contract) {
+            return $contract->bellDevice?->name ?? 'Unknown Device';
+        })->map(function($contracts) {
             return [
                 'count' => $contracts->count(),
                 'total_revenue' => $contracts->sum('bell_retail_price'),
@@ -177,12 +179,16 @@ class ReportController extends Controller
     }
 
     /**
-     * Export Contract Summary to Excel/PDF
+     * Export Contract Summary to Excel/PDF/CSV
      */
     private function exportContractSummary($data, $format)
     {
         if ($format === 'excel') {
             return $this->exportContractSummaryExcel($data);
+        }
+
+        if ($format === 'csv') {
+            return $this->exportContractSummaryCsv($data);
         }
 
         return $this->exportContractSummaryPdf($data);
@@ -233,9 +239,9 @@ class ReportController extends Controller
         foreach ($data['contracts'] as $contract) {
             $customer = $contract->subscriber?->mobilityAccount?->ivueAccount?->customer;
             $sheet->setCellValue('A' . $row, $contract->contract_date->format('Y-m-d'));
-            $sheet->setCellValue('B' . $row, $customer?->display_name ?? 'N/A');
+            $sheet->setCellValue('B' . $row, $customer ? $customer->first_name . ' ' . $customer->last_name : 'N/A');
             $sheet->setCellValue('C' . $row, $contract->activityType?->name ?? 'N/A');
-            $sheet->setCellValue('D' . $row, $contract->bellDevice?->device_name ?? 'BYOD');
+            $sheet->setCellValue('D' . $row, $contract->bellDevice?->name ?? 'BYOD');
             $sheet->setCellValue('E' . $row, '$' . number_format(($contract->rate_plan_price ?? 0) + ($contract->mobile_internet_price ?? 0), 2));
             $sheet->setCellValue('F' . $row, '$' . number_format($contract->bell_retail_price ?? 0, 2));
             $sheet->setCellValue('G' . $row, $contract->locationModel?->name ?? 'N/A');
@@ -270,12 +276,55 @@ class ReportController extends Controller
     }
 
     /**
-     * Export Device Sales to Excel/PDF
+     * Export Contract Summary to CSV
+     */
+    private function exportContractSummaryCsv($data)
+    {
+        $filename = 'contract_summary_' . $data['month'] . '.csv';
+
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ];
+
+        $callback = function() use ($data) {
+            $file = fopen('php://output', 'w');
+
+            // Add header row
+            fputcsv($file, ['Date', 'Customer', 'Activity Type', 'Device', 'Plan Revenue', 'Device Revenue', 'Location', 'CSR']);
+
+            // Add data rows
+            foreach ($data['contracts'] as $contract) {
+                $customer = $contract->subscriber?->mobilityAccount?->ivueAccount?->customer;
+                fputcsv($file, [
+                    $contract->contract_date->format('Y-m-d'),
+                    $customer ? $customer->first_name . ' ' . $customer->last_name : 'N/A',
+                    $contract->activityType?->name ?? 'N/A',
+                    $contract->bellDevice?->name ?? 'BYOD',
+                    number_format(($contract->rate_plan_price ?? 0) + ($contract->mobile_internet_price ?? 0), 2),
+                    number_format($contract->bell_retail_price ?? 0, 2),
+                    $contract->locationModel?->name ?? 'N/A',
+                    $contract->updatedBy?->name ?? 'N/A',
+                ]);
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+    /**
+     * Export Device Sales to Excel/PDF/CSV
      */
     private function exportDeviceSales($data, $format)
     {
         if ($format === 'excel') {
             return $this->exportDeviceSalesExcel($data);
+        }
+
+        if ($format === 'csv') {
+            return $this->exportDeviceSalesCsv($data);
         }
 
         return $this->exportDeviceSalesPdf($data);
@@ -345,12 +394,51 @@ class ReportController extends Controller
     }
 
     /**
-     * Export Plan Adoption to Excel/PDF
+     * Export Device Sales to CSV
+     */
+    private function exportDeviceSalesCsv($data)
+    {
+        $filename = 'device_sales_' . $data['month'] . '.csv';
+
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ];
+
+        $callback = function() use ($data) {
+            $file = fopen('php://output', 'w');
+
+            // Add header row
+            fputcsv($file, ['Device Name', 'Units Sold', 'Total Revenue', 'Avg Price', '% of Sales']);
+
+            // Add data rows
+            foreach ($data['salesByDevice'] as $deviceName => $stats) {
+                fputcsv($file, [
+                    $deviceName,
+                    $stats['count'],
+                    number_format($stats['total_revenue'], 2),
+                    number_format($stats['avg_price'], 2),
+                    number_format(($stats['count'] / $data['totalDevicesSold']) * 100, 1) . '%',
+                ]);
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+    /**
+     * Export Plan Adoption to Excel/PDF/CSV
      */
     private function exportPlanAdoption($data, $format)
     {
         if ($format === 'excel') {
             return $this->exportPlanAdoptionExcel($data);
+        }
+
+        if ($format === 'csv') {
+            return $this->exportPlanAdoptionCsv($data);
         }
 
         return $this->exportPlanAdoptionPdf($data);
@@ -430,5 +518,53 @@ class ReportController extends Controller
     {
         $pdf = PDF::loadView('reports.pdf.plan-adoption', $data);
         return $pdf->download('plan_adoption_' . $data['month'] . '.pdf');
+    }
+
+    /**
+     * Export Plan Adoption to CSV
+     */
+    private function exportPlanAdoptionCsv($data)
+    {
+        $filename = 'plan_adoption_' . $data['month'] . '.csv';
+
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ];
+
+        $callback = function() use ($data) {
+            $file = fopen('php://output', 'w');
+
+            // Rate Plans section
+            fputcsv($file, ['Rate Plans']);
+            fputcsv($file, ['Plan Name', 'Subscriptions', 'Revenue']);
+
+            foreach ($data['ratePlanAdoption'] as $planName => $stats) {
+                fputcsv($file, [
+                    $planName,
+                    $stats['count'],
+                    number_format($stats['revenue'], 2),
+                ]);
+            }
+
+            // Empty row separator
+            fputcsv($file, []);
+
+            // Mobile Internet Plans section
+            fputcsv($file, ['Mobile Internet Plans']);
+            fputcsv($file, ['Plan Name', 'Subscriptions', 'Revenue']);
+
+            foreach ($data['internetAdoption'] as $planName => $stats) {
+                fputcsv($file, [
+                    $planName,
+                    $stats['count'],
+                    number_format($stats['revenue'], 2),
+                ]);
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 }
