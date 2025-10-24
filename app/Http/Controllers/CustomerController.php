@@ -135,6 +135,19 @@ class CustomerController extends Controller
             return view('customers.show', compact('customer'));
         } catch (RequestException $e) {
             Log::error('API fetch error: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
+
+            // Determine user-friendly error message based on status code
+            $statusCode = $e->hasResponse() ? $e->getResponse()->getStatusCode() : null;
+            if ($statusCode === 404) {
+                $errorMessage = 'Customer number not found in NISC billing system. Please verify the customer number and try again.';
+            } elseif ($statusCode >= 500) {
+                $errorMessage = 'NISC billing system is currently unavailable. Please try again later.';
+            } elseif ($statusCode === 401 || $statusCode === 403) {
+                $errorMessage = 'Unable to access customer information. Please contact IT support.';
+            } else {
+                $errorMessage = 'Failed to fetch customer information. Please try again.';
+            }
+
             $latestContracts = Contract::with(['subscriber.mobilityAccount.ivueAccount.customer', 'device', 'activityType'])
                 ->latest()
                 ->take(12)
@@ -149,7 +162,7 @@ class CustomerController extends Controller
                 ->take(6)
                 ->get();
             return view('customers.index', compact('latestContracts', 'activeUsers', 'recentCustomers'))
-                ->withErrors(['customer_number' => 'Failed to fetch customer: ' . $e->getMessage()]);
+                ->withErrors(['customer_number' => $errorMessage]);
         } catch (\Exception $e) {
             Log::error('Fetch error: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
             $latestContracts = Contract::with(['subscriber.mobilityAccount.ivueAccount.customer', 'device', 'activityType'])
