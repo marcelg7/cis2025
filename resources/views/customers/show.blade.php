@@ -1,6 +1,6 @@
 @extends('layouts.app')
 @section('content')
-    <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 py-6 px-2" x-data="{ refreshing: false }">
+    <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 py-6 px-2 page-container" x-data="{ refreshing: false }">
         <div class="bg-white shadow overflow-hidden sm:rounded-lg">
             <div class="px-4 py-5 sm:px-6 flex justify-between items-center">
                 <div>

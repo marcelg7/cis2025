@@ -1,6 +1,6 @@
 @extends('layouts.app')
 @section('content')
-    <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 py-6 px-2">
+    <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 py-6 px-2 page-container">
         <h1 class="text-2xl font-bold mb-4">Contracts</h1>
         @if (session('success'))
             <div class="bg-green-50 p-3 rounded-lg shadow-sm mb-6">

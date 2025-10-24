@@ -38,7 +38,7 @@
         .rounded-lg { border-radius: 0; }
     }
 </style>
-<div class="max-w-7xl mx-auto sm:px-6 lg:px-8 py-8 px-4 container">
+<div class="max-w-7xl mx-auto sm:px-6 lg:px-8 py-8 px-4 container page-container">
     @if (session('success'))
         <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded-lg mb-6 no-print">
             <p class="font-medium">{{ session('success') }}</p>
