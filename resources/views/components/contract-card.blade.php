@@ -1,6 +1,6 @@
 @props(['contract'])
 
-<div class="bg-white overflow-hidden shadow rounded-lg border border-gray-200 hover:shadow-md transition-shadow duration-200">
+<div class="bg-white overflow-hidden shadow rounded-lg border border-gray-200 card-hover">
     <div class="px-4 py-5 sm:p-6">
         <div class="flex items-center justify-between">
             <h3 class="text-lg leading-6 font-medium text-gray-900">

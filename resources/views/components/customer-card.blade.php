@@ -1,7 +1,7 @@
 <!-- resources/views/components/customer-card.blade.php -->
 @props(['customer'])
 
-<div class="bg-white overflow-hidden shadow-sm rounded-lg border border-gray-200 hover:shadow-md transition-shadow duration-200" x-data="{ refreshing: false }">
+<div class="bg-white overflow-hidden shadow-sm rounded-lg border border-gray-200 card-hover" x-data="{ refreshing: false }">
     <div class="px-4 py-4">
 	    <div class="mt-3">
             <x-primary-link href="{{ route('customers.show', $customer->id) }}" class="text-xs px-2 py-1 w-full justify-center">

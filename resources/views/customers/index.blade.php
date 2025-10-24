@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 py-6 px-2" x-data="{
+    <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 py-6 px-2 page-container" x-data="{
         searchModalOpen: false,
         searchQuery: { lastName: '', firstName: '', businessName: '', address: '' },
         searchResults: [],
@@ -107,7 +107,7 @@
 		<!-- Active Users Bar -->
 	
 		@if($activeUsers->count() > 0)
-			<div class="bg-green-50 p-3 rounded-lg shadow-sm mt-4 mb-6">
+			<div class="bg-green-50 p-3 rounded-lg shadow-sm mt-4 mb-6 section-animate section-animate-delay-1">
 				<h3 class="text-sm font-medium text-green-800 inline-flex items-center">
 					<svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
@@ -125,7 +125,7 @@
 		@endif
 		
 
-        <h1 class="text-2xl font-semibold text-gray-900">Fetch Customer</h1>
+        <h1 class="text-2xl font-semibold text-gray-900 section-animate section-animate-delay-1">Fetch Customer</h1>
 
 		@if ($errors->any())
 			<div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mt-4 rounded-md">
@@ -139,7 +139,7 @@
 		@endif
 
 
-        <form method="POST" action="{{ route('customers.fetch') }}" class="mt-6" @submit.prevent="handleFormSubmit($event)">
+        <form method="POST" action="{{ route('customers.fetch') }}" class="mt-6 section-animate section-animate-delay-2" @submit.prevent="handleFormSubmit($event)">
             @csrf
             <div class="mb-4">
                 <label for="customer_number" class="block text-sm font-medium text-gray-700">Customer Number or Name</label>
@@ -149,7 +149,7 @@
                     <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
                 @enderror
             </div>
-            <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+            <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 btn-press">
                 Fetch or Update Customer
             </button>
         </form>
@@ -157,10 +157,10 @@
 
 		<!-- Recent Customers Section -->
 		@if($recentCustomers->count() > 0)
-			<div class="mt-6">
+			<div class="mt-6 section-animate section-animate-delay-3">
 				<h2 class="text-xl font-semibold text-gray-800 mb-4">Recently Imported Customers</h2>
-				
-				<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+
+				<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 card-grid">
 					@foreach($recentCustomers as $customer)
 						<x-customer-card :customer="$customer" />
 					@endforeach
@@ -169,10 +169,10 @@
 		@endif		
 		
         <!-- Recent Contracts Section -->
-        <div class="mt-8">
+        <div class="mt-8 section-animate section-animate-delay-3">
             <h2 class="text-xl font-semibold text-gray-800 mb-4">Recent Contracts</h2>
-            
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 card-grid">
                 @forelse($latestContracts as $contract)
                     <x-contract-card :contract="$contract" />
                 @empty
