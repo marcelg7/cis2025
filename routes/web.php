@@ -188,6 +188,8 @@ Route::middleware(['auth', 'throttle:60,1'])->group(function () {  // CHANGED FR
     */
     Route::get('/settings', [UserSettingsController::class, 'edit'])->name('users.settings.edit');
     Route::patch('/settings', [UserSettingsController::class, 'update'])->name('users.settings.update');
+    Route::get('/notification-preferences', [UserSettingsController::class, 'editNotificationPreferences'])->name('users.notification-preferences.edit');
+    Route::patch('/notification-preferences', [UserSettingsController::class, 'updateNotificationPreferences'])->name('users.notification-preferences.update');
     Route::get('/change-password', fn() => view('auth.change-password'))->name('password.custom_change');
     Route::get('/search', [SearchController::class, 'search'])->name('search');
     Route::get('/changelog', [ChangelogController::class, 'index'])->name('changelog');
