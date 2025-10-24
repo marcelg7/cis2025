@@ -17,6 +17,7 @@ use App\Http\Controllers\RatePlanController;
 use App\Http\Controllers\MobileInternetPlanController;
 use App\Http\Controllers\ChangelogController;
 use App\Http\Controllers\ReadmeController;
+use App\Http\Controllers\CheatSheetController;
 use App\Http\Controllers\TermsOfServiceController;
 use App\Http\Controllers\LogController;
 use App\Http\Controllers\SettingsController;
@@ -196,6 +197,7 @@ Route::middleware(['auth', 'throttle:60,1'])->group(function () {  // CHANGED FR
     Route::get('/search', [SearchController::class, 'search'])->name('search');
     Route::get('/changelog', [ChangelogController::class, 'index'])->name('changelog');
     Route::get('/readme', [ReadmeController::class, 'index'])->name('readme');
+    Route::get('/cheat-sheet', [CheatSheetController::class, 'index'])->name('cheat-sheet');
     Route::get('/analytics', [AnalyticsController::class, 'index'])->name('analytics');
 
     /*

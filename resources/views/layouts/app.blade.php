@@ -317,6 +317,9 @@
                                         <a href="{{ route('readme') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                             Documentation
                                         </a>
+                                        <a href="{{ route('cheat-sheet') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                            CSR Cheat Sheet
+                                        </a>
                                         <div class="border-t border-gray-200 my-1"></div>
                                         <a href="{{ route('bug-reports.create') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                             <div class="flex items-center">
@@ -560,6 +563,9 @@
                             </x-responsive-nav-link>
                             <x-responsive-nav-link :href="route('readme')" :active="request()->routeIs('readme')">
                                 Documentation
+                            </x-responsive-nav-link>
+                            <x-responsive-nav-link :href="route('cheat-sheet')" :active="request()->routeIs('cheat-sheet')">
+                                CSR Cheat Sheet
                             </x-responsive-nav-link>
 
                             <div class="border-t border-gray-200 my-1 mx-4"></div>
