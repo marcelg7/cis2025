@@ -62,6 +62,7 @@ class ContractController extends Controller
 	
 	public function create($subscriberId = null)
 	{
+		\Log::info('ContractController@create STARTED', ['subscriber_id' => $subscriberId, 'user' => auth()->user()?->name]);
 		$customers = Customer::orderBy('last_name')->get();
 		$users = User::orderBy('name')->get();
 		$activityTypes = ActivityType::orderBy('name')->get();
@@ -105,7 +106,9 @@ class ContractController extends Controller
 		
 		$defaultFirstBillDate = Carbon::now()->addMonth()->startOfMonth();
 		$defaultConnectionFee = \App\Helpers\SettingsHelper::get('default_connection_fee', 80);
-	   
+
+		\Log::info('ContractController@create BEFORE VIEW RENDER');
+
 		return view('contracts.create', compact(
 			'customers',
 			'users',
