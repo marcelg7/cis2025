@@ -121,7 +121,7 @@ class ContractController extends Controller
 			'deviceTiers',
 			'defaultConnectionFee',
 			'locations'
-		));
+		))->withErrors(session()->get('errors', new \Illuminate\Support\ViewErrorBag));
 	}
 	
     public function store(Request $request, $subscriberId)
