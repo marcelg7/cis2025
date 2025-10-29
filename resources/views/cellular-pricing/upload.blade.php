@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="max-w-4xl mx-auto sm:px-6 lg:px-8 py-6">
+<div class="max-w-4xl mx-auto sm:px-6 lg:px-8 py-6 page-container">
     <div class="mb-6">
         <h1 class="text-3xl font-bold text-gray-900">Cellular Price Plans Management</h1>
         <p class="mt-2 text-sm text-gray-600">Upload Excel files to import rate plans, mobile internet plans, and add-ons</p>

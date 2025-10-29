@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 py-6 px-2">
+    <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 py-6 px-2 page-container">
         <h1 class="text-2xl font-semibold text-gray-900">All Activity Logs</h1>
         
         <table class="min-w-full divide-y divide-gray-200 mt-6">

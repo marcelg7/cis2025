@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="max-w-7xl mx-auto sm:px-6 lg:px-8 py-6">
+<div class="max-w-7xl mx-auto sm:px-6 lg:px-8 py-6 page-container">
     <div class="mb-6 no-print">
         <a href="{{ route('contracts.view', $contract->id) }}" class="inline-flex items-center text-sm text-indigo-600 hover:text-indigo-500">
             <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">

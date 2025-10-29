@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="max-w-4xl mx-auto sm:px-6 lg:px-8 py-6">
+<div class="max-w-4xl mx-auto sm:px-6 lg:px-8 py-6 page-container">
     <!-- Header with Back Button -->
     <div class="mb-6 flex justify-between items-center">
         <a href="{{ route('cellular-pricing.mobile-internet') }}" class="inline-flex items-center text-sm text-indigo-600 hover:text-indigo-500">

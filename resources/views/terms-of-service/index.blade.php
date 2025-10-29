@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="max-w-7xl mx-auto sm:px-6 lg:px-8 py-6">
+<div class="max-w-7xl mx-auto sm:px-6 lg:px-8 py-6 page-container">
     <div class="mb-6 flex justify-between items-center">
         <h1 class="text-2xl font-semibold text-gray-900">Terms of Service Management</h1>
         <a href="{{ route('terms-of-service.create') }}" 
