@@ -884,13 +884,23 @@ class ContractController extends Controller
 
 		Log::info('PDF generated for finalized contract', ['contract_id' => $id, 'pdf_path' => $pdfPath]);
 
-        // Generate merged PDF (includes financing, DRO, and main contract)
+        // Generate merged PDF (includes financing, DRO, and main contract, and terms of service)
         $pdfService = app(ContractPdfService::class);
         $mergedPdfContent = $pdfService->generateMergedPdfContent($contract);
 
         // Save merged PDF
         $mergedPdfPath = "contracts/contract_{$contract->id}_merged.pdf";
         Storage::disk('public')->put($mergedPdfPath, $mergedPdfContent);
+
+        // Log merged PDF details for debugging
+        $mergedPdfSize = strlen($mergedPdfContent);
+        $mergedPdfExists = Storage::disk('public')->exists($mergedPdfPath);
+        Log::info('Merged PDF saved to storage', [
+            'contract_id' => $id,
+            'merged_pdf_path' => $mergedPdfPath,
+            'merged_pdf_size' => $mergedPdfSize,
+            'file_exists' => $mergedPdfExists
+        ]);
 
         // FTP Upload merged PDF to Vault
         $ftpService = new VaultFtpService();
