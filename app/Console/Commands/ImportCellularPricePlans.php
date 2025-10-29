@@ -350,12 +350,13 @@ class ImportCellularPricePlans extends Command
     private function extractTier($planName): ?string
     {
         $planNameLower = strtolower($planName);
-        
+
         if (stripos($planNameLower, 'ultra') !== false) return 'Ultra';
         if (stripos($planNameLower, 'max') !== false) return 'Max';
         if (stripos($planNameLower, 'select') !== false) return 'Select';
         if (stripos($planNameLower, 'lite') !== false) return 'Lite';
-        
+        if (stripos($planNameLower, 'basic') !== false) return 'Basic';
+
         return null;
     }
 
