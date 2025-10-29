@@ -22,7 +22,7 @@
         @endif
 
         <!-- Form -->
-        <form method="POST" action="{{ route('users.settings.update') }}" class="p-6 space-y-8">
+        <form method="POST" action="{{ route('users.settings.update') }}" enctype="multipart/form-data" class="p-6 space-y-8">
             @csrf
             @method('PATCH')
 
@@ -122,6 +122,103 @@
                     @endforeach
                 </div>
             </div>
+
+            <!-- Background Settings -->
+            <div>
+                <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <svg class="w-5 h-5 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                    Background Image
+                </h2>
+
+                <div class="space-y-4">
+                    @php
+                        $currentBackgroundType = old('background_type', $user->background_type ?? 'default');
+                    @endphp
+
+                    <!-- Default Background -->
+                    <label class="flex items-start p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors @if($currentBackgroundType === 'default') border-indigo-600 bg-indigo-50 @else border-gray-200 @endif">
+                        <input type="radio"
+                               name="background_type"
+                               value="default"
+                               @checked($currentBackgroundType === 'default')
+                               class="mt-1 h-5 w-5 text-indigo-600 border-gray-300 focus:ring-indigo-500 flex-shrink-0"
+                               onchange="toggleBackgroundOptions()">
+                        <div class="ml-4 flex-1">
+                            <span class="font-semibold text-gray-900">Classic CIS Background</span>
+                            <p class="text-sm text-gray-600 mt-1">Use the default Hay Communications background image</p>
+                        </div>
+                    </label>
+
+                    <!-- Random Background -->
+                    <label class="flex items-start p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors @if($currentBackgroundType === 'random') border-indigo-600 bg-indigo-50 @else border-gray-200 @endif">
+                        <input type="radio"
+                               name="background_type"
+                               value="random"
+                               @checked($currentBackgroundType === 'random')
+                               class="mt-1 h-5 w-5 text-indigo-600 border-gray-300 focus:ring-indigo-500 flex-shrink-0"
+                               onchange="toggleBackgroundOptions()">
+                        <div class="ml-4 flex-1">
+                            <span class="font-semibold text-gray-900">Random Beautiful Backgrounds</span>
+                            <p class="text-sm text-gray-600 mt-1">Display random high-quality images (changes daily)</p>
+                        </div>
+                    </label>
+
+                    <!-- Solid Color -->
+                    <label class="flex items-start p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors @if($currentBackgroundType === 'color') border-indigo-600 bg-indigo-50 @else border-gray-200 @endif">
+                        <input type="radio"
+                               name="background_type"
+                               value="color"
+                               @checked($currentBackgroundType === 'color')
+                               class="mt-1 h-5 w-5 text-indigo-600 border-gray-300 focus:ring-indigo-500 flex-shrink-0"
+                               onchange="toggleBackgroundOptions()">
+                        <div class="ml-4 flex-1">
+                            <span class="font-semibold text-gray-900">Solid Color</span>
+                            <p class="text-sm text-gray-600 mt-1 mb-3">Use a solid color background</p>
+                            <div id="color-picker-container" style="display: @if($currentBackgroundType === 'color') block @else none @endif;">
+                                <input type="color"
+                                       name="background_color"
+                                       id="background_color"
+                                       value="{{ old('background_color', $user->background_value ?? '#f3f4f6') }}"
+                                       class="h-10 w-20 rounded border border-gray-300 cursor-pointer">
+                            </div>
+                        </div>
+                    </label>
+
+                    <!-- Upload Custom Image -->
+                    <label class="flex items-start p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors @if($currentBackgroundType === 'upload') border-indigo-600 bg-indigo-50 @else border-gray-200 @endif">
+                        <input type="radio"
+                               name="background_type"
+                               value="upload"
+                               @checked($currentBackgroundType === 'upload')
+                               class="mt-1 h-5 w-5 text-indigo-600 border-gray-300 focus:ring-indigo-500 flex-shrink-0"
+                               onchange="toggleBackgroundOptions()">
+                        <div class="ml-4 flex-1">
+                            <span class="font-semibold text-gray-900">Upload Custom Image</span>
+                            <p class="text-sm text-gray-600 mt-1 mb-3">Use your own background image (min 1920x1080px, max 5MB)</p>
+                            <div id="upload-container" style="display: @if($currentBackgroundType === 'upload') block @else none @endif;">
+                                <input type="file"
+                                       name="background_image"
+                                       id="background_image"
+                                       accept="image/jpeg,image/png,image/jpg"
+                                       class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                                @if($user->background_type === 'upload' && $user->background_value)
+                                    <p class="mt-2 text-xs text-gray-500">Current: {{ $user->background_value }}</p>
+                                @endif
+                            </div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <script>
+                function toggleBackgroundOptions() {
+                    const backgroundType = document.querySelector('input[name="background_type"]:checked').value;
+                    document.getElementById('color-picker-container').style.display = backgroundType === 'color' ? 'block' : 'none';
+                    document.getElementById('upload-container').style.display = backgroundType === 'upload' ? 'block' : 'none';
+                }
+            </script>
 
             <!-- Developer Options -->
             <div>
