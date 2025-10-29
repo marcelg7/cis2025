@@ -203,6 +203,9 @@
                                        id="background_image"
                                        accept="image/jpeg,image/png,image/jpg"
                                        class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                                @error('background_image')
+                                    <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                                @enderror
                                 @if($user->background_type === 'upload' && $user->background_value)
                                     <p class="mt-2 text-xs text-gray-500">Current: {{ $user->background_value }}</p>
                                 @endif
@@ -218,6 +221,11 @@
                     document.getElementById('color-picker-container').style.display = backgroundType === 'color' ? 'block' : 'none';
                     document.getElementById('upload-container').style.display = backgroundType === 'upload' ? 'block' : 'none';
                 }
+
+                // On page load, ensure containers are visible if errors exist or if that option is selected
+                document.addEventListener('DOMContentLoaded', function() {
+                    toggleBackgroundOptions();
+                });
             </script>
 
             <!-- Developer Options -->
