@@ -1000,7 +1000,8 @@ class ContractController extends Controller
         $revision->signature_path = null;
 
         // Reset financing form fields (amounts may have changed, requires re-signing)
-        $revision->financing_status = null;
+        // Set to 'pending' if financing is required, otherwise 'not_required'
+        $revision->financing_status = $originalContract->requiresFinancing() ? 'pending' : 'not_required';
         $revision->financing_signature_path = null;
         $revision->financing_csr_initials_path = null;
         $revision->financing_signed_at = null;
@@ -1008,7 +1009,8 @@ class ContractController extends Controller
         $revision->financing_pdf_path = null;
 
         // Reset DRO form fields (amounts may have changed, requires re-signing)
-        $revision->dro_status = null;
+        // Set to 'pending' if DRO is required, otherwise 'not_required'
+        $revision->dro_status = $originalContract->requiresDro() ? 'pending' : 'not_required';
         $revision->dro_signature_path = null;
         $revision->dro_csr_initials_path = null;
         $revision->dro_signed_at = null;
