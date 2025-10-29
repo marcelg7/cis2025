@@ -65,8 +65,8 @@
                 <button
                     id="backToTop"
                     onclick="scrollToTop()"
-                    class="fixed bottom-8 right-8 bg-blue-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700 transition-all opacity-0 pointer-events-none"
-                    style="z-index: 50;"
+                    class="fixed bottom-8 right-8 bg-blue-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700 transition-all"
+                    style="z-index: 50; opacity: 0; pointer-events: none;"
                 >
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"/>
@@ -318,8 +318,8 @@
 
         /* Back to top button animation */
         #backToTop.visible {
-            opacity: 1;
-            pointer-events: auto;
+            opacity: 1 !important;
+            pointer-events: auto !important;
         }
     </style>
 
@@ -357,9 +357,11 @@
         // Make headings collapsible
         function makeCollapsible() {
             const headings = document.querySelectorAll('.cheat-sheet-content h1, .cheat-sheet-content h2');
+            console.log('Cheat Sheet: Making', headings.length, 'headings collapsible');
 
             headings.forEach(heading => {
                 heading.addEventListener('click', function() {
+                    console.log('Cheat Sheet: Heading clicked:', this.textContent.trim());
                     this.classList.toggle('collapsed');
 
                     // Find content until next heading of same or higher level
@@ -514,10 +516,21 @@
             }
         }
 
-        // Initialize on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            generateTOC();
-            makeCollapsible();
-        });
+        // Initialize on page load - delay to avoid Alpine.js conflicts
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initCheatSheet);
+        } else {
+            initCheatSheet();
+        }
+
+        function initCheatSheet() {
+            // Delay execution to ensure Alpine.js has initialized
+            setTimeout(function() {
+                console.log('Cheat Sheet: Initializing...');
+                generateTOC();
+                makeCollapsible();
+                console.log('Cheat Sheet: Initialized successfully');
+            }, 200);
+        }
     </script>
 @endsection
