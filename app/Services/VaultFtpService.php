@@ -104,39 +104,49 @@ class VaultFtpService
 
     /**
      * Generate standardized filename for contract PDF
-     * Format: IVUE_CUSTOMER_NUMBER-IVUE_ACCOUNT-ACCOUNT_NAME-SUBSCRIBER-MOBILE_NUMBER.pdf
-     * Example: 50208810-12345-Hay_Communications-John_Smith-5195551234.pdf
+     * Format: CUSTOMER_NUMBER-ACCOUNT_NUMBER-CUSTOMER_NAME-SUBSCRIBER_NAME-PHONE-Contract-CONTRACT_ID.pdf
+     * Example: 50215279-10220876-Marcel_Gelinas-Marcel_Gelinas-519-3177086-Contract-18.pdf
      */
     public function getRemoteFilename($contract): string
     {
         // Get iVue customer number (format: 50208810)
         $ivueCustomerNumber = $contract->subscriber->mobilityAccount->ivueAccount->customer->ivue_customer_number;
-        
+
         // Get iVue account number
         $ivueAccount = $contract->subscriber->mobilityAccount->ivueAccount->ivue_account;
-        
-        // Get account/company name (Title Case)
-        $accountName = $contract->subscriber->mobilityAccount->ivueAccount->customer->display_name;
-        $safeAccountName = $this->sanitizeFilename($accountName);
-        
+
+        // Get customer name (First Last format, not display_name which can be Last First)
+        $customer = $contract->subscriber->mobilityAccount->ivueAccount->customer;
+        $customerName = $customer->first_name . ' ' . $customer->last_name;
+        $safeCustomerName = $this->sanitizeFilename($customerName);
+
         // Get subscriber name (Title Case)
         $subscriberName = $contract->subscriber->first_name . ' ' . $contract->subscriber->last_name;
         $safeSubscriberName = $this->sanitizeFilename($subscriberName);
-        
-        // Get mobile number (remove non-digits)
+
+        // Get mobile number (remove non-digits, then format as XXX-XXXXXXX)
         $mobileNumber = preg_replace('/[^0-9]/', '', $contract->subscriber->mobile_number);
-        
+        // Format phone number with dashes (XXX-XXXXXXX for 10-digit, or just the number as-is for other lengths)
+        if (strlen($mobileNumber) === 10) {
+            $formattedPhone = substr($mobileNumber, 0, 3) . '-' . substr($mobileNumber, 3);
+        } else {
+            $formattedPhone = $mobileNumber;
+        }
+
+        // Get contract ID
+        $contractId = $contract->id;
+
         // Build filename
-        $filename = "{$ivueCustomerNumber}-{$ivueAccount}-{$safeAccountName}-{$safeSubscriberName}-{$mobileNumber}.pdf";
-        
+        $filename = "{$ivueCustomerNumber}-{$ivueAccount}-{$safeCustomerName}-{$safeSubscriberName}-{$formattedPhone}-Contract-{$contractId}.pdf";
+
         // Ensure filename isn't too long (max 255 chars for most filesystems)
         if (strlen($filename) > 255) {
-            // Truncate account name if needed
-            $maxAccountNameLength = 255 - strlen("{$ivueCustomerNumber}-{$ivueAccount}--{$safeSubscriberName}-{$mobileNumber}.pdf");
-            $safeAccountName = substr($safeAccountName, 0, $maxAccountNameLength);
-            $filename = "{$ivueCustomerNumber}-{$ivueAccount}-{$safeAccountName}-{$safeSubscriberName}-{$mobileNumber}.pdf";
+            // Truncate customer name if needed
+            $maxCustomerNameLength = 255 - strlen("{$ivueCustomerNumber}-{$ivueAccount}--{$safeSubscriberName}-{$formattedPhone}-Contract-{$contractId}.pdf");
+            $safeCustomerName = substr($safeCustomerName, 0, $maxCustomerNameLength);
+            $filename = "{$ivueCustomerNumber}-{$ivueAccount}-{$safeCustomerName}-{$safeSubscriberName}-{$formattedPhone}-Contract-{$contractId}.pdf";
         }
-        
+
         return $filename;
     }
         
