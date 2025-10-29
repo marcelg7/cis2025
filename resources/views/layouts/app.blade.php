@@ -167,6 +167,8 @@
             background-color: rgba(255, 255, 255, 0.95) !important;
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
+            position: relative;
+            z-index: 1000;
         }
 
         .page-container,
@@ -177,6 +179,8 @@
             border-radius: 0.5rem;
             padding: 1.5rem;
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            position: relative;
+            z-index: 1;
         }
 
         footer {
@@ -185,10 +189,18 @@
             -webkit-backdrop-filter: blur(10px);
         }
 
-        /* Ensure dropdowns stay on top */
+        /* Ensure dropdowns stay on top of everything */
         nav .absolute,
-        [x-show] {
-            z-index: 9999 !important;
+        nav [x-show],
+        .absolute[x-show] {
+            z-index: 10000 !important;
+            position: absolute !important;
+        }
+
+        /* Specific dropdown menu styling */
+        nav .absolute.z-50,
+        nav .absolute.z-10 {
+            z-index: 10000 !important;
         }
     </style>
 </head>
