@@ -67,16 +67,26 @@ fi
 echo "✓ Caches cleared"
 echo ""
 
+# Rebuild config cache (critical for APP_KEY)
+echo "6. Rebuilding config cache..."
+php artisan config:cache
+if [ $? -ne 0 ]; then
+    echo "Error: Failed to cache config"
+    exit 1
+fi
+echo "✓ Config cached"
+echo ""
+
 # Optional: Install/update Composer dependencies
 # Uncomment if you update composer.json
-# echo "6. Updating Composer dependencies..."
+# echo "7. Updating Composer dependencies..."
 # composer install --no-dev --optimize-autoloader
 # echo "✓ Composer updated"
 # echo ""
 
 # Optional: Build frontend assets
 # Uncomment if you update frontend assets
-# echo "7. Building frontend assets..."
+# echo "8. Building frontend assets..."
 # npm run build
 # echo "✓ Assets built"
 # echo ""
