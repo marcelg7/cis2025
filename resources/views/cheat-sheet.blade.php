@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" style="overflow: visible;">
         <!-- Header with Search and Actions -->
         <div class="mb-6">
             <div class="flex items-center justify-between mb-4">
@@ -40,7 +40,7 @@
             </div>
         </div>
 
-        <div class="flex gap-6">
+        <div class="flex gap-6" style="overflow: visible;">
             <!-- Sidebar Table of Contents (Desktop) -->
             <aside class="hidden lg:block lg:w-64 flex-shrink-0" style="align-self: flex-start;">
                 <div id="stickyNav" style="position: sticky; position: -webkit-sticky; top: 1rem; max-height: calc(100vh - 2rem); overflow-y: auto;">
