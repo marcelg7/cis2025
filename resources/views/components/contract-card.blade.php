@@ -31,7 +31,7 @@
             <p><span class="font-medium">IVUE:</span> {{ $contract->subscriber->mobilityAccount->ivueAccount->ivue_account }}</p>
             <p><span class="font-medium">Start Date:</span> {{ $contract->start_date->format('M d, Y') }}</p>
             <p><span class="font-medium">First Bill Date:</span> {{ $contract->first_bill_date->format('M d, Y') }}</p>
-            <p><span class="font-medium">Location:</span> {{ ucfirst($contract->location) }}</p>
+            <p><span class="font-medium">Location:</span> {{ $contract->locationModel?->name ?? 'N/A' }}</p>
             <p><span class="font-medium">Plan:</span> {{ $contract->bell_tier ?? 'N/A' }} Tier</p>
             @if ($contract->bell_device_id && $contract->bellDevice)
                 <p class="mt-1">
@@ -57,42 +57,44 @@
                 </a>
             </div>
             
-            <!-- Download Button - Only for Finalized -->
-            <div class="flex-shrink-0">
-                <a href="{{ route('contracts.download', $contract->id) }}" 
-                   class="inline-flex justify-center items-center w-10 h-10 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 {{ $contract->status !== 'finalized' ? 'cursor-not-allowed' : '' }}"
-                   style="background-color: {{ $contract->status === 'finalized' ? 'var(--color-success)' : '#e5e7eb' }}; color: {{ $contract->status === 'finalized' ? 'white' : '#9ca3af' }};"
-                   @if($contract->status === 'finalized')
-                   onmouseover="this.style.backgroundColor='#059669'"
-                   onmouseout="this.style.backgroundColor='var(--color-success)'"
-                   @endif
-                   title="{{ $contract->status === 'finalized' ? 'Download PDF' : 'Must be finalized to download' }}"
-                   {{ $contract->status !== 'finalized' ? 'onclick="return false;"' : '' }}>
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                    </svg>
-                </a>
-            </div>
-            
-            <!-- Email Button - Only for Finalized -->
-            <div class="flex-shrink-0">
-                <form action="{{ route('contracts.email', $contract->id) }}" method="POST" class="inline">
-                    @csrf
-                    <button type="submit" 
-                            {{ $contract->status !== 'finalized' ? 'disabled' : '' }}
-                            class="inline-flex justify-center items-center w-10 h-10 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 {{ $contract->status !== 'finalized' ? 'cursor-not-allowed' : '' }}"
-                            style="background-color: {{ $contract->status === 'finalized' ? 'var(--color-info)' : '#e5e7eb' }}; color: {{ $contract->status === 'finalized' ? 'white' : '#9ca3af' }};"
-                            @if($contract->status === 'finalized')
-                            onmouseover="this.style.backgroundColor='#2563eb'"
-                            onmouseout="this.style.backgroundColor='var(--color-info)'"
-                            @endif
-                            title="{{ $contract->status === 'finalized' ? 'Email Contract' : 'Must be finalized to email' }}">
+            <!-- Download Button - Only for Finalized and NOT uploaded to vault -->
+            @if(!$contract->ftp_to_vault)
+                <div class="flex-shrink-0">
+                    <a href="{{ route('contracts.download', $contract->id) }}"
+                       class="inline-flex justify-center items-center w-10 h-10 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 {{ $contract->status !== 'finalized' ? 'cursor-not-allowed' : '' }}"
+                       style="background-color: {{ $contract->status === 'finalized' ? 'var(--color-success)' : '#e5e7eb' }}; color: {{ $contract->status === 'finalized' ? 'white' : '#9ca3af' }};"
+                       @if($contract->status === 'finalized')
+                       onmouseover="this.style.backgroundColor='#059669'"
+                       onmouseout="this.style.backgroundColor='var(--color-success)'"
+                       @endif
+                       title="{{ $contract->status === 'finalized' ? 'Download PDF' : 'Must be finalized to download' }}"
+                       {{ $contract->status !== 'finalized' ? 'onclick="return false;"' : '' }}>
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                         </svg>
-                    </button>
-                </form>
-            </div>
+                    </a>
+                </div>
+
+                <!-- Email Button - Only for Finalized and NOT uploaded to vault -->
+                <div class="flex-shrink-0">
+                    <form action="{{ route('contracts.email', $contract->id) }}" method="POST" class="inline">
+                        @csrf
+                        <button type="submit"
+                                {{ $contract->status !== 'finalized' ? 'disabled' : '' }}
+                                class="inline-flex justify-center items-center w-10 h-10 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 {{ $contract->status !== 'finalized' ? 'cursor-not-allowed' : '' }}"
+                                style="background-color: {{ $contract->status === 'finalized' ? 'var(--color-info)' : '#e5e7eb' }}; color: {{ $contract->status === 'finalized' ? 'white' : '#9ca3af' }};"
+                                @if($contract->status === 'finalized')
+                                onmouseover="this.style.backgroundColor='#2563eb'"
+                                onmouseout="this.style.backgroundColor='var(--color-info)'"
+                                @endif
+                                title="{{ $contract->status === 'finalized' ? 'Email Contract' : 'Must be finalized to email' }}">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                            </svg>
+                        </button>
+                    </form>
+                </div>
+            @endif
             
             <!-- Edit Button - Only for Draft -->
             @if ($contract->status === 'draft')
@@ -187,11 +189,11 @@
                 @endif
             @endif
             
-            <!-- Financing Form Button - Only for contracts that require financing -->
-            @if($contract->requiresFinancing() && $contract->status !== 'draft')
+            <!-- Financing Form Button - Only for contracts that require financing and NOT uploaded to vault -->
+            @if($contract->requiresFinancing() && $contract->status !== 'draft' && !$contract->ftp_to_vault)
                 @if($contract->financing_status === 'pending')
                     <div class="flex-shrink-0">
-                        <a href="{{ route('contracts.financing.index', $contract->id) }}" 
+                        <a href="{{ route('contracts.financing.index', $contract->id) }}"
                            class="inline-flex justify-center items-center w-10 h-10 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1"
                            style="background-color: var(--color-warning); color: white;"
                            onmouseover="this.style.backgroundColor='#d97706'"
@@ -202,9 +204,9 @@
                             </svg>
                         </a>
                     </div>
-                @elseif($contract->financing_status === 'signed')
+                @elseif($contract->financing_status === 'signed' || $contract->financing_status === 'customer_signed')
                     <div class="flex-shrink-0">
-                        <a href="{{ route('contracts.financing.index', $contract->id) }}" 
+                        <a href="{{ route('contracts.financing.index', $contract->id) }}"
                            class="inline-flex justify-center items-center w-10 h-10 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1"
                            style="background-color: var(--color-info); color: white;"
                            onmouseover="this.style.backgroundColor='#2563eb'"
@@ -217,7 +219,7 @@
                     </div>
                 @elseif($contract->financing_status === 'finalized')
                     <div class="flex-shrink-0">
-                        <a href="{{ route('contracts.financing.index', $contract->id) }}" 
+                        <a href="{{ route('contracts.financing.index', $contract->id) }}"
                            class="inline-flex justify-center items-center w-10 h-10 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1"
                            style="background-color: var(--color-success); color: white;"
                            onmouseover="this.style.backgroundColor='#059669'"
