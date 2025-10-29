@@ -115,12 +115,8 @@ class ContractPolicy
      */
     public function createRevision(User $user, Contract $contract): bool
     {
-        // Admins can create revisions of any contract
-        if ($user->hasRole('admin')) {
-            return true;
-        }
-
-        // Users can create revisions of finalized contracts they created
-        return $contract->updated_by === $user->id && $contract->status === 'finalized';
+        // All authenticated users can create revisions of any finalized contract
+        // This allows team collaboration and picking up each other's work
+        return $contract->status === 'finalized';
     }
 }
