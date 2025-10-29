@@ -276,8 +276,14 @@
         }
 
         /* Section collapsing */
-        .section-content.collapsed {
-            display: none;
+        .collapsed {
+            display: none !important;
+        }
+
+        /* But keep headings visible when collapsed */
+        .cheat-sheet-content h1.collapsed,
+        .cheat-sheet-content h2.collapsed {
+            display: block !important;
         }
 
         /* Highlight search results */
@@ -285,6 +291,12 @@
             background-color: #fef08a;
             padding: 0.125rem 0.25rem;
             border-radius: 0.25rem;
+        }
+
+        /* Sticky sidebar */
+        .sticky {
+            position: -webkit-sticky;
+            position: sticky;
         }
 
         /* TOC Styles */
@@ -379,9 +391,11 @@
 
         // Toggle all sections
         function toggleAllSections() {
+            console.log('Cheat Sheet: Toggle All clicked');
             const headings = document.querySelectorAll('.cheat-sheet-content h1, .cheat-sheet-content h2');
             const firstHeading = headings[0];
             const isCollapsed = firstHeading.classList.contains('collapsed');
+            console.log('Cheat Sheet: Currently collapsed?', isCollapsed);
 
             headings.forEach(heading => {
                 if (isCollapsed) {
@@ -484,18 +498,24 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        // Show/hide back to top button
-        window.addEventListener('scroll', function() {
-            const backToTop = document.getElementById('backToTop');
-            if (window.pageYOffset > 300) {
-                backToTop.classList.add('visible');
-            } else {
-                backToTop.classList.remove('visible');
-            }
+        // Show/hide back to top button - initialize after DOM is ready
+        function initScrollHandlers() {
+            console.log('Cheat Sheet: Scroll handlers initialized');
 
-            // Update active TOC item
-            updateActiveTOC();
-        });
+            window.addEventListener('scroll', function() {
+                const backToTop = document.getElementById('backToTop');
+                if (backToTop) {
+                    if (window.pageYOffset > 300) {
+                        backToTop.classList.add('visible');
+                    } else {
+                        backToTop.classList.remove('visible');
+                    }
+                }
+
+                // Update active TOC item
+                updateActiveTOC();
+            });
+        }
 
         // Update active TOC item based on scroll position
         function updateActiveTOC() {
@@ -529,6 +549,7 @@
                 console.log('Cheat Sheet: Initializing...');
                 generateTOC();
                 makeCollapsible();
+                initScrollHandlers();
                 console.log('Cheat Sheet: Initialized successfully');
             }, 200);
         }
