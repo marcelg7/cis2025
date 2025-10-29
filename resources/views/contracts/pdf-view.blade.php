@@ -135,25 +135,6 @@
     @endif
     <hr style="margin: 0; border-color: #ccc;">
 
-    <!-- Cellular Pricing -->
-    <div style="padding: 0;">
-        <h3 style="font-size: 10pt; margin: 0;">Cellular Pricing</h3>
-        <div style="font-size: 7pt; color: #333; line-height: 1.0;">
-            <p><strong>Rate Plan:</strong> {{ $contract->ratePlan?->plan_name ?? 'N/A' }}</p>
-            <p><strong>SOC:</strong> {{ $contract->ratePlan?->soc_code ?? 'N/A' }}</p>
-            <p><strong>Data:</strong> {{ $contract->ratePlan?->data_amount ?? 'N/A' }}</p>
-            @if($contract->ratePlan?->tier)
-                <p><strong>Tier:</strong> {{ $contract->ratePlan->tier }}</p>
-            @endif
-            @if($contract->bell_pricing_type !== 'byod')
-                <p><strong>Pricing Type:</strong> {{ $contract->bell_pricing_type === 'dro' ? 'DRO' : ucfirst($contract->bell_pricing_type ?? 'N/A') }}</p>
-                <p><strong>Selected Device Tier:</strong> {{ $contract->bell_tier ?? 'N/A' }}</p>
-            @endif
-            <p><strong>Monthly Rate Plan Charge:</strong> ${{ number_format($contract->rate_plan_price ?? 0, 2) }}</p>
-        </div>
-    </div>
-    <hr style="margin: 0; border-color: #ccc;">
-
     <!-- Return Policy -->
     @if($contract->bell_pricing_type !== 'byod')
         <div style="padding: 0; font-size: 6pt; color: #333; background: #fff; border-bottom: 1px solid #ccc;">
@@ -169,10 +150,7 @@
     <div style="padding: 0; background: #fff; border-bottom: 1px solid #ccc;">
         <h3 style="font-size: 8pt; margin: 0;">Rate Plan Details</h3>
         <div style="font-size: 6pt; color: #333; line-height: 1.0;">
-            <p><strong>Plan:</strong> {{ $contract->bell_tier ?? 'N/A' }}</p>
-            @if($contract->ratePlan && $contract->ratePlan->tier)
-                <p><strong>Tier:</strong> {{ $contract->ratePlan->tier }} Tier</p>
-            @endif
+            <p><strong>Rate Plan:</strong> {{ $contract->ratePlan?->plan_name ?? 'N/A' }}</p>
             <p><strong>Monthly Rate Plan Charge:</strong> ${{ number_format($contract->rate_plan_price ?? $contract->bell_plan_cost ?? 0, 2) }}</p>
             @if($contract->ratePlan && $contract->ratePlan->features)
                 {!! \App\Helpers\MarkdownHelper::sanitize(Str::markdown($contract->ratePlan->features)) !!}

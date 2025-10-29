@@ -219,9 +219,6 @@
 @endif
 <hr class="border-gray-200">
 
-        @include('contracts.partials._cellular_pricing_display')
-        <hr class="border-gray-200">
-
 		<!-- Return Policy -->
 		@if($contract->bell_pricing_type !== 'byod')
 			<div class="section px-6 py-4 bg-white border-b border-gray-200">
@@ -238,10 +235,7 @@
             <h3 class="text-lg font-semibold text-gray-900">Rate Plan Details</h3>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
                 <div class="bg-gray-50 p-4 rounded-lg">
-                    <p class="text-sm text-gray-700"><span class="font-semibold">Plan:</span> {{ $contract->bell_tier ?? 'N/A' }}</p>
-                    @if($contract->ratePlan && $contract->ratePlan->tier)
-                        <p class="text-sm text-gray-700"><span class="font-semibold">Tier:</span> {{ $contract->ratePlan->tier }} Tier</p>
-                    @endif
+                    <p class="text-sm text-gray-700"><span class="font-semibold">Rate Plan:</span> {{ $contract->ratePlan?->plan_name ?? 'N/A' }}</p>
                 </div>
                 <div class="bg-gray-50 p-4 rounded-lg">
                     <p class="text-sm text-gray-700"><span class="font-semibold">Monthly Rate Plan Charge:</span> ${{ number_format($contract->rate_plan_price ?? $contract->bell_plan_cost ?? 0, 2) }}</p>
