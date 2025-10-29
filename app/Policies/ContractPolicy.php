@@ -21,13 +21,8 @@ class ContractPolicy
      */
     public function view(User $user, Contract $contract): bool
     {
-        // Admins can view any contract
-        if ($user->hasRole('admin')) {
-            return true;
-        }
-
-        // Users can only view contracts they created
-        return $contract->updated_by === $user->id;
+        // All authenticated users can view any contract (team collaboration)
+        return true;
     }
 
     /**
@@ -44,14 +39,9 @@ class ContractPolicy
      */
     public function update(User $user, Contract $contract): bool
     {
-        // Admins can update any contract
-        if ($user->hasRole('admin')) {
-            return true;
-        }
-
-        // Users can only update contracts they created
-        // And only if the contract is not finalized
-        return $contract->updated_by === $user->id && $contract->status !== 'finalized';
+        // All authenticated users can update any draft contract (team collaboration)
+        // But finalized contracts cannot be updated - use revisions instead
+        return $contract->status !== 'finalized';
     }
 
     /**
@@ -59,13 +49,13 @@ class ContractPolicy
      */
     public function delete(User $user, Contract $contract): bool
     {
-        // Only admins can delete contracts
+        // Only admins can delete finalized contracts
         if ($user->hasRole('admin')) {
             return true;
         }
 
-        // Regular users can delete their own draft contracts
-        return $contract->updated_by === $user->id && $contract->status === 'draft';
+        // All users can delete draft contracts (team collaboration)
+        return $contract->status === 'draft';
     }
 
     /**
@@ -73,13 +63,8 @@ class ContractPolicy
      */
     public function sign(User $user, Contract $contract): bool
     {
-        // Admins can sign any contract
-        if ($user->hasRole('admin')) {
-            return true;
-        }
-
-        // Users can sign contracts they created
-        return $contract->updated_by === $user->id;
+        // All authenticated users can sign any contract (team collaboration)
+        return true;
     }
 
     /**
@@ -87,13 +72,8 @@ class ContractPolicy
      */
     public function download(User $user, Contract $contract): bool
     {
-        // Admins can download any contract
-        if ($user->hasRole('admin')) {
-            return true;
-        }
-
-        // Users can download contracts they created
-        return $contract->updated_by === $user->id;
+        // All authenticated users can download any contract (team collaboration)
+        return true;
     }
 
     /**
@@ -101,13 +81,8 @@ class ContractPolicy
      */
     public function finalize(User $user, Contract $contract): bool
     {
-        // Admins can finalize any contract
-        if ($user->hasRole('admin')) {
-            return true;
-        }
-
-        // Users can finalize their own contracts if all signatures are complete
-        return $contract->updated_by === $user->id;
+        // All authenticated users can finalize any contract (team collaboration)
+        return true;
     }
 
     /**
