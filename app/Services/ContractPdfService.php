@@ -30,7 +30,8 @@ class ContractPdfService
             'commitmentPeriod',
             'ratePlan',
             'mobileInternetPlan',
-            'bellDevice'
+            'bellDevice',
+            'locationModel'
         ]);
 
         // Financial calculations

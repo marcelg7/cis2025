@@ -16,7 +16,7 @@
     <div style="clear: both; height: 0;"></div>
 </div>
 <div class="footer">
-    <p style="font-size: 7pt;">Hay Communications | www.hay.net | {{ $contract->location === 'zurich' ? '519-236-4333' : ($contract->location === 'exeter' ? '519-235-1234' : '519-238-5678') }}</p>
+    <p style="font-size: 7pt;">Hay Communications | www.hay.net | {{ $contract->locationModel?->phone ?? '519-238-5678' }}</p>
 </div>
 <div style="margin-top: 10mm; margin-bottom: 10mm; background: #fff; border: 1px solid #ccc; padding: 0;">
     <!-- Your Information Section -->
@@ -139,13 +139,17 @@
     <div style="padding: 0;">
         <h3 style="font-size: 10pt; margin: 0;">Cellular Pricing</h3>
         <div style="font-size: 7pt; color: #333; line-height: 1.0;">
-            <p><strong>Rate Plan</strong></p>
-            <p>{{ $contract->bell_pricing_type === 'dro' ? 'DRO' : strtoupper($contract->bell_pricing_type ?? 'SMARTPAY') }} {{ $contract->bell_tier ?? 'Lite' }}</p>
-            <p>{{ $contract->commitmentPeriod->name ?? '2yr 60GB Lite' }}</p>
-            <p><strong>SOC:</strong> {{ $contract->ratePlan->soc_code ?? 'BRPT00142' }}</p>
-            <p>{{ $contract->ratePlan->data ?? '60GB' }}</p>
-            <p>${{ number_format($contract->rate_plan_price ?? 85.00, 2) }} per month</p>
-            <p><strong>Selected Device Tier:</strong> {{ $contract->bell_tier ?? 'Lite' }}</p>
+            <p><strong>Rate Plan:</strong> {{ $contract->ratePlan?->plan_name ?? 'N/A' }}</p>
+            <p><strong>SOC:</strong> {{ $contract->ratePlan?->soc_code ?? 'N/A' }}</p>
+            <p><strong>Data:</strong> {{ $contract->ratePlan?->data_amount ?? 'N/A' }}</p>
+            @if($contract->ratePlan?->tier)
+                <p><strong>Tier:</strong> {{ $contract->ratePlan->tier }}</p>
+            @endif
+            @if($contract->bell_pricing_type !== 'byod')
+                <p><strong>Pricing Type:</strong> {{ $contract->bell_pricing_type === 'dro' ? 'DRO' : ucfirst($contract->bell_pricing_type ?? 'N/A') }}</p>
+                <p><strong>Selected Device Tier:</strong> {{ $contract->bell_tier ?? 'N/A' }}</p>
+            @endif
+            <p><strong>Monthly Rate Plan Charge:</strong> ${{ number_format($contract->rate_plan_price ?? 0, 2) }}</p>
         </div>
     </div>
     <hr style="margin: 0; border-color: #ccc;">
