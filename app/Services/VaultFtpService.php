@@ -33,18 +33,22 @@ class VaultFtpService
 
             return [
                 'success' => true,
-                'path' => '/test/' . $remotePath,
+                'path' => '/test/Scan/' . $remotePath,
                 'test_mode' => true,
                 'error' => null
             ];
         }
 
         // Production mode - actual FTP upload
+        // Build remote path with Scan folder for NISC Vault integration
+        $remotePathWithFolder = 'Scan/' . $remotePath;
+
         try {
             // Check if local file exists
             if (!Storage::disk('public')->exists($localPath)) {
                 Log::error('Local file not found for FTP upload', [
-                    'local_path' => $localPath
+                    'local_path' => $localPath,
+                    'remote_path' => $remotePathWithFolder
                 ]);
                 return [
                     'success' => false,
@@ -56,28 +60,28 @@ class VaultFtpService
 
             // Get file contents
             $fileContents = Storage::disk('public')->get($localPath);
-            
-            // Upload to vault FTP (directly to root, no subdirectories)
-            $uploaded = Storage::disk('vault_ftp')->put($remotePath, $fileContents);
+
+            // Upload to vault FTP in the Scan folder
+            $uploaded = Storage::disk('vault_ftp')->put($remotePathWithFolder, $fileContents);
 
             if ($uploaded) {
                 Log::info('File uploaded to vault successfully', [
                     'local_path' => $localPath,
-                    'remote_path' => $remotePath
+                    'remote_path' => $remotePathWithFolder
                 ]);
-                
+
                 return [
                     'success' => true,
-                    'path' => $remotePath,
+                    'path' => $remotePathWithFolder,
                     'error' => null,
                     'test_mode' => false
                 ];
             } else {
                 Log::error('FTP upload failed', [
                     'local_path' => $localPath,
-                    'remote_path' => $remotePath
+                    'remote_path' => $remotePathWithFolder
                 ]);
-                
+
                 return [
                     'success' => false,
                     'path' => null,
@@ -88,7 +92,7 @@ class VaultFtpService
         } catch (\Exception $e) {
             Log::error('Exception during FTP upload', [
                 'local_path' => $localPath,
-                'remote_path' => $remotePath,
+                'remote_path' => $remotePathWithFolder,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
