@@ -33,22 +33,20 @@ class VaultFtpService
 
             return [
                 'success' => true,
-                'path' => '/test/Scan/' . $remotePath,
+                'path' => '/test/' . $remotePath,
                 'test_mode' => true,
                 'error' => null
             ];
         }
 
         // Production mode - actual FTP upload
-        // Build remote path with Scan folder for NISC Vault integration
-        $remotePathWithFolder = 'Scan/' . $remotePath;
-
+        // Note: VAULT_FTP_PATH should be set to /Scan/ in .env for NISC Vault integration
         try {
             // Check if local file exists
             if (!Storage::disk('public')->exists($localPath)) {
                 Log::error('Local file not found for FTP upload', [
                     'local_path' => $localPath,
-                    'remote_path' => $remotePathWithFolder
+                    'remote_path' => $remotePath
                 ]);
                 return [
                     'success' => false,
@@ -61,30 +59,18 @@ class VaultFtpService
             // Get file contents
             $fileContents = Storage::disk('public')->get($localPath);
 
-            // Ensure Scan directory exists on FTP server
-            if (!Storage::disk('vault_ftp')->exists('Scan')) {
-                Log::info('Creating Scan directory on FTP server');
-                try {
-                    Storage::disk('vault_ftp')->makeDirectory('Scan');
-                } catch (\Exception $e) {
-                    Log::warning('Could not create Scan directory, it may already exist', [
-                        'error' => $e->getMessage()
-                    ]);
-                }
-            }
-
-            // Upload to vault FTP in the Scan folder
-            $uploaded = Storage::disk('vault_ftp')->put($remotePathWithFolder, $fileContents);
+            // Upload to vault FTP (path configured via VAULT_FTP_PATH in .env)
+            $uploaded = Storage::disk('vault_ftp')->put($remotePath, $fileContents);
 
             if ($uploaded) {
                 Log::info('File uploaded to vault successfully', [
                     'local_path' => $localPath,
-                    'remote_path' => $remotePathWithFolder
+                    'remote_path' => $remotePath
                 ]);
 
                 return [
                     'success' => true,
-                    'path' => $remotePathWithFolder,
+                    'path' => $remotePath,
                     'error' => null,
                     'test_mode' => false
                 ];
@@ -93,28 +79,27 @@ class VaultFtpService
                 $ftpConfig = config('filesystems.disks.vault_ftp');
                 Log::error('FTP upload failed', [
                     'local_path' => $localPath,
-                    'remote_path' => $remotePathWithFolder,
+                    'remote_path' => $remotePath,
                     'ftp_host' => $ftpConfig['host'] ?? 'not set',
                     'ftp_root' => $ftpConfig['root'] ?? 'not set',
-                    'ftp_passive' => $ftpConfig['passive'] ?? 'not set',
-                    'scan_dir_exists' => Storage::disk('vault_ftp')->exists('Scan') ? 'yes' : 'no'
+                    'ftp_passive' => $ftpConfig['passive'] ?? 'not set'
                 ]);
 
                 return [
                     'success' => false,
                     'path' => null,
-                    'error' => 'FTP upload returned false - check FTP permissions and Scan folder access',
+                    'error' => 'FTP upload returned false - check FTP permissions and directory access',
                     'test_mode' => false
                 ];
             }
         } catch (\Exception $e) {
             Log::error('Exception during FTP upload', [
                 'local_path' => $localPath,
-                'remote_path' => $remotePathWithFolder,
+                'remote_path' => $remotePath,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            
+
             return [
                 'success' => false,
                 'path' => null,
