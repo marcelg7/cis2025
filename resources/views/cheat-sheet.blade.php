@@ -42,8 +42,8 @@
 
         <div class="flex gap-6">
             <!-- Sidebar Table of Contents (Desktop) -->
-            <div class="hidden lg:block lg:w-64 flex-shrink-0">
-                <div class="sticky top-4">
+            <aside class="hidden lg:block lg:w-64 flex-shrink-0" style="align-self: flex-start;">
+                <div class="sticky top-4" style="max-height: calc(100vh - 2rem); overflow-y: auto;">
                     <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-4">
                         <h3 class="font-semibold text-gray-900 mb-3 text-sm uppercase tracking-wide">Quick Navigation</h3>
                         <nav id="tocNav" class="space-y-1">
@@ -51,7 +51,7 @@
                         </nav>
                     </div>
                 </div>
-            </div>
+            </aside>
 
             <!-- Main Content -->
             <div class="flex-1 min-w-0">
