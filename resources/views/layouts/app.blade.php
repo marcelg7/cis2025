@@ -205,8 +205,8 @@
     </style>
 </head>
 <body class="font-sans antialiased">
-    <div class="min-h-screen">
-        <nav class="bg-white border-b border-gray-100">
+    <div class="min-h-screen flex flex-col">
+        <nav class="bg-white border-b border-gray-100 flex-shrink-0">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex justify-between h-16">
                     <!-- Logo and Main Navigation -->
@@ -706,12 +706,12 @@
             </div>
         </nav>
 
-        <main class="px-4 py-6 sm:px-6 lg:px-8">
+        <main class="flex-grow px-4 py-6 sm:px-6 lg:px-8">
             @yield('content')
         </main>
 
         <!-- Footer with Version -->
-        <footer class="mt-8 py-4 text-center text-sm text-gray-500 bg-white bg-opacity-90 border-t border-gray-200">
+        <footer class="flex-shrink-0 mt-8 py-4 text-center text-sm text-gray-500 bg-white bg-opacity-90 border-t border-gray-200">
             <div class="max-w-7xl mx-auto px-4">
                 &copy; {{ date('Y') }} {{ config('app.name') }}. All rights reserved.
                 <span class="mx-2">|</span>

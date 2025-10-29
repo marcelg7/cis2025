@@ -10,6 +10,15 @@ A Laravel-based contract management system for cellular service agreements with 
 - **PDF Generation** - Automatic PDF generation with DomPDF and FPDI for merging multiple forms
 - **Contract Finalization** - Complete workflow from draft to finalized with all required signatures
 - **Version Control** - Track contract revisions and changes with activity logging
+- **Contract Revision** - Create revisions of finalized contracts (resets signatures and vault status)
+
+#### Vault Integration
+- **FTP Upload to NISC Vault** - Automatic upload of finalized contracts to NISC iVue Vault
+- **Standardized Filename Format** - `CustomerNumber-AccountNumber-CustomerName-SubscriberName-Phone-Contract-ContractID.pdf`
+- **File Cleanup** - Automatic removal of signature files after vault upload for security
+- **Upload Tracking** - Timeline tracking of vault upload status with error logging
+- **Test Mode** - Configurable test mode for development environments
+- **CSR Access** - CSRs can view uploaded contracts through NISC iVue Service software
 
 ### Customer Integration
 - **NISC Billing System Integration** - Fetch customer data from external billing system API
@@ -112,13 +121,15 @@ GITHUB_OWNER=your_github_username
 GITHUB_REPO=your_repo_name
 GITHUB_TOKEN=your_github_token
 
-# Vault FTP (optional - for contract storage)
+# Vault FTP (NISC iVue Vault integration - REQUIRED for production)
 VAULT_FTP_HOST=your_ftp_host
 VAULT_FTP_USERNAME=your_ftp_user
 VAULT_FTP_PASSWORD=your_ftp_password
 VAULT_FTP_PORT=21
-VAULT_FTP_ROOT=/
-VAULT_FTP_TEST_MODE=true
+VAULT_FTP_PATH=/Scan/           # IMPORTANT: Must be /Scan/ for NISC Vault integration
+VAULT_FTP_PASSIVE=true
+VAULT_FTP_SSL=false
+VAULT_FTP_TEST_MODE=true        # Set to false in production
 ```
 
 ### 4. Database Setup
@@ -359,4 +370,4 @@ For support, contact the Hay Communications IT team.
 
 ## Changelog
 
-View the [Changelog](http://your-domain.com/changelog) for recent updates and changes.
+View the [Changelog](/changelog) for recent updates and changes (accessible when logged into the application).

@@ -97,9 +97,14 @@ The application centers around cellular contracts with these key models:
 
 Located in `app/Services/`:
 
-- **ContractPdfService**: Generates and merges contract PDFs (WCOC compliance forms, financing forms, DRO forms)
-- **VaultFtpService**: Uploads signed contracts to Vault FTP server
-- **ContractFileCleanupService**: Cleans up temporary contract files
+- **ContractPdfService**: Generates and merges contract PDFs (WCOC compliance forms, financing forms, DRO forms, Terms of Service)
+- **VaultFtpService**: Handles FTP uploads to NISC iVue Vault with standardized filename generation
+  - Uploads finalized contracts to `/Scan/` folder (configured via `VAULT_FTP_PATH` in .env)
+  - Generates standardized filenames: `CustomerNumber-AccountNumber-CustomerName-SubscriberName-Phone-Contract-ContractID.pdf`
+  - Example: `50215279-10220876-Marcel_Gelinas-Marcel_Gelinas-519-3177086-Contract-18.pdf`
+  - Supports test mode for development (simulates upload without actual FTP connection)
+  - Tracks upload status in contract fields: `ftp_to_vault`, `ftp_at`, `vault_path`, `ftp_error`
+- **ContractFileCleanupService**: Cleans up temporary contract files (PDFs, signatures) after vault upload for security
 - **ThemeService**: Manages user theme preferences (button/link colors)
 
 ### Controllers
@@ -122,13 +127,26 @@ The app retrieves customer data from the NISC billing system via API:
 - Models: `Customer`, `Subscriber`, `MobilityAccount`, `IvueAccount`
 - API integration handled through controllers (CustomerController, SearchController)
 
-### PDF Generation Workflow
+### PDF Generation and Vault Workflow
 
+**PDF Generation:**
 1. Contract data is rendered into Blade views (`contracts/pdf-view.blade.php`, `contracts/dro.blade.php`, etc.)
 2. DomPDF converts HTML to PDF
-3. FPDI merges multiple PDFs (WCOC form, financing form, DRO form, terms of service)
-4. PDFs stored temporarily in `storage/app/contracts/`
-5. After signing, uploaded to Vault FTP and cleaned up
+3. FPDI merges multiple PDFs:
+   - Main contract (WCOC compliance form)
+   - Financing form (if `requiresFinancing()` is true and status is 'finalized')
+   - DRO form (if `requiresDro()` is true and status is 'finalized')
+   - Terms of Service (active version from database, or legacy hardcoded files as fallback)
+4. Merged PDF stored temporarily in `storage/app/public/contracts/`
+
+**Vault Upload Workflow (on contract finalization):**
+1. Merged PDF is generated with all required forms
+2. VaultFtpService uploads PDF to NISC Vault at `/Scan/` folder via FTP
+3. Filename format: `CustomerNumber-AccountNumber-CustomerName-SubscriberName-Phone-Contract-ContractID.pdf`
+4. Contract fields updated: `ftp_to_vault=true`, `ftp_at=timestamp`, `vault_path=filename`
+5. ContractFileCleanupService queued to clean up temporary files (PDFs, signature images) for security
+6. After cleanup, PDF/Email/Forms buttons hidden (files no longer accessible)
+7. CSRs can view uploaded contracts in NISC iVue Service software
 
 ### Permissions System
 
@@ -186,8 +204,43 @@ Two pricing systems:
 ### Contract Status Flow
 
 Contracts progress through statuses:
-- `draft` → `pending` → `signed` → `completed`
+- `draft` → `pending` → `signed` → `finalized`
 - Status tracked in `contracts.status` column
+- `finalized` contracts can be revised (creates new draft with reset signatures)
+
+### Contract Revision Workflow
+
+When creating a revision of a finalized contract (`ContractController::createRevision()`):
+1. **Replicates the original contract** - All contract data is copied
+2. **Resets status** - New revision starts as `draft`
+3. **Resets main signature** - `signature_path` set to null
+4. **Resets financing form** (if applicable):
+   - `financing_status` = `requiresFinancing() ? 'pending' : 'not_required'`
+   - `financing_signature_path` = null
+   - `financing_csr_initials_path` = null
+   - `financing_signed_at` = null
+   - `financing_csr_initialed_at` = null
+   - `financing_pdf_path` = null
+5. **Resets DRO form** (if applicable):
+   - `dro_status` = `requiresDro() ? 'pending' : 'not_required'`
+   - `dro_signature_path` = null
+   - `dro_csr_initials_path` = null
+   - `dro_signed_at` = null
+   - `dro_csr_initialed_at` = null
+   - `dro_pdf_path` = null
+6. **Resets vault/FTP fields**:
+   - `ftp_to_vault` = false
+   - `ftp_at` = null
+   - `vault_path` = null
+   - `ftp_error` = null
+   - `pdf_path` = null
+7. **Increments revision number** - `revision_number` incremented
+8. **Links to original** - `original_contract_id` set to original contract ID
+
+**Important Notes:**
+- All authenticated users can create revisions of finalized contracts (team collaboration)
+- Revisions require re-signing all forms (amounts may have changed)
+- Revisions reset vault upload status (new contract needs new upload)
 
 ### Signature Workflows
 
@@ -318,13 +371,36 @@ DB_PASSWORD=...
 
 Customer data is retrieved via API calls to the NISC billing system (not stored locally).
 
+### Vault FTP Configuration (.env)
+
+**Critical vault settings for production:**
+```
+VAULT_FTP_HOST=your_ftp_host
+VAULT_FTP_PORT=21
+VAULT_FTP_USERNAME=your_ftp_user
+VAULT_FTP_PASSWORD=your_ftp_password
+VAULT_FTP_PATH=/Scan/              # CRITICAL: Must be /Scan/ for NISC Vault integration
+VAULT_FTP_PASSIVE=true
+VAULT_FTP_SSL=false
+VAULT_FTP_TEST_MODE=false          # false for production, true for development
+```
+
+**Important Notes:**
+- `VAULT_FTP_PATH` must be `/Scan/` in production (NISC requirement for iVue Vault integration)
+- After changing `VAULT_FTP_TEST_MODE`, clear and cache config: `php artisan config:clear && php artisan config:cache`
+- Test mode simulates uploads without actual FTP connection (useful for development)
+- Uploaded contracts can be viewed by CSRs in NISC iVue Service software
+
 ## Important Files to Review
 
 When working on contracts:
-- `app/Http/Controllers/ContractController.php`: Main contract logic
-- `app/Services/ContractPdfService.php`: PDF generation
+- `app/Http/Controllers/ContractController.php`: Main contract logic (CRUD, finalization, revision)
+- `app/Services/ContractPdfService.php`: PDF generation and merging
+- `app/Services/VaultFtpService.php`: FTP upload to NISC Vault with filename generation
+- `app/Models/Contract.php`: Contract model (ensure vault fields in `$fillable` array)
 - `resources/views/contracts/create.blade.php`: Contract creation form
-- `resources/views/contracts/pdf-view.blade.php`: PDF template
+- `resources/views/contracts/pdf-view.blade.php`: PDF template (for merged PDFs)
+- `resources/views/contracts/view.blade.php`: Contract view (HTML, with vault status)
 
 When working on pricing:
 - `app/Console/Commands/ImportBellPricing.php`: Bell pricing import
@@ -339,8 +415,14 @@ When working on permissions:
 ## Common Pitfalls
 
 1. **TinyMCE assets**: Always run `npm run copy-tinymce` when updating TinyMCE or deploying
-2. **Queue worker**: Background jobs won't run without `php artisan queue:listen`
+2. **Queue worker**: Background jobs won't run without `php artisan queue:listen` (needed for file cleanup)
 3. **NISC API connection**: Ensure NISC billing system API credentials and endpoints are correctly configured
-4. **PDF generation**: Requires write permissions on `storage/app/contracts/`
-5. **FTP uploads**: Vault FTP credentials must be configured in `.env`
+4. **PDF generation**: Requires write permissions on `storage/app/public/contracts/`
+5. **Vault FTP configuration**:
+   - `VAULT_FTP_PATH` MUST be set to `/Scan/` in production for NISC Vault integration
+   - `VAULT_FTP_TEST_MODE=false` required for actual uploads
+   - After changing `VAULT_FTP_TEST_MODE`, run `php artisan config:clear` and `php artisan config:cache`
+   - Verify FTP connectivity before finalizing contracts
 6. **Permissions cache**: Clear permission cache after seeding: `php artisan permission:cache-reset`
+7. **Contract model fillable**: Ensure vault fields (`ftp_to_vault`, `ftp_at`, `vault_path`, `ftp_error`) are in `$fillable` array
+8. **Terms of Service**: Ensure active Terms of Service PDF file exists and is uploaded via admin panel
