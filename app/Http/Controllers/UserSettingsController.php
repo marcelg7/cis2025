@@ -34,35 +34,47 @@ class UserSettingsController extends Controller
         $user->show_development_info = $request->has('show_development_info');
 
         // Handle background preferences
-        $user->background_type = $validated['background_type'];
-
         if ($validated['background_type'] === 'color') {
+            $user->background_type = 'color';
             $user->background_value = $request->input('background_color', '#f3f4f6');
-        } elseif ($validated['background_type'] === 'upload' && $request->hasFile('background_image')) {
-            // Validate image dimensions
-            $image = $request->file('background_image');
-            $imageInfo = getimagesize($image->getRealPath());
+        } elseif ($validated['background_type'] === 'upload') {
+            // If selecting upload, must provide a file OR already have one uploaded
+            if ($request->hasFile('background_image')) {
+                // Validate image dimensions
+                $image = $request->file('background_image');
+                $imageInfo = getimagesize($image->getRealPath());
 
-            if ($imageInfo[0] < 1920 || $imageInfo[1] < 1080) {
+                if ($imageInfo[0] < 1920 || $imageInfo[1] < 1080) {
+                    return redirect()->back()
+                        ->withErrors(['background_image' => 'Image must be at least 1920x1080 pixels. Your image is ' . $imageInfo[0] . 'x' . $imageInfo[1] . ' pixels.'])
+                        ->withInput();
+                }
+
+                // Delete old background image if exists
+                if ($user->background_type === 'upload' && $user->background_value) {
+                    \Storage::disk('public')->delete('backgrounds/' . $user->background_value);
+                }
+
+                // Store new image
+                $filename = 'user-' . $user->id . '-' . time() . '.' . $image->getClientOriginalExtension();
+                $image->storeAs('backgrounds', $filename, 'public');
+                $user->background_type = 'upload';
+                $user->background_value = $filename;
+            } elseif ($user->background_type === 'upload' && $user->background_value) {
+                // User already has an uploaded image, keep it
+                // Don't change anything
+            } else {
+                // No file uploaded and no existing file - show error
                 return redirect()->back()
-                    ->withErrors(['background_image' => 'Image must be at least 1920x1080 pixels. Your image is ' . $imageInfo[0] . 'x' . $imageInfo[1] . ' pixels.'])
+                    ->withErrors(['background_image' => 'Please select an image file to upload, or choose a different background option.'])
                     ->withInput();
             }
-
-            // Delete old background image if exists
-            if ($user->background_type === 'upload' && $user->background_value) {
-                \Storage::disk('public')->delete('backgrounds/' . $user->background_value);
-            }
-
-            // Store new image
-            $filename = 'user-' . $user->id . '-' . time() . '.' . $image->getClientOriginalExtension();
-            $image->storeAs('backgrounds', $filename, 'public');
-            $user->background_value = $filename;
         } elseif ($validated['background_type'] === 'default' || $validated['background_type'] === 'random') {
             // Delete old uploaded background if switching away from upload
             if ($user->background_type === 'upload' && $user->background_value) {
                 \Storage::disk('public')->delete('backgrounds/' . $user->background_value);
             }
+            $user->background_type = $validated['background_type'];
             $user->background_value = null;
         }
 
