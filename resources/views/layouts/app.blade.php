@@ -15,8 +15,41 @@
         
         /* Apply theme colors to common elements */
         body {
-            background-color: var(--color-background);
             color: var(--color-text);
+            @auth
+                @php
+                    $user = auth()->user();
+                    $backgroundType = $user->background_type ?? 'default';
+                    $backgroundValue = $user->background_value;
+                @endphp
+                @if($backgroundType === 'color')
+                    background-color: {{ $backgroundValue ?? '#f3f4f6' }};
+                @elseif($backgroundType === 'upload' && $backgroundValue)
+                    background-image: url('{{ asset('storage/backgrounds/' . $backgroundValue) }}');
+                    background-size: cover;
+                    background-position: center;
+                    background-attachment: fixed;
+                    background-repeat: no-repeat;
+                @elseif($backgroundType === 'random')
+                    background-image: url('https://picsum.photos/1920/1080?random={{ date('Ymd') }}');
+                    background-size: cover;
+                    background-position: center;
+                    background-attachment: fixed;
+                    background-repeat: no-repeat;
+                @else
+                    background-image: url('/images/classic-cis-background.jpg');
+                    background-size: cover;
+                    background-position: center;
+                    background-attachment: fixed;
+                    background-repeat: no-repeat;
+                @endif
+            @else
+                background-image: url('/images/classic-cis-background.jpg');
+                background-size: cover;
+                background-position: center;
+                background-attachment: fixed;
+                background-repeat: no-repeat;
+            @endauth
         }
         
         .bg-primary {
@@ -128,10 +161,39 @@
         .pricing-dropdown {
             min-width: 230px !important;
         }
+
+        /* Semi-transparent backgrounds for readability over background images */
+        nav.bg-white {
+            background-color: rgba(255, 255, 255, 0.95) !important;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .page-container,
+        .signature-page-container {
+            background-color: rgba(255, 255, 255, 0.92) !important;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        footer {
+            background-color: rgba(255, 255, 255, 0.95) !important;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        /* Ensure dropdowns stay on top */
+        nav .absolute,
+        [x-show] {
+            z-index: 9999 !important;
+        }
     </style>
 </head>
 <body class="font-sans antialiased">
-    <div class="min-h-screen bg-white">
+    <div class="min-h-screen">
         <nav class="bg-white border-b border-gray-100">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex justify-between h-16">
@@ -631,13 +693,13 @@
                 @endauth
             </div>
         </nav>
-        
-        <main class="px-2 sm:px-0">
+
+        <main class="px-4 py-6 sm:px-6 lg:px-8">
             @yield('content')
         </main>
 
         <!-- Footer with Version -->
-        <footer class="mt-8 py-4 text-center text-sm text-gray-500 border-t border-gray-200">
+        <footer class="mt-8 py-4 text-center text-sm text-gray-500 bg-white bg-opacity-90 border-t border-gray-200">
             <div class="max-w-7xl mx-auto px-4">
                 &copy; {{ date('Y') }} {{ config('app.name') }}. All rights reserved.
                 <span class="mx-2">|</span>
