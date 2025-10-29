@@ -77,16 +77,25 @@ fi
 echo "✓ Config cached"
 echo ""
 
+# Restart PHP-FPM to clear OPcache
+echo "7. Restarting PHP-FPM..."
+sudo systemctl restart php-fpm
+if [ $? -ne 0 ]; then
+    echo "Warning: Failed to restart PHP-FPM (may need sudo access)"
+fi
+echo "✓ PHP-FPM restarted"
+echo ""
+
 # Optional: Install/update Composer dependencies
 # Uncomment if you update composer.json
-# echo "7. Updating Composer dependencies..."
+# echo "8. Updating Composer dependencies..."
 # composer install --no-dev --optimize-autoloader
 # echo "✓ Composer updated"
 # echo ""
 
 # Optional: Build frontend assets
 # Uncomment if you update frontend assets
-# echo "8. Building frontend assets..."
+# echo "9. Building frontend assets..."
 # npm run build
 # echo "✓ Assets built"
 # echo ""
