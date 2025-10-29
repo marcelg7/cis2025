@@ -989,7 +989,7 @@ class ContractController extends Controller
         $originalContract = Contract::with('subscriber.mobilityAccount.ivueAccount.customer')->findOrFail($id);
 
         // Authorization check - prevent IDOR vulnerability
-        $this->authorize('update', $originalContract);
+        $this->authorize('createRevision', $originalContract);
 
         if ($originalContract->status !== 'finalized') {
             return redirect()->route('contracts.view', $id)->with('error', 'Only finalized contracts can have revisions.');

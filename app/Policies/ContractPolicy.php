@@ -109,4 +109,18 @@ class ContractPolicy
         // Users can finalize their own contracts if all signatures are complete
         return $contract->updated_by === $user->id;
     }
+
+    /**
+     * Determine if the user can create a revision of the contract.
+     */
+    public function createRevision(User $user, Contract $contract): bool
+    {
+        // Admins can create revisions of any contract
+        if ($user->hasRole('admin')) {
+            return true;
+        }
+
+        // Users can create revisions of finalized contracts they created
+        return $contract->updated_by === $user->id && $contract->status === 'finalized';
+    }
 }
