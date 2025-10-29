@@ -42,7 +42,7 @@
 
         <div class="flex gap-6" style="overflow: visible;">
             <!-- Sidebar Table of Contents (Desktop) -->
-            <aside class="hidden lg:block lg:w-64 flex-shrink-0" style="align-self: flex-start;">
+            <aside class="hidden lg:block lg:w-64 flex-shrink-0">
                 <div id="stickyNav" style="position: sticky; position: -webkit-sticky; top: 1rem;">
                     <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-4" style="max-height: calc(100vh - 2rem); overflow-y: auto;">
                         <h3 class="font-semibold text-gray-900 mb-3 text-sm uppercase tracking-wide">Quick Navigation</h3>
