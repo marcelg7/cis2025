@@ -110,7 +110,7 @@ Route::middleware(['auth', 'throttle:200,1'])->group(function () {  // CHANGED F
         // Export & Communication
         Route::get('/{contract}/download', [ContractController::class, 'download'])->name('download');
         Route::post('/{contract}/email', [ContractController::class, 'email'])->name('email')->middleware('throttle:50,1');
-        Route::get('/{contract}/ftp', [ContractController::class, 'ftp'])->name('ftp')->middleware('throttle:50,1');
+        Route::post('/{contract}/ftp', [ContractController::class, 'ftp'])->name('ftp')->middleware('throttle:50,1');
         
         // Financing Form
         Route::prefix('{contract}/financing')->name('financing.')->group(function () {

@@ -65,6 +65,10 @@ class Contract extends Model
         'dro_csr_initialed_at',
         'dro_pdf_path',
 		'imei',
+        'ftp_to_vault',
+        'ftp_at',
+        'vault_path',
+        'ftp_error',
     ];
 
     // Add date casting
@@ -74,7 +78,9 @@ class Contract extends Model
         'contract_date' => 'date',
         'first_bill_date' => 'date',
         'financing_signed_at' => 'datetime',
+        'ftp_at' => 'datetime',
         'is_test' => 'boolean',
+        'ftp_to_vault' => 'boolean',
         'device_price' => 'decimal:2',
         'agreement_credit_amount' => 'decimal:2',
         'required_upfront_payment' => 'decimal:2',

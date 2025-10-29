@@ -998,6 +998,30 @@ class ContractController extends Controller
         $revision = $originalContract->replicate();
         $revision->status = 'draft';
         $revision->signature_path = null;
+
+        // Reset financing form fields (amounts may have changed, requires re-signing)
+        $revision->financing_status = null;
+        $revision->financing_signature_path = null;
+        $revision->financing_csr_initials_path = null;
+        $revision->financing_signed_at = null;
+        $revision->financing_csr_initialed_at = null;
+        $revision->financing_pdf_path = null;
+
+        // Reset DRO form fields (amounts may have changed, requires re-signing)
+        $revision->dro_status = null;
+        $revision->dro_signature_path = null;
+        $revision->dro_csr_initials_path = null;
+        $revision->dro_signed_at = null;
+        $revision->dro_csr_initialed_at = null;
+        $revision->dro_pdf_path = null;
+
+        // Reset FTP/Vault fields (new contract needs to be uploaded separately)
+        $revision->ftp_to_vault = false;
+        $revision->ftp_at = null;
+        $revision->vault_path = null;
+        $revision->ftp_error = null;
+        $revision->pdf_path = null;
+
         $revision->save();
       
         foreach ($originalContract->addOns as $addOn) {
