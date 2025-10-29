@@ -186,32 +186,48 @@ class ContractPdfService
         // NEW: Add active Terms of Service from database
         $activeTerms = TermsOfService::getActive();
         if ($activeTerms && Storage::disk('public')->exists($activeTerms->path)) {
+            $termsPdfPath = storage_path('app/public/' . $activeTerms->path);
             Log::info('Adding Terms of Service to merged document', [
                 'contract_id' => $contract->id,
                 'tos_version' => $activeTerms->version,
-                'tos_id' => $activeTerms->id
+                'tos_id' => $activeTerms->id,
+                'tos_path' => $termsPdfPath,
+                'file_exists' => file_exists($termsPdfPath),
+                'file_size' => file_exists($termsPdfPath) ? filesize($termsPdfPath) : 0
             ]);
-            
-            $termsPdfPath = storage_path('app/public/' . $activeTerms->path);
+
             try {
                 $pageCount = $fpdi->setSourceFile($termsPdfPath);
+                Log::info('Terms of Service PDF loaded successfully', [
+                    'contract_id' => $contract->id,
+                    'page_count' => $pageCount
+                ]);
+
                 for ($i = 1; $i <= $pageCount; $i++) {
                     $fpdi->AddPage();
                     $tplIdx = $fpdi->importPage($i);
                     $fpdi->useTemplate($tplIdx);
                 }
+
+                Log::info('Terms of Service pages added to merged PDF', [
+                    'contract_id' => $contract->id,
+                    'pages_added' => $pageCount
+                ]);
             } catch (\Exception $e) {
                 Log::error('Failed to add Terms of Service to merged PDF', [
                     'contract_id' => $contract->id,
                     'tos_id' => $activeTerms->id,
-                    'error' => $e->getMessage()
+                    'tos_path' => $termsPdfPath,
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
                 ]);
             }
         } else {
             Log::warning('No active Terms of Service found or file does not exist', [
                 'contract_id' => $contract->id,
                 'has_active_terms' => !is_null($activeTerms),
-                'path' => $activeTerms->path ?? null
+                'path' => $activeTerms?->path ?? 'null',
+                'storage_path' => $activeTerms ? storage_path('app/public/' . $activeTerms->path) : 'null'
             ]);
         }
 
