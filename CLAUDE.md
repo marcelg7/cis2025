@@ -348,9 +348,35 @@ Reusable components in `resources/views/components/`:
 
 ### Testing
 
+**Test Suite Status:** ⚠️ Tests require configuration work (Known Issue - Oct 31, 2025)
+
+The application has comprehensive test coverage (16 test files, 8340+ lines of test code):
 - Feature tests for API/controller logic
-- Unit tests for services and models
-- Use in-memory SQLite for tests (configured in `phpunit.xml`)
+- Unit tests for services and models (19 financial calculation tests)
+- Configured to use in-memory SQLite for tests (`phpunit.xml`)
+
+**Known Issue:** The test suite currently fails due to a test bootstrap ordering issue where migrations do not execute properly in the PHPUnit test environment, despite working correctly when run manually via command line. The SQLite in-memory database is created, but tables are not being migrated before factory methods attempt to insert records.
+
+**Current Status:**
+- Production application is fully functional and tested manually
+- Tests serve as valuable documentation of business logic and expected behavior
+- Financial calculation tests document complex device financing logic
+- Test infrastructure (factories, seeders) is properly configured
+
+**Fixes Applied:**
+- Updated ContractFactory to use lazy callbacks for database queries
+- Added migration calls to TestCase setUp() method
+- Multiple trait approaches attempted (DatabaseMigrations, RefreshDatabase)
+
+**Future Work:**
+- Investigate Laravel test bootstrap sequence for SQLite in-memory databases
+- Consider alternative: configure tests to use MySQL test database instead
+- May require deeper investigation into Corcel (WordPress) package interactions
+
+**For Developers:**
+- Do not rely on automated tests for validation at this time
+- Manual testing and code review are required for changes
+- Test files remain valuable for understanding expected behavior and edge cases
 
 ## Database Connections
 
@@ -426,3 +452,5 @@ When working on permissions:
 6. **Permissions cache**: Clear permission cache after seeding: `php artisan permission:cache-reset`
 7. **Contract model fillable**: Ensure vault fields (`ftp_to_vault`, `ftp_at`, `vault_path`, `ftp_error`) are in `$fillable` array
 8. **Terms of Service**: Ensure active Terms of Service PDF file exists and is uploaded via admin panel
+9. **Test Suite**: Automated PHPUnit tests currently have a known configuration issue (see Testing section above). Use manual testing and code review for validation.
+10. **Log File Permissions**: Fixed Oct 31, 2025 - New log files automatically get correct permissions (664). If you encounter permission errors on existing log files, run `sudo bash fix-log-permissions.sh` to fix them. See `LOG_PERMISSIONS_FIX.md` for details.

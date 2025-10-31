@@ -63,6 +63,7 @@ return [
             'path' => storage_path('logs/laravel.log'),
             'level' => env('LOG_LEVEL', 'debug'),
             'replace_placeholders' => true,
+            'permission' => 0664, // Set file permissions to allow group write
         ],
 
         'daily' => [
@@ -71,6 +72,7 @@ return [
             'level' => env('LOG_LEVEL', 'debug'),
             'days' => env('LOG_DAILY_DAYS', 14),
             'replace_placeholders' => true,
+            'permission' => 0664, // Set file permissions to allow group write
         ],
 
         'security' => [
@@ -79,6 +81,7 @@ return [
             'level' => env('LOG_LEVEL', 'debug'),
             'days' => 90, // Keep security logs for 90 days
             'replace_placeholders' => true,
+            'permission' => 0664, // Set file permissions to allow group write
         ],
 
         'slack' => [
@@ -133,6 +136,7 @@ return [
 
         'emergency' => [
             'path' => storage_path('logs/laravel.log'),
+            'permission' => 0664, // Set file permissions to allow group write
         ],
 
     ],
