@@ -11,11 +11,15 @@ class BellDeviceController extends Controller
 public function compatible(Request $request)
     {
         $tier = $request->tier;
-        $compatibleIds = BellDevice::whereHas('currentPricing', function ($q) use ($tier) {
-            $q->where('tier', $tier);
-        })->orWhereHas('currentDroPricing', function ($q) use ($tier) {
-            $q->where('tier', $tier);
-        })->pluck('id')->unique()->toArray();
+        $compatibleIds = BellDevice::where('is_active', true)
+            ->where(function ($query) use ($tier) {
+                $query->whereHas('currentPricing', function ($q) use ($tier) {
+                    $q->where('tier', $tier);
+                })->orWhereHas('currentDroPricing', function ($q) use ($tier) {
+                    $q->where('tier', $tier);
+                });
+            })
+            ->pluck('id')->unique()->toArray();
 
         return response()->json($compatibleIds);
     }

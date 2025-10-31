@@ -86,7 +86,8 @@
         <div style="padding: 0;">
             <h3 style="font-size: 10pt; margin: 0;">Device Details</h3>
             @php
-                $deviceDisplayName = $contract->bell_device_id && $contract->bellDevice ? $contract->bellDevice->name : 'N/A';
+                // Use stored device_name instead of relationship to preserve historical data
+                $deviceDisplayName = $contract->device_name ?? $contract->custom_device_name ?? 'N/A';
             @endphp
             <div style="font-size: 7pt; color: #333; line-height: 1.0;">
                 <div style="float: left; width: 48%; margin-right: 2%;">

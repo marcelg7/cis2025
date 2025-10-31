@@ -30,6 +30,7 @@ class Contract extends Model
         'first_bill_date',
         'status',
         'bell_device_id',
+        'device_name',
         'bell_pricing_type',
         'bell_tier',
         'bell_retail_price',

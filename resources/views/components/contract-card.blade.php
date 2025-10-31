@@ -33,9 +33,9 @@
             <p><span class="font-medium">First Bill Date:</span> {{ $contract->first_bill_date->format('M d, Y') }}</p>
             <p><span class="font-medium">Location:</span> {{ $contract->locationModel?->name ?? 'N/A' }}</p>
             <p><span class="font-medium">Plan:</span> {{ $contract->bell_tier ?? 'N/A' }} Tier</p>
-            @if ($contract->bell_device_id && $contract->bellDevice)
+            @if ($contract->device_name)
                 <p class="mt-1">
-                    <span class="font-medium">Device:</span> {{ $contract->bellDevice->name ?? 'N/A' }}
+                    <span class="font-medium">Device:</span> {{ $contract->device_name }}
                 </p>
             @endif
         </div>

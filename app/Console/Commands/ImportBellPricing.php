@@ -76,6 +76,24 @@ class ImportBellPricing extends Command
             $droSheet = $spreadsheet->getSheetByName('DRO - SMARTPAY');
             $droCount = $this->importDro($droSheet, $effectiveDate, $replace);
 
+            // Mark devices not in this import as inactive
+            $allDeviceNames = array_unique(array_merge(
+                $this->getDeviceNamesFromSheet($smartPaySheet),
+                $smartPayBasicSheet ? $this->getDeviceNamesFromSheet($smartPayBasicSheet) : [],
+                $this->getDeviceNamesFromSheet($droSheet)
+            ));
+
+            $this->info('Found ' . count($allDeviceNames) . ' unique devices in spreadsheet');
+
+            // Mark devices NOT in the import as inactive
+            $deactivatedCount = BellDevice::whereNotIn('name', $allDeviceNames)
+                ->where('is_active', true)
+                ->update(['is_active' => false]);
+
+            if ($deactivatedCount > 0) {
+                $this->info("Marked {$deactivatedCount} devices as inactive (removed from spreadsheet)");
+            }
+
             DB::commit();
 
             $this->info("Import completed successfully!");
@@ -315,15 +333,33 @@ class ImportBellPricing extends Command
 		if (is_null($value) || $value === '') {
 			return 0.00;
 		}
-		
+
 		// Remove dollar signs, commas, and other non-numeric characters except decimal point
 		$cleanValue = preg_replace('/[^0-9.]/', '', $value);
-		
+
 		// If empty after cleaning, return 0
 		if ($cleanValue === '') {
 			return 0.00;
 		}
-		
+
 		return (float) $cleanValue;
+	}
+
+	private function getDeviceNamesFromSheet($sheet): array
+	{
+		$rows = $sheet->toArray();
+		$deviceNames = [];
+
+		// Start from row 5 for SmartPay sheets (same logic as import)
+		for ($rowIndex = 5; $rowIndex < count($rows); $rowIndex++) {
+			$row = $rows[$rowIndex];
+
+			// Skip if device name is empty
+			if (!empty($row[0])) {
+				$deviceNames[] = trim($row[0]);
+			}
+		}
+
+		return $deviceNames;
 	}
 }

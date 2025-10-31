@@ -66,7 +66,7 @@ class ContractController extends Controller
 		$users = User::orderBy('name')->get();
 		$activityTypes = ActivityType::orderBy('name')->get();
 		$commitmentPeriods = CommitmentPeriod::orderBy('name')->get();
-		$bellDevices = BellDevice::orderBy('model')->get();
+		$bellDevices = BellDevice::where('is_active', true)->orderBy('model')->get();
 		$locations = Location::active()->orderBy('name')->get();
 		
 		$ratePlans = RatePlan::current()->active()->orderBy('plan_type')->orderBy('tier')->orderBy('base_price')->get();
@@ -190,7 +190,16 @@ class ContractController extends Controller
                 $price = 0;
             }
         }
-        
+
+        // Get device name if bell_device_id is provided
+        $deviceName = null;
+        if ($request->filled('bell_device_id')) {
+            $bellDevice = \App\Models\BellDevice::find($request->bell_device_id);
+            if ($bellDevice) {
+                $deviceName = $bellDevice->name;
+            }
+        }
+
         $contract = Contract::create([
             'subscriber_id' => $subscriberId,
             'start_date' => $request->start_date,
@@ -201,6 +210,7 @@ class ContractController extends Controller
             'location_id' => $request->location_id,
             'customer_phone' => $request->customer_phone,
             'bell_device_id' => $request->bell_device_id,
+            'device_name' => $deviceName,
             'bell_pricing_type' => $request->bell_pricing_type,
             'bell_tier' => $request->bell_tier,
             'bell_retail_price' => $request->bell_retail_price,
@@ -378,7 +388,7 @@ class ContractController extends Controller
 		$users = User::orderBy('name')->get();
 		$activityTypes = ActivityType::orderBy('name')->get();
 		$commitmentPeriods = CommitmentPeriod::orderBy('name')->get();
-		$bellDevices = BellDevice::orderBy('model')->get();
+		$bellDevices = BellDevice::where('is_active', true)->orderBy('model')->get();
 		$locations = Location::active()->orderBy('name')->get();
 
 		$ratePlans = RatePlan::current()->active()->orderBy('plan_type')->orderBy('tier')->orderBy('base_price')->get();
@@ -500,6 +510,15 @@ class ContractController extends Controller
 			}
 		}
 
+		// Get device name if bell_device_id is provided
+		$deviceName = null;
+		if ($request->filled('bell_device_id')) {
+			$bellDevice = \App\Models\BellDevice::find($request->bell_device_id);
+			if ($bellDevice) {
+				$deviceName = $bellDevice->name;
+			}
+		}
+
 		$contract->update([
 			'start_date' => $request->start_date,
 			'end_date' => $request->end_date,
@@ -509,6 +528,7 @@ class ContractController extends Controller
 			'location_id' => $request->location_id,
 			'customer_phone' => $request->customer_phone,
 			'bell_device_id' => $request->bell_device_id,
+			'device_name' => $deviceName,
 			'bell_pricing_type' => $request->bell_pricing_type,
 			'bell_tier' => $request->bell_tier,
 			'bell_retail_price' => $request->bell_retail_price,

@@ -159,7 +159,8 @@
     <div class="section px-6 py-4 bg-white border-b border-gray-200">
         <h3 class="text-lg font-semibold text-gray-900">Device Details</h3>
         @php
-            $deviceDisplayName = $contract->bell_device_id && $contract->bellDevice ? $contract->bellDevice->name : 'N/A';
+            // Use stored device_name instead of relationship to preserve historical data
+            $deviceDisplayName = $contract->device_name ?? $contract->custom_device_name ?? 'N/A';
         @endphp
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
             <!-- LEFT COLUMN: Device & Pricing Info -->
