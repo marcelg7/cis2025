@@ -44,6 +44,13 @@ class ImportBellPricing extends Command
 
             $spreadsheet = IOFactory::load($filePath);
 
+            // List available sheets for debugging
+            $sheetNames = [];
+            foreach ($spreadsheet->getAllSheets() as $sheet) {
+                $sheetNames[] = $sheet->getTitle();
+            }
+            $this->info('Available sheets in file: ' . implode(', ', $sheetNames));
+
             // Import SmartPay pricing (Ultra, Max, Select, Lite)
             $this->info('Importing SmartPay pricing (Ultra/Max/Select/Lite)...');
             $smartPaySheet = $spreadsheet->getSheetByName('SMART PAY');
@@ -51,12 +58,17 @@ class ImportBellPricing extends Command
 
             // Import SmartPay Basic pricing
             $smartPayBasicCount = 0;
-            try {
-                $this->info('Importing SmartPay Basic pricing...');
-                $smartPayBasicSheet = $spreadsheet->getSheetByName('SmartPay Basic');
-                $smartPayBasicCount = $this->importSmartPay($smartPayBasicSheet, $effectiveDate, $replace);
-            } catch (\Exception $e) {
-                $this->warn('SmartPay Basic sheet not found or error importing: ' . $e->getMessage());
+            $smartPayBasicSheet = $spreadsheet->getSheetByName('SmartPay Basic');
+
+            if ($smartPayBasicSheet !== null) {
+                try {
+                    $this->info('Importing SmartPay Basic pricing...');
+                    $smartPayBasicCount = $this->importSmartPay($smartPayBasicSheet, $effectiveDate, $replace);
+                } catch (\Exception $e) {
+                    $this->warn('Error importing SmartPay Basic: ' . $e->getMessage());
+                }
+            } else {
+                $this->warn('SmartPay Basic sheet not found in spreadsheet - skipping');
             }
 
             // Import DRO pricing
