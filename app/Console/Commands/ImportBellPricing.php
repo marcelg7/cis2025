@@ -43,12 +43,22 @@ class ImportBellPricing extends Command
             DB::beginTransaction();
 
             $spreadsheet = IOFactory::load($filePath);
-            
-            // Import SmartPay pricing
-            $this->info('Importing SmartPay pricing...');
+
+            // Import SmartPay pricing (Ultra, Max, Select, Lite)
+            $this->info('Importing SmartPay pricing (Ultra/Max/Select/Lite)...');
             $smartPaySheet = $spreadsheet->getSheetByName('SMART PAY');
             $smartPayCount = $this->importSmartPay($smartPaySheet, $effectiveDate, $replace);
-            
+
+            // Import SmartPay Basic pricing
+            $smartPayBasicCount = 0;
+            try {
+                $this->info('Importing SmartPay Basic pricing...');
+                $smartPayBasicSheet = $spreadsheet->getSheetByName('SmartPay Basic');
+                $smartPayBasicCount = $this->importSmartPay($smartPayBasicSheet, $effectiveDate, $replace);
+            } catch (\Exception $e) {
+                $this->warn('SmartPay Basic sheet not found or error importing: ' . $e->getMessage());
+            }
+
             // Import DRO pricing
             $this->info('Importing DRO pricing...');
             $droSheet = $spreadsheet->getSheetByName('DRO - SMARTPAY');
@@ -57,7 +67,8 @@ class ImportBellPricing extends Command
             DB::commit();
 
             $this->info("Import completed successfully!");
-            $this->info("SmartPay records: {$smartPayCount}");
+            $this->info("SmartPay records (Ultra/Max/Select/Lite): {$smartPayCount}");
+            $this->info("SmartPay Basic records: {$smartPayBasicCount}");
             $this->info("DRO records: {$droCount}");
 
             return 0;
@@ -108,7 +119,7 @@ class ImportBellPricing extends Command
 
 			// Validate tier is one of the expected values
 			$tier = trim($row[4]);
-			if (!in_array($tier, ['Ultra', 'Max', 'Select', 'Lite'])) {
+			if (!in_array($tier, ['Ultra', 'Max', 'Select', 'Lite', 'Basic'])) {
 				if ($rowIndex < 10) {
 					$this->warn("Row {$rowIndex}: Invalid tier '{$tier}' for device '{$row[0]}' - skipping");
 				}
@@ -205,7 +216,7 @@ class ImportBellPricing extends Command
 
 			// Validate tier is one of the expected values
 			$tier = trim($row[5]);
-			if (!in_array($tier, ['Ultra', 'Max', 'Select', 'Lite'])) {
+			if (!in_array($tier, ['Ultra', 'Max', 'Select', 'Lite', 'Basic'])) {
 				if ($rowIndex < 10) {
 					$this->warn("Row {$rowIndex}: Invalid tier '{$tier}' for device '{$row[0]}' - skipping");
 				}
