@@ -85,6 +85,14 @@ class CustomerController extends Controller
             $zipCode = $data['address']['zipCode'] ?? null;
             $zip4 = $data['address']['zip4'] ?? null;
 
+            Log::info('Postal code processing', [
+                'customer' => $customerNumber,
+                'original_zipCode' => $zipCode,
+                'original_zip4' => $zip4,
+                'zip4_trimmed' => trim($zip4 ?? ''),
+                'zip4_empty_check' => empty(trim($zip4 ?? ''))
+            ]);
+
             // Combine zipCode and zip4 if zip4 exists and is not empty/whitespace
             // Note: "0" is a VALID character in postal codes, so we don't exclude it
             if ($zipCode && !empty(trim($zip4))) {
@@ -93,14 +101,22 @@ class CustomerController extends Controller
                     // Canadian postal code: format as "A1A 1A1"
                     // Combine zipCode and zip4, then add space after 3rd character
                     $fullPostal = $zipCode . $zip4;
+                    Log::info('Formatting Canadian postal code', [
+                        'fullPostal' => $fullPostal,
+                        'length' => strlen($fullPostal)
+                    ]);
                     if (strlen($fullPostal) >= 6) {
                         $zipCode = substr($fullPostal, 0, 3) . ' ' . substr($fullPostal, 3, 3);
+                        Log::info('Formatted Canadian postal code', ['result' => $zipCode]);
                     }
                 } else {
                     // US ZIP code: format as "12345-6789"
                     $zipCode .= '-' . $zip4;
+                    Log::info('Formatted US ZIP code', ['result' => $zipCode]);
                 }
             }
+
+            Log::info('Final postal code to save', ['zipCode' => $zipCode]);
 
             $customer = Customer::updateOrCreate(
                 ['ivue_customer_number' => $data['customer']],
