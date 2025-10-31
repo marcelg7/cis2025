@@ -4,7 +4,11 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use App\Models\Setting;
+use App\Models\Customer;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\RequestException;
 
 class AdminController extends Controller
 {
@@ -19,11 +23,13 @@ class AdminController extends Controller
         $testContractsCount = DB::table('contracts')->where('is_test', 1)->count();
         $testSubscribersCount = DB::table('subscribers')->where('is_test', 1)->count();
         $testCustomersCount = DB::table('customers')->where('is_test', 1)->count();
-        
+        $totalCustomersCount = DB::table('customers')->count();
+
         return view('admin.index', compact(
             'testContractsCount',
             'testSubscribersCount',
             'testCustomersCount',
+            'totalCustomersCount',
         ));
     }
 
@@ -85,11 +91,132 @@ class AdminController extends Controller
     public function seedTestData(Request $request)
     {
         $exitCode = Artisan::call('db:seed');
-        
+
         if ($exitCode === 0) {
             return redirect()->route('admin.index')->with('success', 'Test data seeded successfully.');
         }
-        
+
         return redirect()->route('admin.index')->with('error', 'Failed to seed test data.');
+    }
+
+    public function refetchAllCustomers(Request $request)
+    {
+        set_time_limit(300); // 5 minutes max
+
+        $customers = Customer::all();
+        $successCount = 0;
+        $errorCount = 0;
+        $errors = [];
+
+        Log::info('Starting bulk customer refetch', ['total_customers' => $customers->count()]);
+
+        $client = new Client([
+            'timeout' => 30,
+            'connect_timeout' => 10,
+            'debug' => false,
+            'verify' => true,
+            'http_errors' => true,
+            'force_ip_resolve' => 'v4',
+        ]);
+
+        foreach ($customers as $customer) {
+            try {
+                $customerNumber = $customer->ivue_customer_number;
+
+                // Fetch basic customer summary
+                $response = $client->get(config('services.customer_api.url') . $customerNumber, [
+                    'headers' => ['Authorization' => 'Basic ' . config('services.customer_api.token')]
+                ]);
+
+                $data = json_decode($response->getBody(), true);
+
+                // Fetch detailed customer information
+                $detailResponse = $client->get('https://hay.cloud.coop/services/secured/customerInformation/customer?customerId=' . $customerNumber, [
+                    'headers' => ['Authorization' => 'Basic ' . config('services.customer_api.token')]
+                ]);
+
+                $detailData = json_decode($detailResponse->getBody(), true);
+
+                if (empty($data) || !isset($data['customer'])) {
+                    $errorCount++;
+                    $errors[] = "Customer {$customerNumber}: No data returned from API";
+                    continue;
+                }
+
+                // Process postal code (same logic as CustomerController)
+                $zipCode = $data['address']['zipCode'] ?? null;
+                $zip4 = $data['address']['zip4'] ?? null;
+
+                if ($zipCode && strlen(trim($zip4 ?? '')) > 0) {
+                    if (preg_match('/[A-Za-z]/', $zipCode)) {
+                        // Canadian postal code
+                        $fullPostal = $zipCode . $zip4;
+                        if (strlen($fullPostal) >= 6) {
+                            $zipCode = substr($fullPostal, 0, 3) . ' ' . substr($fullPostal, 3, 3);
+                        }
+                    } else {
+                        // US ZIP code
+                        $zipCode .= '-' . $zip4;
+                    }
+                }
+
+                // Update customer
+                $customer->update([
+                    'first_name' => $data['firstName'] ?? 'Unknown',
+                    'last_name' => $data['lastName'] ?? 'Customer',
+                    'email' => $data['users'][0] ?? null,
+                    'address' => $data['address']['lineOne'] . ($data['address']['lineTwo'] ? ' ' . $data['address']['lineTwo'] : ''),
+                    'city' => $data['address']['city'] ?? null,
+                    'state' => $data['address']['state'] ?? null,
+                    'zip_code' => $zipCode,
+                    'display_name' => $data['displayName'] ?? ($data['firstName'] . ' ' . $data['lastName']),
+                    'is_individual' => $data['isIndividual'] ?? true,
+                    'customer_json' => json_encode($data),
+                    'contact_methods' => $detailData['contactMethods'] ?? null,
+                    'additional_contacts' => $detailData['additionalContacts'] ?? null,
+                    'last_fetched_at' => now(),
+                ]);
+
+                $successCount++;
+
+                // Small delay to avoid overwhelming the API (100ms between requests)
+                usleep(100000);
+
+            } catch (RequestException $e) {
+                $errorCount++;
+                $statusCode = $e->hasResponse() ? $e->getResponse()->getStatusCode() : 'N/A';
+                $errors[] = "Customer {$customer->ivue_customer_number}: API error (HTTP {$statusCode})";
+                Log::error('Bulk refetch API error', [
+                    'customer' => $customer->ivue_customer_number,
+                    'error' => $e->getMessage()
+                ]);
+            } catch (\Exception $e) {
+                $errorCount++;
+                $errors[] = "Customer {$customer->ivue_customer_number}: {$e->getMessage()}";
+                Log::error('Bulk refetch error', [
+                    'customer' => $customer->ivue_customer_number,
+                    'error' => $e->getMessage()
+                ]);
+            }
+        }
+
+        Log::info('Bulk customer refetch completed', [
+            'success' => $successCount,
+            'errors' => $errorCount
+        ]);
+
+        $message = "Refetch completed: {$successCount} succeeded, {$errorCount} failed.";
+
+        if ($errorCount > 0 && count($errors) <= 10) {
+            $message .= " Errors: " . implode('; ', $errors);
+        } elseif ($errorCount > 10) {
+            $message .= " (First 10 errors: " . implode('; ', array_slice($errors, 0, 10)) . ")";
+        }
+
+        if ($errorCount > 0) {
+            return redirect()->route('admin.index')->with('warning', $message);
+        }
+
+        return redirect()->route('admin.index')->with('success', $message);
     }
 }

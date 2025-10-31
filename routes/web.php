@@ -304,6 +304,7 @@ Route::middleware(['auth', 'throttle:200,1'])->group(function () {  // CHANGED F
             Route::get('/', [AdminController::class, 'index'])->name('index');
             Route::post('/clear-test-data', [AdminController::class, 'clearTestData'])->name('clear-test-data');
             Route::post('/seed-test-data', [AdminController::class, 'seedTestData'])->name('seed-test-data');
+            Route::post('/refetch-all-customers', [AdminController::class, 'refetchAllCustomers'])->name('refetch-all-customers');
             Route::get('/settings', [SettingsController::class, 'edit'])->name('settings');
             Route::post('/settings', [SettingsController::class, 'update']);
 
