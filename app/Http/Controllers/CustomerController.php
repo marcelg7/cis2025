@@ -85,7 +85,9 @@ class CustomerController extends Controller
             $zipCode = $data['address']['zipCode'] ?? null;
             $zip4 = $data['address']['zip4'] ?? null;
 
-            if ($zipCode && !empty($zip4) && $zip4 !== '0') {
+            // Combine zipCode and zip4 if zip4 exists and is not empty/whitespace
+            // Note: "0" is a VALID character in postal codes, so we don't exclude it
+            if ($zipCode && !empty(trim($zip4))) {
                 // Check if it's a Canadian postal code (contains letters)
                 if (preg_match('/[A-Za-z]/', $zipCode)) {
                     // Canadian postal code: format as "A1A 1A1"
