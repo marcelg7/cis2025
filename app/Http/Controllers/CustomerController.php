@@ -90,12 +90,13 @@ class CustomerController extends Controller
                 'original_zipCode' => $zipCode,
                 'original_zip4' => $zip4,
                 'zip4_trimmed' => trim($zip4 ?? ''),
-                'zip4_empty_check' => empty(trim($zip4 ?? ''))
+                'zip4_length' => strlen(trim($zip4 ?? ''))
             ]);
 
             // Combine zipCode and zip4 if zip4 exists and is not empty/whitespace
             // Note: "0" is a VALID character in postal codes, so we don't exclude it
-            if ($zipCode && !empty(trim($zip4))) {
+            // IMPORTANT: Use strlen() instead of empty() because empty("0") returns true in PHP!
+            if ($zipCode && strlen(trim($zip4 ?? '')) > 0) {
                 // Check if it's a Canadian postal code (contains letters)
                 if (preg_match('/[A-Za-z]/', $zipCode)) {
                     // Canadian postal code: format as "A1A 1A1"
