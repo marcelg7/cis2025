@@ -58,7 +58,7 @@ class ImportBellPricing extends Command
 
             // Import SmartPay Basic pricing
             $smartPayBasicCount = 0;
-            $smartPayBasicSheet = $spreadsheet->getSheetByName('SmartPay Basic');
+            $smartPayBasicSheet = $spreadsheet->getSheetByName('SMART PAY BASIC');
 
             if ($smartPayBasicSheet !== null) {
                 try {
@@ -68,7 +68,7 @@ class ImportBellPricing extends Command
                     $this->warn('Error importing SmartPay Basic: ' . $e->getMessage());
                 }
             } else {
-                $this->warn('SmartPay Basic sheet not found in spreadsheet - skipping');
+                $this->warn('SMART PAY BASIC sheet not found in spreadsheet - skipping');
             }
 
             // Import DRO pricing
