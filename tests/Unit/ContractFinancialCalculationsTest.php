@@ -3,13 +3,10 @@
 namespace Tests\Unit;
 
 use App\Models\Contract;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class ContractFinancialCalculationsTest extends TestCase
 {
-    use RefreshDatabase;
-
     protected function setUp(): void
     {
         parent::setUp();
