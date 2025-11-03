@@ -1,16 +1,19 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" x-data="calculatorApp()">
+<div class="py-12">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6" x-data="calculatorApp()">
     <!-- Header -->
-    <div class="mb-6 flex justify-between items-center">
-        <div>
-            <h1 class="text-3xl font-bold text-gray-900">Contract Calculator & Comparison Tool</h1>
-            <p class="mt-2 text-sm text-gray-600">Compare up to 4 rate plans side-by-side with device and add-on costs</p>
-        </div>
-        <div class="flex space-x-3">
-            <!-- Saved Comparisons Dropdown -->
-            <div x-show="savedComparisons.length > 0" class="relative">
+    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+        <div class="p-6">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">Contract Calculator & Comparison Tool</h1>
+                    <p class="mt-2 text-sm text-gray-600">Compare up to 4 rate plans side-by-side with device and add-on costs</p>
+                </div>
+                <div class="flex space-x-3">
+                    <!-- Saved Comparisons Dropdown -->
+                    <div x-show="savedComparisons.length > 0" class="relative">
                 <button @click="showSaved = !showSaved" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50">
                     <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
@@ -33,13 +36,14 @@
                             </div>
                         </div>
                     </template>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Configuration Panel -->
-    <div class="bg-white border border-gray-200 rounded-lg p-6 mb-6">
+    <div class="bg-white border border-gray-200 rounded-lg p-6">
         <h3 class="text-lg font-semibold text-gray-900 mb-4">Configuration</h3>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -108,7 +112,7 @@
     </div>
 
     <!-- Plan Selection -->
-    <div class="bg-white border border-gray-200 rounded-lg p-6 mb-6">
+    <div class="bg-white border border-gray-200 rounded-lg p-6">
         <h3 class="text-lg font-semibold text-gray-900 mb-4">Select Rate Plans to Compare (1-4 plans)</h3>
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -264,6 +268,7 @@
             </button>
         </div>
     </div>
+</div>
 </div>
 
 <script>
