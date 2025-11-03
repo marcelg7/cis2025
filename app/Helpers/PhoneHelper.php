@@ -22,11 +22,10 @@ class PhoneHelper
             ];
         }
 
-        // Extract number and name
-        if (preg_match('/^(\d+)(.*)$/', $contactInfo, $matches)) {
-            $number = $matches[1];
-            $name = trim($matches[2]);
-        } else {
+        // Extract all digits from the string (strips dashes, spaces, parentheses, etc.)
+        $allDigits = preg_replace('/\D/', '', $contactInfo);
+
+        if (empty($allDigits)) {
             // If no digits found, return as-is
             return [
                 'formatted' => $contactInfo,
@@ -34,6 +33,21 @@ class PhoneHelper
                 'name' => '',
                 'display' => $contactInfo
             ];
+        }
+
+        // Extract any text that comes AFTER the phone number
+        // Pattern: phone number chars (digits, dashes, spaces, parens) followed by text
+        $name = '';
+        if (preg_match('/^[\d\s\-\(\)\.]+(.*)$/', $contactInfo, $matches)) {
+            $name = trim($matches[1]);
+        }
+
+        // For 10-digit numbers, use the full number
+        // For longer numbers (like "15196306098"), use the last 10 digits
+        // This handles cases where country code is included
+        $number = $allDigits;
+        if (strlen($allDigits) > 10) {
+            $number = substr($allDigits, -10);
         }
 
         // Format 10-digit North American numbers as xxx-xxx-xxxx
