@@ -225,6 +225,11 @@ Route::middleware(['auth', 'throttle:200,1', 'ensure.active.csr'])->group(functi
         Route::get('/contract-summary', [ReportController::class, 'contractSummary'])->name('contract-summary');
         Route::get('/device-sales', [ReportController::class, 'deviceSales'])->name('device-sales');
         Route::get('/plan-adoption', [ReportController::class, 'planAdoption'])->name('plan-adoption');
+
+        // Admin-only: CSR Usage Report
+        Route::get('/usage', [App\Http\Controllers\UsageReportController::class, 'index'])
+            ->name('usage')
+            ->middleware('admin');
     });
 
     /*

@@ -69,6 +69,27 @@
                 </a>
             </div>
         </div>
+
+        <!-- CSR Usage Report (Admin Only) -->
+        @can('admin-access')
+        <div class="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+            <div class="p-6">
+                <div class="flex items-center mb-4">
+                    <svg class="h-8 w-8 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <h2 class="ml-3 text-xl font-semibold text-gray-900">CSR Usage</h2>
+                </div>
+                <p class="text-gray-600 mb-4">Track CSR login activity, session duration, and system usage statistics.</p>
+                <a href="{{ route('reports.usage') }}" class="inline-flex items-center px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 transition-colors">
+                    View Report
+                    <svg class="ml-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                </a>
+            </div>
+        </div>
+        @endcan
         </div>
 
         <!-- Info Box -->

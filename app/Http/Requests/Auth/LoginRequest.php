@@ -63,6 +63,15 @@ class LoginRequest extends FormRequest
             $this->input('email'),
             $this->ip()
         );
+
+        // Track user session for usage reporting
+        \App\Models\UserSession::create([
+            'user_id' => Auth::id(),
+            'session_id' => session()->getId(),
+            'ip_address' => $this->ip(),
+            'user_agent' => $this->userAgent(),
+            'login_at' => now(),
+        ]);
     }
 
     /**

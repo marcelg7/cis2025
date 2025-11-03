@@ -36,6 +36,16 @@ class AuthenticatedSessionController extends Controller
      */
     public function destroy(Request $request): RedirectResponse
     {
+        // End user session tracking before logout
+        $sessionId = $request->session()->getId();
+        $userSession = \App\Models\UserSession::where('session_id', $sessionId)
+            ->whereNull('logout_at')
+            ->first();
+
+        if ($userSession) {
+            $userSession->endSession();
+        }
+
         Auth::guard('web')->logout();
 
         $request->session()->invalidate();
