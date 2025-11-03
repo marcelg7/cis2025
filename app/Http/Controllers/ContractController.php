@@ -35,6 +35,22 @@ use App\Services\ContractFileCleanupService;
 
 class ContractController extends Controller
 {
+    /**
+     * Get the effective user ID for contract attribution
+     * If on a shared device, returns the active CSR from session
+     * Otherwise returns the logged-in user ID
+     */
+    protected function getEffectiveUserId(): int
+    {
+        // If logged-in user is on a shared device and has selected a CSR, use that CSR's ID
+        if (auth()->user()->is_shared_device && session()->has('active_csr_id')) {
+            return session('active_csr_id');
+        }
+
+        // Otherwise use the logged-in user's ID
+        return auth()->id();
+    }
+
     public function index(Request $request): View
     {
         $query = Contract::with('subscriber.mobilityAccount.ivueAccount.customer', 'updatedBy');
@@ -232,7 +248,7 @@ class ContractController extends Controller
             'first_bill_date' => $request->first_bill_date,
 			'imei' => $request->imei,
             'status' => 'draft',
-            'updated_by' => auth()->id(),
+            'updated_by' => $this->getEffectiveUserId(),
             'rate_plan_id' => $request->rate_plan_id,
             'mobile_internet_plan_id' => $request->mobile_internet_plan_id,
             'rate_plan_price' => $request->rate_plan_price,
@@ -549,7 +565,7 @@ class ContractController extends Controller
 			'commitment_period_id' => $request->commitment_period_id,
 			'first_bill_date' => $request->first_bill_date,
 			'imei' => $request->imei,
-			'updated_by' => auth()->id(),
+			'updated_by' => $this->getEffectiveUserId(),
 			'rate_plan_id' => $request->rate_plan_id,
 			'mobile_internet_plan_id' => $request->mobile_internet_plan_id,
 			'rate_plan_price' => $request->rate_plan_price,
@@ -677,7 +693,7 @@ class ContractController extends Controller
 			$contract->update([
 				'signature_path' => 'storage/' . $signaturePath,
 				'status' => 'signed',
-				'updated_by' => auth()->id(),
+				'updated_by' => $this->getEffectiveUserId(),
 			]);
 			
 			$contract->refresh();
@@ -807,7 +823,7 @@ class ContractController extends Controller
 		
 		$contract->update([
 			'status' => 'finalized',
-			'updated_by' => auth()->id(),
+			'updated_by' => $this->getEffectiveUserId(),
 		]);
 
 		$contract->load('addOns', 'oneTimeFees', 'subscriber.mobilityAccount.ivueAccount.customer', 'activityType', 'commitmentPeriod', 'ratePlan', 'mobileInternetPlan', 'bellDevice');
@@ -1393,7 +1409,7 @@ class ContractController extends Controller
                 'financing_signature_path' => 'storage/' . $signaturePath,
                 'financing_status' => 'customer_signed',
                 'financing_signed_at' => now(),
-                'updated_by' => auth()->id(),
+                'updated_by' => $this->getEffectiveUserId(),
             ]);
             
             if (!$updated) {
@@ -1430,7 +1446,7 @@ class ContractController extends Controller
 
         $contract->update([
             'financing_status' => 'finalized',
-            'updated_by' => auth()->id(),
+            'updated_by' => $this->getEffectiveUserId(),
         ]);
 
         $this->generateFinancingPdf($contract);
@@ -1498,7 +1514,7 @@ class ContractController extends Controller
                 'financing_csr_initials_path' => 'storage/' . $initialsPath,
                 'financing_status' => 'csr_initialed',
                 'financing_csr_initialed_at' => now(),
-                'updated_by' => auth()->id(),
+                'updated_by' => $this->getEffectiveUserId(),
             ]);
             
             $contract->refresh();
@@ -1654,7 +1670,7 @@ class ContractController extends Controller
 				'dro_signature_path' => 'storage/' . $signaturePath,
 				'dro_status' => 'customer_signed',
 				'dro_signed_at' => now(),
-				'updated_by' => auth()->id(),
+				'updated_by' => $this->getEffectiveUserId(),
 			]);
 			
 			$contract->refresh();
@@ -1718,7 +1734,7 @@ class ContractController extends Controller
 				'dro_csr_initials_path' => 'storage/' . $initialsPath,
 				'dro_status' => 'csr_initialed',
 				'dro_csr_initialed_at' => now(),
-				'updated_by' => auth()->id(),
+				'updated_by' => $this->getEffectiveUserId(),
 			]);
 			
 			$contract->refresh();
@@ -1749,7 +1765,7 @@ class ContractController extends Controller
 
 		$contract->update([
 			'dro_status' => 'finalized',
-			'updated_by' => auth()->id(),
+			'updated_by' => $this->getEffectiveUserId(),
 		]);
 
 		$this->generateDroPdf($contract);

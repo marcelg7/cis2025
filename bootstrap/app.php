@@ -19,7 +19,8 @@ return Application::configure(basePath: dirname(__DIR__))
 			'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
 			'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
 			'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class,
-			'admin' => \App\Http\Middleware\Admin::class,			
+			'admin' => \App\Http\Middleware\Admin::class,
+			'ensure.active.csr' => \App\Http\Middleware\EnsureActiveCsr::class,
 
 		]);
 	})	

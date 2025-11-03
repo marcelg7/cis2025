@@ -16,6 +16,24 @@
                     </x-nav-link>
                 </div>
             </div>
+
+            <!-- Active CSR Indicator (for shared devices) -->
+            @if(auth()->user()->is_shared_device && session()->has('active_csr_id'))
+                <div class="hidden sm:flex sm:items-center sm:ms-6">
+                    <div class="flex items-center px-3 py-2 bg-blue-100 border border-blue-300 rounded-md">
+                        <svg class="h-5 w-5 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                        <div class="text-sm">
+                            <div class="font-semibold text-blue-900">{{ session('active_csr_name') }}</div>
+                        </div>
+                        <a href="{{ route('csr-selector.index') }}" class="ml-3 text-xs text-blue-700 hover:text-blue-900 font-medium">
+                            Switch
+                        </a>
+                    </div>
+                </div>
+            @endif
+
             <!-- Settings Dropdown -->
             <div class="hidden sm:flex sm:items-center sm:ms-6">
                 <x-dropdown align="right" width="48">
@@ -68,6 +86,23 @@
             <div class="px-4">
                 <div class="font-medium text-base text-gray-800">{{ Auth::user()->name }}</div>
                 <div class="font-medium text-sm text-gray-500">{{ Auth::user()->email }}</div>
+
+                <!-- Active CSR Indicator (Mobile) -->
+                @if(auth()->user()->is_shared_device && session()->has('active_csr_id'))
+                    <div class="mt-3 px-3 py-2 bg-blue-100 border border-blue-300 rounded-md">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <svg class="h-5 w-5 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                </svg>
+                                <span class="text-sm font-semibold text-blue-900">{{ session('active_csr_name') }}</span>
+                            </div>
+                            <a href="{{ route('csr-selector.index') }}" class="text-xs text-blue-700 hover:text-blue-900 font-medium">
+                                Switch
+                            </a>
+                        </div>
+                    </div>
+                @endif
             </div>
             <div class="mt-3 space-y-1">
                 <x-responsive-nav-link :href="route('profile.edit')">

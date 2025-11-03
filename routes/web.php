@@ -66,8 +66,20 @@ Route::middleware(['guest', 'throttle:100,1'])->group(function () {
 */
 
 // Apply rate limiting to authenticated routes (200 requests per minute)
-Route::middleware(['auth', 'throttle:200,1'])->group(function () {  // CHANGED FROM 'admin' to 'auth'
-    
+// Also apply ensure.active.csr middleware to redirect shared devices to CSR selector
+Route::middleware(['auth', 'throttle:200,1', 'ensure.active.csr'])->group(function () {
+
+    /*
+    |--------------------------------------------------------------------------
+    | CSR Selector (for shared iPad devices)
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('csr-selector')->name('csr-selector.')->group(function () {
+        Route::get('/', [App\Http\Controllers\CsrSelectorController::class, 'index'])->name('index');
+        Route::post('/select', [App\Http\Controllers\CsrSelectorController::class, 'select'])->name('select');
+        Route::post('/clear', [App\Http\Controllers\CsrSelectorController::class, 'clear'])->name('clear');
+    });
+
     /*
     |--------------------------------------------------------------------------
     | Customer Management

@@ -17,6 +17,7 @@ class User extends Authenticatable implements MustVerifyEmail
     protected $fillable = [
         'name',
         'email',
+        'is_shared_device',
         'location_id',
         'password',
 		'component_styles',
@@ -35,6 +36,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'password' => 'hashed',
 		'component_styles' => 'array',
 		'show_development_info' => 'boolean',
+		'is_shared_device' => 'boolean',
     ];
 
     // Customize password reset email to distinguish new user setup
