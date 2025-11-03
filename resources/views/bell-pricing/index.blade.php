@@ -1,21 +1,29 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-	<div class="flex justify-between items-center mb-6">
-		<h1 class="text-2xl font-bold text-gray-900">Bell Device Pricing</h1>
-		<div class="flex space-x-2">
-			<a href="{{ route('bell-pricing.upload') }}" 
-			   class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">
-				<svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-				</svg>
-				Upload New Pricing
-			</a>
-			<a href="{{ route('bell-pricing.compare') }}" 
-			   class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
-				Compare Devices
-			</a>
+<div class="py-12">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+	<!-- Page Header -->
+	<div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+		<div class="p-6">
+			<div class="flex justify-between items-center">
+				<div>
+					<h1 class="text-2xl font-bold text-gray-900">Bell Device Pricing</h1>
+				</div>
+				<div class="flex space-x-2">
+					<a href="{{ route('bell-pricing.upload') }}"
+					   class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">
+						<svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+						</svg>
+						Upload New Pricing
+					</a>
+					<a href="{{ route('bell-pricing.compare') }}"
+					   class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+						Compare Devices
+					</a>
+				</div>
+			</div>
 		</div>
 	</div>
 
@@ -132,5 +140,6 @@
     <div class="mt-6">
         {{ $devices->links() }}
     </div>
+</div>
 </div>
 @endsection

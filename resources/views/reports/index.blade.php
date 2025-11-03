@@ -1,13 +1,18 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900">Reports</h1>
-        <p class="mt-2 text-sm text-gray-600">Generate and export comprehensive business reports</p>
-    </div>
+<div class="py-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+        <!-- Page Header -->
+        <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+            <div class="p-6">
+                <h1 class="text-3xl font-bold text-gray-900">Reports</h1>
+                <p class="mt-2 text-sm text-gray-600">Generate and export comprehensive business reports</p>
+            </div>
+        </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Reports Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <!-- Contract Summary Report -->
         <div class="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow">
             <div class="p-6">
@@ -64,16 +69,18 @@
                 </a>
             </div>
         </div>
-    </div>
+        </div>
 
-    <div class="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-6">
-        <div class="flex">
-            <svg class="h-5 w-5 text-blue-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <div class="ml-3">
-                <h3 class="text-sm font-medium text-blue-900">Export Options</h3>
-                <p class="mt-1 text-sm text-blue-700">All reports can be exported to Excel or PDF format for easy sharing and analysis.</p>
+        <!-- Info Box -->
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-6">
+            <div class="flex">
+                <svg class="h-5 w-5 text-blue-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div class="ml-3">
+                    <h3 class="text-sm font-medium text-blue-900">Export Options</h3>
+                    <p class="mt-1 text-sm text-blue-700">All reports can be exported to Excel or PDF format for easy sharing and analysis.</p>
+                </div>
             </div>
         </div>
     </div>

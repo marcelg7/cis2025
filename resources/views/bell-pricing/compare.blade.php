@@ -1,17 +1,21 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-    <div class="mb-6">
-        <a href="{{ route('bell-pricing.index') }}" class="text-indigo-600 hover:text-indigo-900">
-            ← Back to Devices
-        </a>
+<div class="py-12">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+        <div class="p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h1 class="text-2xl font-bold text-gray-900">Compare Device Pricing</h1>
+                <a href="{{ route('bell-pricing.index') }}" class="text-indigo-600 hover:text-indigo-900">
+                    ← Back to Devices
+                </a>
+            </div>
+        </div>
     </div>
 
-    <h1 class="text-2xl font-bold text-gray-900 mb-6">Compare Device Pricing</h1>
-    
     <!-- Selection Form -->
-    <form method="GET" action="{{ route('bell-pricing.compare') }}" class="bg-white shadow rounded-lg p-6 mb-6">
+    <form method="GET" action="{{ route('bell-pricing.compare') }}" class="bg-white shadow rounded-lg p-6">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <!-- Devices Multi-Select -->
             <div class="col-span-2">
@@ -205,5 +209,6 @@
             <p class="text-blue-800">Select devices from the list above to compare their pricing.</p>
         </div>
     @endif
+</div>
 </div>
 @endsection

@@ -1,16 +1,19 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="max-w-6xl mx-auto px-4 py-8">
+<div class="py-12">
+<div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
     <!-- Header -->
-    <div class="mb-6">
-        <h1 class="text-3xl font-bold text-gray-900">Database Backups</h1>
-        <p class="text-gray-600 mt-2">Manage and monitor your database backups</p>
+    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+        <div class="p-6">
+            <h1 class="text-3xl font-bold text-gray-900">Database Backups</h1>
+            <p class="text-gray-600 mt-2">Manage and monitor your database backups</p>
+        </div>
     </div>
 
     <!-- Success/Error Messages -->
     @if(session('success'))
-        <div class="mb-6 bg-green-50 border-l-4 border-green-500 p-4 rounded">
+        <div class="bg-green-50 border-l-4 border-green-500 p-4 rounded">
             <div class="flex">
                 <div class="flex-shrink-0">
                     <svg class="h-5 w-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
@@ -25,7 +28,7 @@
     @endif
 
     @if(session('error'))
-        <div class="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded">
+        <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded">
             <div class="flex">
                 <div class="flex-shrink-0">
                     <svg class="h-5 w-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
@@ -41,9 +44,9 @@
 
     <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
         <!-- Left Column: Actions -->
-        <div class="lg:col-span-1">
+        <div class="lg:col-span-1 space-y-6">
             <!-- Manual Backup Card -->
-            <div class="bg-white rounded-lg shadow-md overflow-hidden mb-6">
+            <div class="bg-white rounded-lg shadow-md overflow-hidden">
                 <div class="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4">
                     <h2 class="text-xl font-bold text-white">Manual Backup</h2>
                 </div>
@@ -242,5 +245,6 @@
             </div>
         </div>
     </div>
+</div>
 </div>
 @endsection

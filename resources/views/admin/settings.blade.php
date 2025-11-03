@@ -1,7 +1,8 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="max-w-4xl mx-auto px-4 py-8">
+<div class="py-12">
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
     <div class="bg-white rounded-lg shadow-md overflow-hidden">
         <!-- Header -->
         <div class="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4">
@@ -176,7 +177,7 @@
     </div>
 
     <!-- Additional Info Card -->
-    <div class="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
         <div class="flex">
             <div class="flex-shrink-0">
                 <svg class="h-5 w-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
@@ -191,5 +192,6 @@
             </div>
         </div>
     </div>
+</div>
 </div>
 @endsection
