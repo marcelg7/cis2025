@@ -636,18 +636,6 @@ class ContractController extends Controller
             return redirect()->route('contracts.view', $id)->with('error', 'Contract cannot be signed.');
         }
 
-        // Check if financing needs to be signed first
-        if ($contract->requiresFinancing() && $contract->financing_status === 'pending') {
-            return redirect()->route('contracts.financing.sign', $id)
-                ->with('success', 'Please complete the financing form first.');
-        }
-
-        // Check if DRO needs to be signed first
-        if ($contract->requiresDro() && $contract->dro_status === 'pending') {
-            return redirect()->route('contracts.dro.sign', $id)
-                ->with('success', 'Please complete the DRO form first.');
-        }
-
         return view('contracts.sign', compact('contract'));
     }
 	
@@ -1453,16 +1441,8 @@ class ContractController extends Controller
 
         Log::info('Financing form finalized', ['contract_id' => $id]);
 
-        // Auto-redirect to next step based on what's required
-        if ($contract->requiresDro() && $contract->dro_status === 'pending') {
-            // Redirect to DRO signing
-            return redirect()->route('contracts.dro.sign', $id)
-                ->with('success', 'Financing form finalized. Please proceed with DRO signing.');
-        } else {
-            // Redirect to main contract signing
-            return redirect()->route('contracts.sign', $id)
-                ->with('success', 'Financing form finalized. Please proceed with contract signing.');
-        }
+        return redirect()->route('contracts.view', $id)
+            ->with('success', 'Financing form finalized successfully.');
     }
    
     public function signCsrFinancing($id)
@@ -1772,9 +1752,8 @@ class ContractController extends Controller
 
 		Log::info('DRO form finalized', ['contract_id' => $id]);
 
-		// Auto-redirect to main contract signing
-		return redirect()->route('contracts.sign', $id)
-			->with('success', 'DRO form finalized. Please proceed with contract signing.');
+		return redirect()->route('contracts.view', $id)
+			->with('success', 'DRO form finalized successfully.');
 	}
 
 	public function downloadDro($id)
