@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use Spatie\Activitylog\Models\Activity;
+use App\Helpers\SettingsHelper;
 
 class PruneActivityLog extends Command
 {
@@ -13,7 +14,7 @@ class PruneActivityLog extends Command
 
 	public function handle()
 	{
-		$days = Setting::where('key', 'log_prune_days')->first()->value ?? 365;
+		$days = SettingsHelper::get('log_prune_days', 365);
 		$threshold = now()->subDays($days);
 
 		$deleted = Activity::where('created_at', '<', $threshold)->delete();
