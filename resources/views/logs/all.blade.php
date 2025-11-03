@@ -56,7 +56,9 @@
                 @endforelse
             </tbody>
         </table>
-        
-        {{ $logs->links() }} <!-- Pagination -->
+
+        <div class="mt-6 bg-white p-4 rounded-lg shadow-sm">
+            {{ $logs->links() }} <!-- Pagination -->
+        </div>
     </div>
 @endsection

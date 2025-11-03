@@ -131,7 +131,7 @@
 
     <!-- Pagination -->
     @if($plans->hasPages())
-        <div class="mt-6">
+        <div class="mt-6 bg-white p-4 rounded-lg shadow-sm">
             {{ $plans->links() }}
         </div>
     @endif

@@ -274,7 +274,7 @@
 				</tbody>
 			</table>
 		</div>
-        <div class="mt-6">
+        <div class="mt-6 bg-white p-4 rounded-lg shadow-sm">
             {{ $contracts->links() }}
         </div>
     </div>

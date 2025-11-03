@@ -104,7 +104,7 @@
 
     <!-- Pagination -->
     @if($addOns->hasPages())
-        <div class="mt-6">
+        <div class="mt-6 bg-white p-4 rounded-lg shadow-sm">
             {{ $addOns->links() }}
         </div>
     @endif

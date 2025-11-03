@@ -86,7 +86,7 @@
             @endforeach
         </div>
 
-        <div class="mt-4">
+        <div class="mt-4 bg-white p-4 rounded-lg shadow-sm">
             {{ $notifications->links() }}
         </div>
     @endif
