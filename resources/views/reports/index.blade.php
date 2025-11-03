@@ -71,7 +71,7 @@
         </div>
 
         <!-- CSR Usage Report (Admin Only) -->
-        @can('admin-access')
+        @role('admin')
         <div class="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow">
             <div class="p-6">
                 <div class="flex items-center mb-4">
@@ -89,7 +89,7 @@
                 </a>
             </div>
         </div>
-        @endcan
+        @endrole
         </div>
 
         <!-- Info Box -->
