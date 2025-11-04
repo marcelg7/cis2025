@@ -63,7 +63,8 @@ class ImportBellPricing extends Command
             if ($smartPayBasicSheet !== null) {
                 try {
                     $this->info('Importing SmartPay Basic pricing...');
-                    $smartPayBasicCount = $this->importSmartPay($smartPayBasicSheet, $effectiveDate, $replace);
+                    // Use the separate Basic import function with correct column mapping
+                    $smartPayBasicCount = $this->importSmartPayBasic($smartPayBasicSheet, $effectiveDate, $replace);
                 } catch (\Exception $e) {
                     $this->warn('Error importing SmartPay Basic: ' . $e->getMessage());
                 }
@@ -137,8 +138,8 @@ class ImportBellPricing extends Command
 			->where('effective_date', '!=', $effectiveDate)
 			->update(['is_current' => false]);
 
-		// Start from row 5 (index 4 is headers, index 5+ is data)
-		for ($rowIndex = 5; $rowIndex < count($rows); $rowIndex++) {
+		// Start from row 4 (index 3 is headers, index 4+ is data)
+		for ($rowIndex = 4; $rowIndex < count($rows); $rowIndex++) {
 			$row = $rows[$rowIndex];
 			
 			// Skip if device name or tier is empty
@@ -212,6 +213,107 @@ class ImportBellPricing extends Command
 
 		if ($skipped > 0) {
 			$this->info("Skipped {$skipped} rows");
+		}
+
+		return $count;
+	}
+
+	private function importSmartPayBasic($sheet, $effectiveDate, $replace): int
+	{
+		$rows = $sheet->toArray();
+		$count = 0;
+		$skipped = 0;
+
+		$this->info("Total rows in SmartPay Basic sheet: " . count($rows));
+
+		// If replacing, delete existing Basic records for this effective date
+		if ($replace) {
+			$deleted = BellPricing::where('effective_date', $effectiveDate)
+				->where('tier', 'Basic')
+				->delete();
+			$this->info("Deleted {$deleted} existing SmartPay Basic records for {$effectiveDate->format('Y-m-d')}");
+		}
+
+		// Mark all previous Basic records as not current (only if not same date)
+		BellPricing::where('is_current', true)
+			->where('tier', 'Basic')
+			->where('effective_date', '!=', $effectiveDate)
+			->update(['is_current' => false]);
+
+		// Start from row 7 (skip headers at row 5 and junk row at row 6)
+		for ($rowIndex = 7; $rowIndex < count($rows); $rowIndex++) {
+			$row = $rows[$rowIndex];
+
+			// Skip if device name is empty
+			if (empty($row[0])) {
+				$skipped++;
+				continue;
+			}
+
+			$deviceName = trim($row[0]);
+
+			// Parse the retail price
+			$retailPrice = $this->parseDecimal($row[1]);
+
+			// Skip if retail price is missing or invalid
+			if ($retailPrice <= 0) {
+				if ($rowIndex < 12) {
+					$this->warn("Row {$rowIndex}: Invalid retail price '{$retailPrice}' for device '{$deviceName}' - skipping");
+				}
+				$skipped++;
+				continue;
+			}
+
+			// Debug first few data rows
+			if ($rowIndex < 12) {
+				$this->info("Processing row {$rowIndex}: Device='{$deviceName}', Tier='Basic', Price='{$retailPrice}'");
+			}
+
+			try {
+				// Create or get device
+				$device = $this->getOrCreateDevice($deviceName);
+
+				// SMART PAY BASIC column structure:
+				// [0]=Device, [1]=Retail, [2]=Upfront, [3]=Agreement Credit,
+				// [4]=Monthly Payment Pre-Tax, [5]=null, [6]=$0 Down total, [7]=Plan Cost
+
+				$planCost = $this->parseDecimal($row[7]);
+				$monthlyDevicePreTax = $this->parseDecimal($row[4]);
+				$monthlyDeviceWithHst = $monthlyDevicePreTax * 1.13; // Calculate HST
+				$planPlusDevicePreTax = $planCost + $monthlyDevicePreTax;
+
+				// Create pricing record with tier='Basic'
+				BellPricing::create([
+					'bell_device_id' => $device->id,
+					'tier' => 'Basic',
+					'retail_price' => $retailPrice,
+					'upfront_payment' => $this->parseDecimal($row[2]),
+					'agreement_credit' => $this->parseDecimal($row[3]),
+					'plan_cost' => $planCost,
+					'monthly_device_cost_pre_tax' => $monthlyDevicePreTax,
+					'monthly_device_cost_with_hst' => $monthlyDeviceWithHst,
+					'plan_plus_device_pre_tax' => $planPlusDevicePreTax,
+					'plan_with_10_hay_credit' => 0, // Not applicable for Basic
+					'hay_credit_plus_device_pre_tax' => 0,
+					'plan_with_15_aal' => 0,
+					'aal_15_plan_plus_device_pre_tax' => 0,
+					'plan_with_30_aal' => 0,
+					'aal_30_plan_plus_device_pre_tax' => 0,
+					'plan_with_40_aal' => 0,
+					'aal_40_plan_plus_device_pre_tax' => 0,
+					'effective_date' => $effectiveDate,
+					'is_current' => true,
+				]);
+
+				$count++;
+			} catch (\Exception $e) {
+				$this->warn("Row {$rowIndex}: Error importing '{$deviceName}' (Basic) - " . $e->getMessage());
+				$skipped++;
+			}
+		}
+
+		if ($skipped > 0) {
+			$this->info("Skipped {$skipped} rows in Basic sheet");
 		}
 
 		return $count;
@@ -350,8 +452,8 @@ class ImportBellPricing extends Command
 		$rows = $sheet->toArray();
 		$deviceNames = [];
 
-		// Start from row 5 for SmartPay sheets (same logic as import)
-		for ($rowIndex = 5; $rowIndex < count($rows); $rowIndex++) {
+		// Start from row 4 for SmartPay sheets (same logic as import)
+		for ($rowIndex = 4; $rowIndex < count($rows); $rowIndex++) {
 			$row = $rows[$rowIndex];
 
 			// Skip if device name is empty
