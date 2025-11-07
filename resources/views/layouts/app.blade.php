@@ -325,6 +325,23 @@
                         </form>
                         
                         @auth
+                            <!-- Active CSR Indicator (for shared devices) -->
+                            @if(auth()->user()->is_shared_device && session()->has('active_csr_id'))
+                                <div class="flex items-center mr-4">
+                                    <div class="flex items-center px-3 py-2 bg-blue-100 border border-blue-300 rounded-md">
+                                        <svg class="h-5 w-5 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                        </svg>
+                                        <div class="text-sm">
+                                            <div class="font-semibold text-blue-900">{{ session('active_csr_name') }}</div>
+                                        </div>
+                                        <a href="{{ route('csr-selector.index') }}" class="ml-3 text-xs text-blue-700 hover:text-blue-900 font-medium">
+                                            Switch
+                                        </a>
+                                    </div>
+                                </div>
+                            @endif
+
                             <!-- Settings/Gear Dropdown -->
                             <div class="relative" x-data="{ open: false }" @click.away="open = false">
                                 <button @click="open = !open" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium leading-5 text-gray-900 hover:text-gray-700 hover:border-gray-300 focus:outline-none focus:text-gray-700 focus:border-gray-300 transition duration-150 ease-in-out">
@@ -596,7 +613,24 @@
                                 <div class="text-sm font-medium text-gray-500">{{ auth()->user()->email }}</div>
                             </div>
                         </div>
-                        
+
+                        <!-- Active CSR Indicator (Mobile) -->
+                        @if(auth()->user()->is_shared_device && session()->has('active_csr_id'))
+                            <div class="mt-3 mx-4 px-3 py-2 bg-blue-100 border border-blue-300 rounded-md">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center">
+                                        <svg class="h-5 w-5 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                        </svg>
+                                        <span class="text-sm font-semibold text-blue-900">{{ session('active_csr_name') }}</span>
+                                    </div>
+                                    <a href="{{ route('csr-selector.index') }}" class="text-xs text-blue-700 hover:text-blue-900 font-medium">
+                                        Switch
+                                    </a>
+                                </div>
+                            </div>
+                        @endif
+
                         <div class="mt-3 space-y-1">
                             @hasrole('admin')
                                 <div class="px-4 py-2 text-xs font-semibold text-gray-400 uppercase">Administration</div>
