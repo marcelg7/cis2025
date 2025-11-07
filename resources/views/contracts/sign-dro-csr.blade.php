@@ -34,10 +34,19 @@
                 },
                 resizeCanvas() {
                     const ratio = Math.max(window.devicePixelRatio || 1, 1);
+
+                    // Save signature data before resizing
+                    const data = this.signaturePad.toData();
+
                     this.$refs.canvas.width = this.$refs.canvas.offsetWidth * ratio;
                     this.$refs.canvas.height = this.$refs.canvas.offsetHeight * ratio;
                     this.$refs.canvas.getContext('2d').scale(ratio, ratio);
                     this.signaturePad.clear();
+
+                    // Restore signature data after resizing
+                    if (data && data.length > 0) {
+                        this.signaturePad.fromData(data);
+                    }
                 }
             }" @resize.window="resizeCanvas">
                 <canvas x-ref="canvas" class="w-full border border-gray-300 rounded-md bg-gray-50 signature-canvas" style="height: 250px; min-height: 250px;"></canvas>

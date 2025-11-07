@@ -84,13 +84,27 @@
 
         function resizeCanvas() {
             const ratio = Math.max(window.devicePixelRatio || 1, 1);
+
+            // Save signature data before resizing
+            const data = signaturePad.toData();
+
             canvas.width = canvas.offsetWidth * ratio;
             canvas.height = canvas.offsetHeight * ratio;
             canvas.getContext('2d').scale(ratio, ratio);
             signaturePad.clear();
+
+            // Restore signature data after resizing
+            if (data && data.length > 0) {
+                signaturePad.fromData(data);
+            }
         }
-        
-        window.addEventListener('resize', resizeCanvas);
+
+        // Debounce resize events to prevent excessive redraws
+        let resizeTimeout;
+        window.addEventListener('resize', function() {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(resizeCanvas, 100);
+        });
         resizeCanvas();
 
         document.getElementById('clear-signature').addEventListener('click', function() {
