@@ -42,7 +42,7 @@ class BugReportResolvedNotification extends Notification
         return [
             'type' => 'bug_report_resolved',
             'title' => 'Bug Report Resolved',
-            'message' => "Your bug report '{$this->bugReport->title}' has been resolved.",
+            'message' => "Your bug report '{$this->bugReport->title}' has been resolved. Please test and mention if there are any remaining or new issues.",
             'bug_report_id' => $this->bugReport->id,
             'bug_report_title' => $this->bugReport->title,
             'action_url' => route('bug-reports.show', $this->bugReport->id),
