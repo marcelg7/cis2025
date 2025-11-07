@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\BugReport;
 use App\Models\User;
+use App\Notifications\BugReportResolvedNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -98,12 +99,20 @@ class BugReportController extends Controller
             'admin_notes' => 'nullable|string',
         ]);
 
+        // Check if status is changing to resolved (before update)
+        $statusChangedToResolved = ($validated['status'] === 'resolved' && $bugReport->status !== 'resolved');
+
         // Set resolved_at timestamp if status changed to resolved
-        if ($validated['status'] === 'resolved' && $bugReport->status !== 'resolved') {
+        if ($statusChangedToResolved) {
             $validated['resolved_at'] = now();
         }
 
         $bugReport->update($validated);
+
+        // Notify the user who reported the bug when it's resolved
+        if ($statusChangedToResolved) {
+            $bugReport->user->notify(new BugReportResolvedNotification($bugReport));
+        }
 
         return redirect()->route('bug-reports.show', $bugReport)
             ->with('success', 'Bug report updated successfully!');
