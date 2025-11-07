@@ -235,6 +235,35 @@ class CustomerController extends Controller
             ->with('success', 'Mobility account added successfully.');
     }
 
+    public function editMobilityForm($customerId, $mobilityAccountId): View
+    {
+        $customer = Customer::findOrFail($customerId);
+        $mobilityAccount = MobilityAccount::with('ivueAccount')->findOrFail($mobilityAccountId);
+
+        // Verify this mobility account belongs to this customer
+        if ($mobilityAccount->ivueAccount->customer_id !== $customer->id) {
+            abort(403, 'Unauthorized access to mobility account.');
+        }
+
+        return view('customers.edit-mobility', compact('customer', 'mobilityAccount'));
+    }
+
+    public function updateMobility(Request $request, $customerId, $mobilityAccountId)
+    {
+        $mobilityAccount = MobilityAccount::findOrFail($mobilityAccountId);
+
+        $request->validate([
+            'mobility_account' => 'required|string|max:127|unique:mobility_accounts,mobility_account,' . $mobilityAccount->id,
+        ]);
+
+        $mobilityAccount->update([
+            'mobility_account' => $request->mobility_account,
+        ]);
+
+        return redirect()->route('customers.show', $customerId)
+            ->with('success', 'Mobility account updated successfully.');
+    }
+
     public function show($customerId): View
     {
         $customer = Customer::with('ivueAccounts.mobilityAccount')->findOrFail($customerId);
