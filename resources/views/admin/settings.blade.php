@@ -2,7 +2,7 @@
 
 @section('content')
 <div class="py-8">
-<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 page-container">
     <!-- Header -->
     <div class="mb-8">
         <h1 class="text-3xl font-bold text-gray-900">Admin Settings</h1>
@@ -48,9 +48,9 @@
                                 value="{{ old('log_prune_days', $logPruneDays) }}"
                                 min="30"
                                 required
-                                class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm @error('log_prune_days') border-red-500 @enderror"
+                                class="block w-full px-3 py-2 pr-12 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm @error('log_prune_days') border-red-500 @enderror"
                             >
-                            <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                            <div class="absolute inset-y-0 right-0 flex items-center pr-8 pointer-events-none">
                                 <span class="text-gray-500 text-sm">days</span>
                             </div>
                         </div>
