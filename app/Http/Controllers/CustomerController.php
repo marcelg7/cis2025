@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 use Illuminate\Support\Facades\DB;
 use App\Models\User;
+use App\Helpers\SettingsHelper;
 
 class CustomerController extends Controller
 {
@@ -30,7 +31,12 @@ class CustomerController extends Controller
             ->latest('last_fetched_at')
             ->take(6)
             ->get();
-        return view('customers.index', compact('latestContracts', 'activeUsers', 'recentCustomers'));
+
+        // Get deletable contract statuses from settings
+        $deletableStatusesStr = SettingsHelper::get('deletable_contract_statuses', 'draft');
+        $deletableStatuses = array_filter(explode(',', $deletableStatusesStr));
+
+        return view('customers.index', compact('latestContracts', 'activeUsers', 'recentCustomers', 'deletableStatuses'));
     }
 
     public function fetch(Request $request): View
@@ -267,7 +273,12 @@ class CustomerController extends Controller
     public function show($customerId): View
     {
         $customer = Customer::with('ivueAccounts.mobilityAccount')->findOrFail($customerId);
-        return view('customers.show', compact('customer'));
+
+        // Get deletable contract statuses from settings
+        $deletableStatusesStr = SettingsHelper::get('deletable_contract_statuses', 'draft');
+        $deletableStatuses = array_filter(explode(',', $deletableStatusesStr));
+
+        return view('customers.show', compact('customer', 'deletableStatuses'));
     }
 
     public function addSubscriberForm($customerId): View

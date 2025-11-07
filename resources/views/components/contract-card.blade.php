@@ -1,4 +1,4 @@
-@props(['contract'])
+@props(['contract', 'canDelete' => false])
 
 <div class="bg-white overflow-hidden shadow rounded-lg border border-gray-200 card-hover">
     <div class="px-4 py-5 sm:p-6">
@@ -99,7 +99,7 @@
             <!-- Edit Button - Only for Draft -->
             @if ($contract->status === 'draft')
                 <div class="flex-shrink-0">
-                    <a href="{{ route('contracts.edit', $contract->id) }}" 
+                    <a href="{{ route('contracts.edit', $contract->id) }}"
                        class="inline-flex justify-center items-center w-10 h-10 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1"
                        style="background-color: var(--color-warning); color: white;"
                        onmouseover="this.style.backgroundColor='#d97706'"
@@ -110,9 +110,9 @@
                         </svg>
                     </a>
                 </div>
-                
+
                 <div class="flex-shrink-0">
-                    <a href="{{ route('contracts.sign', $contract->id) }}" 
+                    <a href="{{ route('contracts.sign', $contract->id) }}"
                        class="inline-flex justify-center items-center w-10 h-10 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1"
                        style="background-color: var(--color-primary); color: white;"
                        onmouseover="this.style.backgroundColor='var(--color-primary-hover)'"
@@ -122,6 +122,26 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                         </svg>
                     </a>
+                </div>
+            @endif
+
+            <!-- Delete Button - If deletable -->
+            @if ($canDelete)
+                <div class="flex-shrink-0">
+                    <form action="{{ route('contracts.destroy', $contract->id) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete this contract? This action cannot be undone.');">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit"
+                                class="inline-flex justify-center items-center w-10 h-10 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1"
+                                style="background-color: #dc2626; color: white;"
+                                onmouseover="this.style.backgroundColor='#b91c1c'"
+                                onmouseout="this.style.backgroundColor='#dc2626'"
+                                title="Delete Contract">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            </svg>
+                        </button>
+                    </form>
                 </div>
             @endif
             

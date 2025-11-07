@@ -174,7 +174,7 @@
 
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 card-grid">
                 @forelse($latestContracts as $contract)
-                    <x-contract-card :contract="$contract" />
+                    <x-contract-card :contract="$contract" :canDelete="in_array($contract->status, $deletableStatuses)" />
                 @empty
                     <div class="col-span-full">
                         <p class="text-gray-500">No contracts found.</p>

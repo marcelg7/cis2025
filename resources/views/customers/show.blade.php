@@ -173,7 +173,7 @@
                                             @else
                                                 <div class="mt-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                                                     @foreach ($subscriber->contracts as $contract)
-                                                        <x-contract-card :contract="$contract" />
+                                                        <x-contract-card :contract="$contract" :canDelete="in_array($contract->status, $deletableStatuses)" />
                                                     @endforeach
                                                 </div>
                                             @endif
