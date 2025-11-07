@@ -158,6 +158,41 @@
 				</div>
 			</div>
 
+			<!-- Deletable Contract Statuses -->
+			<div>
+				<label for="deletable_contract_statuses" class="block text-sm font-semibold text-gray-700 mb-2">
+					Contract Deletion Settings
+				</label>
+				<div class="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-3">
+					<p class="text-sm text-gray-600">
+						<svg class="inline w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+							<path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1 a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+						</svg>
+						Select which contract statuses can be deleted by CSRs
+					</p>
+					<div class="space-y-2">
+						@foreach(['draft' => 'Draft', 'pending' => 'Pending'] as $statusValue => $statusLabel)
+							<div class="flex items-center">
+								<input
+									type="checkbox"
+									id="status_{{ $statusValue }}"
+									name="deletable_statuses[]"
+									value="{{ $statusValue }}"
+									{{ in_array($statusValue, $deletableStatuses) ? 'checked' : '' }}
+									class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+								>
+								<label for="status_{{ $statusValue }}" class="ml-2 text-sm text-gray-700">
+									{{ $statusLabel }}
+								</label>
+							</div>
+						@endforeach
+					</div>
+					<p class="text-xs text-gray-500 mt-2">
+						Note: Signed and finalized contracts cannot be deleted for compliance and audit purposes.
+					</p>
+				</div>
+			</div>
+
             <!-- Form Actions -->
             <div class="flex items-center justify-between pt-4 border-t border-gray-200">
                 <a href="{{ url('/customers') }}" class="text-sm text-gray-600 hover:text-gray-800 transition-colors">

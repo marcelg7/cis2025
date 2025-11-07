@@ -113,7 +113,8 @@ Route::middleware(['auth', 'throttle:200,1', 'ensure.active.csr'])->group(functi
         Route::post('/{subscriber}', [ContractController::class, 'store'])->name('store');
         Route::get('/{contract}/edit', [ContractController::class, 'edit'])->name('edit');
         Route::put('/{contract}', [ContractController::class, 'update'])->name('update');
-        
+        Route::delete('/{contract}', [ContractController::class, 'destroy'])->name('destroy');
+
         // Signing & Finalization
         Route::get('/{contract}/sign', [ContractController::class, 'sign'])->name('sign');
         Route::post('/{contract}/sign', [ContractController::class, 'storeSignature'])->name('storeSignature');

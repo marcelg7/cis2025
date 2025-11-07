@@ -31,6 +31,7 @@ use HTMLPurifier_Config;
 use App\Services\VaultFtpService;
 use App\Services\ContractPdfService;
 use App\Services\ContractFileCleanupService;
+use App\Helpers\SettingsHelper;
 
 
 class ContractController extends Controller
@@ -623,7 +624,67 @@ class ContractController extends Controller
 
         return redirect()->route('contracts.view', $contract->id)->with('success', 'Contract updated successfully.');
     }
-	
+
+    /**
+     * Delete a contract (only if status is in deletable_contract_statuses setting)
+     */
+    public function destroy(Contract $contract)
+    {
+        // Get allowed deletable statuses from settings (default to 'draft' only)
+        $deletableStatusesStr = SettingsHelper::get('deletable_contract_statuses', 'draft');
+        $deletableStatuses = array_filter(explode(',', $deletableStatusesStr));
+
+        // Check if current contract status is deletable
+        if (!in_array($contract->status, $deletableStatuses)) {
+            return redirect()->route('contracts.view', $contract->id)
+                ->with('error', 'Contracts with status "' . $contract->status . '" cannot be deleted.');
+        }
+
+        // Delete associated files if they exist
+        if ($contract->signature_path && Storage::disk('public')->exists($contract->signature_path)) {
+            Storage::disk('public')->delete($contract->signature_path);
+        }
+        if ($contract->pdf_path && Storage::disk('public')->exists($contract->pdf_path)) {
+            Storage::disk('public')->delete($contract->pdf_path);
+        }
+        if ($contract->financing_signature_path && Storage::disk('public')->exists($contract->financing_signature_path)) {
+            Storage::disk('public')->delete($contract->financing_signature_path);
+        }
+        if ($contract->financing_pdf_path && Storage::disk('public')->exists($contract->financing_pdf_path)) {
+            Storage::disk('public')->delete($contract->financing_pdf_path);
+        }
+        if ($contract->dro_signature_path && Storage::disk('public')->exists($contract->dro_signature_path)) {
+            Storage::disk('public')->delete($contract->dro_signature_path);
+        }
+        if ($contract->dro_pdf_path && Storage::disk('public')->exists($contract->dro_pdf_path)) {
+            Storage::disk('public')->delete($contract->dro_pdf_path);
+        }
+
+        // Store subscriber ID before deleting contract (for redirect)
+        $subscriberId = $contract->subscriber_id;
+
+        // Delete contract (cascade will delete add-ons and one-time fees)
+        $contractId = $contract->id;
+        $contract->delete();
+
+        Log::info('Contract deleted', [
+            'contract_id' => $contractId,
+            'status' => $contract->status,
+            'deleted_by' => auth()->user()->id
+        ]);
+
+        // Redirect to subscriber's customer page
+        $subscriber = Subscriber::with('mobilityAccount.ivueAccount.customer')->find($subscriberId);
+        if ($subscriber && $subscriber->mobilityAccount && $subscriber->mobilityAccount->ivueAccount && $subscriber->mobilityAccount->ivueAccount->customer) {
+            return redirect()->route('customers.show', $subscriber->mobilityAccount->ivueAccount->customer->id)
+                ->with('success', 'Contract deleted successfully.');
+        }
+
+        // Fallback to contracts index
+        return redirect()->route('contracts.index')
+            ->with('success', 'Contract deleted successfully.');
+    }
+
     public function sign($id): \Illuminate\Contracts\View\View|\Illuminate\Http\RedirectResponse
     {
         $contract = Contract::with('subscriber.mobilityAccount.ivueAccount.customer')->findOrFail($id);
@@ -1245,6 +1306,11 @@ class ContractController extends Controller
 					 ($totalAddOnCost * 24) + 
 					 $totalOneTimeFeeCost;		
 		
+		// Get deletable contract statuses from settings
+		$deletableStatusesStr = SettingsHelper::get('deletable_contract_statuses', 'draft');
+		$deletableStatuses = array_filter(explode(',', $deletableStatusesStr));
+		$canDelete = in_array($contract->status, $deletableStatuses);
+
 		return view('contracts.view', compact(
 			'contract',
 			'totalAddOnCost',
@@ -1257,7 +1323,8 @@ class ContractController extends Controller
 			'earlyCancellationFee',
 			'monthlyReduction',
 			'buyoutCost',
-			'cancellationPolicy'	
+			'cancellationPolicy',
+			'canDelete'
 		));
 	}
     
