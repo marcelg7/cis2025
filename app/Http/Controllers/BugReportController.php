@@ -29,6 +29,7 @@ class BugReportController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'required|string',
             'severity' => 'required|in:low,medium,high,critical',
+            'feedback_type' => 'required|in:bug,feature,change,general',
             'category' => 'nullable|string',
             'url' => 'nullable|url',
             'screenshot' => 'nullable|image|max:5120', // 5MB max
@@ -46,6 +47,7 @@ class BugReportController extends Controller
             'title' => $validated['title'],
             'description' => $validated['description'],
             'severity' => $validated['severity'],
+            'feedback_type' => $validated['feedback_type'],
             'category' => $validated['category'] ?? 'other',
             'url' => $validated['url'] ?? $request->headers->get('referer'),
             'browser_info' => $request->userAgent(),
@@ -80,7 +82,7 @@ class BugReportController extends Controller
     {
         $this->authorize('view', $bugReport);
 
-        $bugReport->load(['user', 'assignedTo']);
+        $bugReport->load(['user', 'assignedTo', 'comments.user']);
 
         return view('bug-reports.show', compact('bugReport'));
     }
@@ -134,6 +136,26 @@ class BugReportController extends Controller
 
         return redirect()->route('bug-reports.index')
             ->with('success', 'Bug report deleted successfully!');
+    }
+
+    /**
+     * Store a comment on a bug report (admin only)
+     */
+    public function storeComment(Request $request, BugReport $bugReport)
+    {
+        $this->authorize('update', $bugReport);
+
+        $validated = $request->validate([
+            'comment' => 'required|string',
+        ]);
+
+        $bugReport->comments()->create([
+            'user_id' => Auth::id(),
+            'comment' => $validated['comment'],
+        ]);
+
+        return redirect()->route('bug-reports.show', $bugReport)
+            ->with('success', 'Comment added successfully!');
     }
 
     /**

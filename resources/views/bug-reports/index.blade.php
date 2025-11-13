@@ -4,14 +4,14 @@
 <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 py-6 px-2 page-container">
     <div class="mb-6 flex items-center justify-between">
         <div>
-            <h1 class="text-2xl font-semibold text-gray-900">Bug Reports</h1>
-            <p class="mt-1 text-sm text-gray-600">Manage and track reported issues</p>
+            <h1 class="text-2xl font-semibold text-gray-900">Feedback</h1>
+            <p class="mt-1 text-sm text-gray-600">Manage bug reports, feature requests, and user feedback</p>
         </div>
         <a href="{{ route('bug-reports.create') }}" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 transition-colors">
             <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
             </svg>
-            Report New Bug
+            Submit Feedback
         </a>
     </div>
 
@@ -92,8 +92,8 @@
                 <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                 </svg>
-                <h3 class="mt-2 text-sm font-medium text-gray-900">No bug reports</h3>
-                <p class="mt-1 text-sm text-gray-500">Get started by reporting your first bug.</p>
+                <h3 class="mt-2 text-sm font-medium text-gray-900">No feedback yet</h3>
+                <p class="mt-1 text-sm text-gray-500">Get started by submitting feedback.</p>
             </div>
         @else
             <div class="overflow-x-auto">
@@ -102,6 +102,9 @@
                         <tr>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Title
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Type
                             </th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Reporter
@@ -145,6 +148,11 @@
                                             @endif
                                         </div>
                                     </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                                        {{ \App\Models\BugReport::FEEDBACK_TYPES[$bugReport->feedback_type ?? 'bug'] }}
+                                    </span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="text-sm text-gray-900">{{ $bugReport->user->name }}</div>

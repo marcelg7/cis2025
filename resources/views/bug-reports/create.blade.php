@@ -3,8 +3,8 @@
 @section('content')
 <div class="max-w-4xl mx-auto sm:px-6 lg:px-8 py-6 px-2 page-container">
     <div class="mb-6">
-        <h1 class="text-2xl font-semibold text-gray-900">Report a Bug</h1>
-        <p class="mt-1 text-sm text-gray-600">Help us improve by reporting issues you encounter</p>
+        <h1 class="text-2xl font-semibold text-gray-900">Submit Feedback</h1>
+        <p class="mt-1 text-sm text-gray-600">Help us improve by reporting bugs, requesting features, or suggesting changes</p>
     </div>
 
     @if(session('success'))
@@ -76,6 +76,27 @@
                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                 @enderror
                 <p class="mt-1 text-xs text-gray-500">Include what you expected to happen and what actually happened</p>
+            </div>
+
+            <!-- Feedback Type -->
+            <div>
+                <label for="feedback_type" class="block text-sm font-medium text-gray-700 mb-1">
+                    Feedback Type <span class="text-red-500">*</span>
+                </label>
+                <select
+                    id="feedback_type"
+                    name="feedback_type"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 @error('feedback_type') border-red-500 @enderror"
+                    required
+                >
+                    <option value="bug" {{ old('feedback_type', 'bug') == 'bug' ? 'selected' : '' }}>Bug Report - Something is broken</option>
+                    <option value="feature" {{ old('feedback_type') == 'feature' ? 'selected' : '' }}>Feature Request - I want something new</option>
+                    <option value="change" {{ old('feedback_type') == 'change' ? 'selected' : '' }}>Change Request - I want something improved</option>
+                    <option value="general" {{ old('feedback_type') == 'general' ? 'selected' : '' }}>General Feedback - Comments or suggestions</option>
+                </select>
+                @error('feedback_type')
+                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                @enderror
             </div>
 
             <!-- Severity and Category Row -->

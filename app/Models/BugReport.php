@@ -12,6 +12,7 @@ class BugReport extends Model
         'title',
         'description',
         'severity',
+        'feedback_type',
         'status',
         'category',
         'url',
@@ -26,6 +27,16 @@ class BugReport extends Model
 
     protected $casts = [
         'resolved_at' => 'datetime',
+    ];
+
+    /**
+     * Feedback types
+     */
+    public const FEEDBACK_TYPES = [
+        'bug' => 'Bug Report',
+        'feature' => 'Feature Request',
+        'change' => 'Change Request',
+        'general' => 'General Feedback',
     ];
 
     /**
@@ -74,6 +85,14 @@ class BugReport extends Model
     public function assignedTo(): BelongsTo
     {
         return $this->belongsTo(User::class, 'assigned_to');
+    }
+
+    /**
+     * Get all comments for this feedback
+     */
+    public function comments()
+    {
+        return $this->hasMany(FeedbackComment::class)->orderBy('created_at', 'asc');
     }
 
     /**

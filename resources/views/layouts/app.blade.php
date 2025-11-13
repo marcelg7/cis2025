@@ -422,10 +422,10 @@
                                         <div class="border-t border-gray-200 my-1"></div>
                                         <a href="{{ route('bug-reports.create') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                             <div class="flex items-center">
-                                                <svg class="h-4 w-4 mr-2 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                                <svg class="h-4 w-4 mr-2 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"></path>
                                                 </svg>
-                                                Report a Bug
+                                                Submit Feedback
                                             </div>
                                         </a>
                                         @hasrole('admin')
@@ -434,7 +434,7 @@
                                                     <svg class="h-4 w-4 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                                                     </svg>
-                                                    Manage Bug Reports
+                                                    Manage Feedback
                                                 </div>
                                             </a>
                                         @endhasrole
@@ -696,11 +696,11 @@
                             <div class="border-t border-gray-200 my-1 mx-4"></div>
 
                             <x-responsive-nav-link :href="route('bug-reports.create')" :active="request()->routeIs('bug-reports.create')">
-                                Report a Bug
+                                Submit Feedback
                             </x-responsive-nav-link>
                             @hasrole('admin')
                                 <x-responsive-nav-link :href="route('bug-reports.index')" :active="request()->routeIs('bug-reports.index')">
-                                    Manage Bug Reports
+                                    Manage Feedback
                                 </x-responsive-nav-link>
                             @endhasrole
 

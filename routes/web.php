@@ -345,6 +345,7 @@ Route::middleware(['auth', 'throttle:200,1', 'ensure.active.csr'])->group(functi
             Route::get('/{bugReport}', [BugReportController::class, 'show'])->name('show');
             Route::patch('/{bugReport}', [BugReportController::class, 'update'])->name('update');
             Route::delete('/{bugReport}', [BugReportController::class, 'destroy'])->name('destroy');
+            Route::post('/{bugReport}/comments', [BugReportController::class, 'storeComment'])->name('comments.store');
         });
 
         // Resource Controllers
