@@ -179,8 +179,8 @@
                         @if($contract->bell_dro_amount && $contract->bell_dro_amount > 0)
                             <p class="text-xs"><span class="font-semibold">DRO Amount:</span> ${{ number_format($contract->bell_dro_amount, 2) }}</p>
                         @endif
-                        @if($contract->bell_plan_cost)
-                            <p class="text-xs"><span class="font-semibold">Bell Plan Cost:</span> ${{ number_format($contract->bell_plan_cost, 2) }}</p>
+                        @if($contract->rate_plan_price || $contract->bell_plan_cost)
+                            <p class="text-xs"><span class="font-semibold">Plan Cost:</span> ${{ number_format($contract->rate_plan_price ?? $contract->bell_plan_cost ?? 0, 2) }}</p>
                         @endif
                     </div>
                 @endif
