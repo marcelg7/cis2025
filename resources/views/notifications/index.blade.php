@@ -61,6 +61,18 @@
                             <p class="text-sm text-gray-600 mt-1">
                                 {{ $notification->data['message'] }}
                             </p>
+                            @php
+                                // Check if contract still exists (for contract-related notifications)
+                                $contractExists = true;
+                                if (isset($notification->data['contract_id'])) {
+                                    $contractExists = \App\Models\Contract::find($notification->data['contract_id']) !== null;
+                                }
+                            @endphp
+                            @if(!$contractExists)
+                                <p class="text-xs text-red-600 mt-1">
+                                    ⚠️ This contract has been deleted
+                                </p>
+                            @endif
                             <p class="text-xs text-gray-500 mt-1">
                                 {{ $notification->created_at->diffForHumans() }}
                             </p>
@@ -74,12 +86,19 @@
                                     </button>
                                 </form>
                             @endif
-                            @if(isset($notification->data['action_url']))
+                            @if(isset($notification->data['action_url']) && $contractExists)
                                 <a href="{{ route('notifications.read', $notification->id) }}"
                                    class="text-xs text-indigo-600 hover:text-indigo-800">
                                     {{ $notification->data['action_text'] ?? 'View' }}
                                 </a>
                             @endif
+                            <form action="{{ route('notifications.destroy', $notification->id) }}" method="POST" class="inline">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="text-xs text-red-600 hover:text-red-800">
+                                    Delete
+                                </button>
+                            </form>
                         </div>
                     </div>
                 </div>

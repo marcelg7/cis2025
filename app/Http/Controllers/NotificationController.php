@@ -41,6 +41,15 @@ class NotificationController extends Controller
 
         // If there's an action URL in the notification data, redirect there
         if (isset($notification->data['action_url'])) {
+            // Check if this is a contract notification and if the contract still exists
+            if (isset($notification->data['contract_id'])) {
+                $contract = \App\Models\Contract::find($notification->data['contract_id']);
+                if (!$contract) {
+                    return redirect()->route('notifications.index')
+                        ->with('error', 'The contract referenced in this notification no longer exists.');
+                }
+            }
+
             return redirect($notification->data['action_url']);
         }
 

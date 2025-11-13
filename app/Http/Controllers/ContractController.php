@@ -671,6 +671,12 @@ class ContractController extends Controller
 
         // Delete contract (cascade will delete add-ons and one-time fees)
         $contractId = $contract->id;
+
+        // Clean up notifications related to this contract
+        \DB::table('notifications')
+            ->whereRaw("JSON_EXTRACT(data, '$.contract_id') = ?", [$contractId])
+            ->delete();
+
         $contract->delete();
 
         Log::info('Contract deleted', [
