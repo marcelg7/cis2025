@@ -153,7 +153,7 @@ class ContractController extends Controller
 			'customer_phone' => 'nullable|string|max:100',
 			'bell_device_id' => 'nullable|exists:bell_devices,id',
 			'bell_pricing_type' => 'nullable|in:smartpay,dro,byod',
-			'bell_tier' => 'nullable|in:Ultra,Max,Select,Lite',
+			'bell_tier' => 'nullable|in:Ultra,Max,Select,Lite,Basic',
 			'bell_retail_price' => 'nullable|numeric|min:0|max:10000', // SECURITY: Prevent unreasonably large values
 			'bell_monthly_device_cost' => 'nullable|numeric|min:0|max:10000',
 			'bell_plan_cost' => 'nullable|numeric|min:0|max:10000',
@@ -177,7 +177,7 @@ class ContractController extends Controller
 			'mobile_internet_plan_id' => 'nullable|exists:mobile_internet_plans,id',
 			'rate_plan_price' => 'nullable|numeric|min:0|max:10000',
 			'mobile_internet_price' => 'nullable|numeric|min:0|max:10000',
-			'selected_tier' => 'nullable|string|in:Lite,Select,Max,Ultra',
+			'selected_tier' => 'nullable|string|in:Lite,Select,Max,Ultra,Basic',
 			'custom_device_name' => 'nullable|string|max:255',
 		]);
         
@@ -480,7 +480,7 @@ class ContractController extends Controller
 			'customer_phone' => 'nullable|string|max:100',
 			'bell_device_id' => 'nullable|exists:bell_devices,id',
 			'bell_pricing_type' => 'nullable|in:smartpay,dro,byod',
-			'bell_tier' => 'nullable|in:Ultra,Max,Select,Lite',
+			'bell_tier' => 'nullable|in:Ultra,Max,Select,Lite,Basic',
 			'bell_retail_price' => 'nullable|numeric|min:0|max:10000', // SECURITY: Prevent unreasonably large values
 			'bell_monthly_device_cost' => 'nullable|numeric|min:0|max:10000',
 			'bell_plan_cost' => 'nullable|numeric|min:0|max:10000',
@@ -504,7 +504,7 @@ class ContractController extends Controller
 			'mobile_internet_plan_id' => 'nullable|exists:mobile_internet_plans,id',
 			'rate_plan_price' => 'nullable|numeric|min:0|max:10000',
 			'mobile_internet_price' => 'nullable|numeric|min:0|max:10000',
-			'selected_tier' => 'nullable|string|in:Lite,Select,Max,Ultra',
+			'selected_tier' => 'nullable|string|in:Lite,Select,Max,Ultra,Basic',
 			'custom_device_name' => 'nullable|string|max:255',
 		]);
 
