@@ -354,7 +354,12 @@ class ContractController extends Controller
         if ($contract->mobileInternetPlan && $contract->mobileInternetPlan->description) {
             $contract->mobileInternetPlan->description = $purifier->purify($contract->mobileInternetPlan->description);
         }
-        
+
+        // Get deletable contract statuses from settings
+        $deletableStatusesStr = SettingsHelper::get('deletable_contract_statuses', 'draft');
+        $deletableStatuses = array_filter(explode(',', $deletableStatusesStr));
+        $canDelete = in_array($contract->status, $deletableStatuses);
+
         $pdf = Pdf::loadView('contracts.view', compact(
             'contract',
             'totalAddOnCost',
@@ -367,7 +372,8 @@ class ContractController extends Controller
             'earlyCancellationFee',
             'monthlyReduction',
             'buyoutCost',
-            'cancellationPolicy'
+            'cancellationPolicy',
+            'canDelete'
         ))
             ->setPaper('a4', 'portrait')
             ->setOptions([
@@ -806,7 +812,12 @@ class ContractController extends Controller
 			if ($contract->mobileInternetPlan && $contract->mobileInternetPlan->description) {
 				$contract->mobileInternetPlan->description = $purifier->purify($contract->mobileInternetPlan->description);
 			}
-			
+
+			// Get deletable contract statuses from settings
+			$deletableStatusesStr = SettingsHelper::get('deletable_contract_statuses', 'draft');
+			$deletableStatuses = array_filter(explode(',', $deletableStatusesStr));
+			$canDelete = in_array($contract->status, $deletableStatuses);
+
 			$pdf = Pdf::loadView('contracts.view', compact(
 				'contract',
 				'totalAddOnCost',
@@ -819,7 +830,8 @@ class ContractController extends Controller
 				'earlyCancellationFee',
 				'monthlyReduction',
 				'buyoutCost',
-				'cancellationPolicy'
+				'cancellationPolicy',
+				'canDelete'
 			))
 				->setPaper('a4', 'portrait')
 				->setOptions([
@@ -933,7 +945,12 @@ class ContractController extends Controller
 		if ($contract->mobileInternetPlan && $contract->mobileInternetPlan->description) {
 			$contract->mobileInternetPlan->description = $purifier->purify($contract->mobileInternetPlan->description);
 		}
-		
+
+		// Get deletable contract statuses from settings
+		$deletableStatusesStr = SettingsHelper::get('deletable_contract_statuses', 'draft');
+		$deletableStatuses = array_filter(explode(',', $deletableStatusesStr));
+		$canDelete = in_array($contract->status, $deletableStatuses);
+
 		$pdf = Pdf::loadView('contracts.view', compact(
 			'contract',
 			'totalAddOnCost',
@@ -946,7 +963,8 @@ class ContractController extends Controller
 			'earlyCancellationFee',
 			'monthlyReduction',
 			'buyoutCost',
-			'cancellationPolicy'
+			'cancellationPolicy',
+			'canDelete'
 		))
 			->setPaper('a4', 'portrait')
 			->setOptions([
