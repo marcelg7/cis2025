@@ -239,7 +239,7 @@ class BellPricingController extends Controller
     {
         $request->validate([
             'device_id' => 'required|exists:bell_devices,id',
-            'tier' => 'required|in:Ultra,Max,Select,Lite',
+            'tier' => 'required|in:Ultra,Max,Select,Lite,Basic',
             'pricing_type' => 'in:smartpay,dro',
         ]);
 
@@ -267,7 +267,7 @@ class BellPricingController extends Controller
     {
         $request->validate([
             'device_id' => 'required|exists:bell_devices,id',
-            'tier' => 'required|in:Ultra,Max,Select,Lite',
+            'tier' => 'required|in:Ultra,Max,Select,Lite,Basic',
             'pricing_type' => 'required|in:smartpay,dro',
         ]);
 
