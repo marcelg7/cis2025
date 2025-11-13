@@ -159,7 +159,7 @@ class BugReportController extends Controller
     }
 
     /**
-     * Send Slack notification for new bug report
+     * Send Slack notification for new feedback submission
      */
     protected function sendSlackNotification(BugReport $bugReport)
     {
@@ -177,14 +177,24 @@ class BugReportController extends Controller
             'critical' => ':red_circle:',
         ];
 
+        $feedbackTypeEmoji = [
+            'bug' => '🐛',
+            'feature' => '✨',
+            'change' => '🔄',
+            'general' => '💬',
+        ];
+
+        $feedbackType = BugReport::FEEDBACK_TYPES[$bugReport->feedback_type ?? 'bug'];
+        $emoji = $feedbackTypeEmoji[$bugReport->feedback_type ?? 'bug'];
+
         $message = [
-            'text' => '🐛 New Bug Report',
+            'text' => "{$emoji} New Feedback: {$feedbackType}",
             'blocks' => [
                 [
                     'type' => 'header',
                     'text' => [
                         'type' => 'plain_text',
-                        'text' => '🐛 New Bug Report',
+                        'text' => "{$emoji} New Feedback: {$feedbackType}",
                     ],
                 ],
                 [
@@ -237,7 +247,7 @@ class BugReportController extends Controller
                     'type' => 'button',
                     'text' => [
                         'type' => 'plain_text',
-                        'text' => 'View Bug Report',
+                        'text' => 'View Feedback',
                     ],
                     'url' => route('bug-reports.show', $bugReport->id),
                     'style' => 'primary',
@@ -245,28 +255,49 @@ class BugReportController extends Controller
             ],
         ];
 
-        // If we have a bot token, use the Web API to get thread info
-        if ($slackToken) {
-            $channel = env('SLACK_CHANNEL_ID');
-            $response = Http::withHeaders([
-                'Authorization' => "Bearer {$slackToken}",
-                'Content-Type' => 'application/json',
-            ])->post('https://slack.com/api/chat.postMessage', [
-                'channel' => $channel,
-                'text' => $message['text'],
-                'blocks' => $message['blocks'],
-            ]);
-
-            if ($response->successful() && $response->json('ok')) {
-                $data = $response->json();
-                $bugReport->update([
-                    'slack_thread_ts' => $data['ts'] ?? null,
-                    'slack_channel_id' => $data['channel'] ?? null,
+        try {
+            // If we have a bot token, use the Web API to get thread info
+            if ($slackToken) {
+                $channel = env('SLACK_CHANNEL_ID');
+                $response = Http::withHeaders([
+                    'Authorization' => "Bearer {$slackToken}",
+                    'Content-Type' => 'application/json',
+                ])->post('https://slack.com/api/chat.postMessage', [
+                    'channel' => $channel,
+                    'text' => $message['text'],
+                    'blocks' => $message['blocks'],
                 ]);
+
+                if ($response->successful() && $response->json('ok')) {
+                    $data = $response->json();
+                    $bugReport->update([
+                        'slack_thread_ts' => $data['ts'] ?? null,
+                        'slack_channel_id' => $data['channel'] ?? null,
+                    ]);
+                } else {
+                    \Log::warning('Slack Web API failed', [
+                        'status' => $response->status(),
+                        'response' => $response->body(),
+                        'feedback_id' => $bugReport->id,
+                    ]);
+                }
+            } else {
+                // Fallback to webhook (no thread info captured)
+                $response = Http::post($webhookUrl, $message);
+
+                if (!$response->successful()) {
+                    \Log::warning('Slack webhook failed', [
+                        'status' => $response->status(),
+                        'response' => $response->body(),
+                        'feedback_id' => $bugReport->id,
+                    ]);
+                }
             }
-        } else {
-            // Fallback to webhook (no thread info captured)
-            Http::post($webhookUrl, $message);
+        } catch (\Exception $e) {
+            \Log::error('Slack notification failed', [
+                'error' => $e->getMessage(),
+                'feedback_id' => $bugReport->id,
+            ]);
         }
     }
 }
