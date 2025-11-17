@@ -7,14 +7,14 @@ use Illuminate\Console\Command;
 
 class ExportBugReport extends Command
 {
-    protected $signature = 'bug:export {id? : The bug report ID to export}
-                            {--list : List all bugs}
-                            {--open : Filter for open bugs only}
+    protected $signature = 'bug:export {id? : The feedback/bug report ID to export}
+                            {--list : List all feedback items}
+                            {--open : Filter for open items only}
                             {--assigned= : Filter by assigned user ID}
                             {--severity= : Filter by severity (low, medium, high, critical)}
-                            {--limit=20 : Number of bugs to show in list}';
+                            {--limit=20 : Number of items to show in list}';
 
-    protected $description = 'Export bug report details in a format suitable for sharing with Claude Code';
+    protected $description = 'Export feedback/bug report details with comment threads in a format suitable for sharing with Claude Code';
 
     public function handle()
     {
@@ -30,7 +30,7 @@ class ExportBugReport extends Command
 
     protected function exportBug($id)
     {
-        $bug = BugReport::with(['user', 'assignedTo'])->find($id);
+        $bug = BugReport::with(['user', 'assignedTo', 'comments.user'])->find($id);
 
         if (!$bug) {
             $this->error("Bug report #{$id} not found.");
@@ -38,13 +38,16 @@ class ExportBugReport extends Command
         }
 
         // Output formatted bug details
+        $feedbackTypeLabel = BugReport::FEEDBACK_TYPES[$bug->feedback_type ?? 'bug'] ?? 'Bug Report';
+
         $this->line('');
         $this->line('================================================================================');
-        $this->info("BUG REPORT #{$bug->id}");
+        $this->info("FEEDBACK #{$bug->id} - {$feedbackTypeLabel}");
         $this->line('================================================================================');
         $this->line('');
 
         $this->line("Title: {$bug->title}");
+        $this->line("Type: {$feedbackTypeLabel}");
         $this->line("Status: {$bug->status}");
         $this->line("Severity: {$bug->severity}");
         $this->line("Category: " . ($bug->category ?? 'N/A'));
@@ -86,6 +89,18 @@ class ExportBugReport extends Command
             $this->line($bug->admin_notes);
         }
 
+        // Display comments thread
+        if ($bug->comments->isNotEmpty()) {
+            $this->line('');
+            $this->line('--- Comments Thread ---');
+            foreach ($bug->comments as $index => $comment) {
+                $this->line('');
+                $commentNumber = $index + 1;
+                $this->line("Comment #{$commentNumber} - {$comment->user->name} ({$comment->created_at->format('Y-m-d H:i:s')}):");
+                $this->line($comment->comment);
+            }
+        }
+
         $this->line('');
         $this->line('================================================================================');
         $this->line('');
@@ -125,15 +140,17 @@ class ExportBugReport extends Command
 
         $this->line('');
         $this->line('================================================================================');
-        $this->info('BUG REPORTS');
+        $this->info('FEEDBACK REPORTS');
         $this->line('================================================================================');
         $this->line('');
 
         $tableData = [];
         foreach ($bugs as $bug) {
+            $feedbackTypeLabel = BugReport::FEEDBACK_TYPES[$bug->feedback_type ?? 'bug'] ?? 'Bug Report';
             $tableData[] = [
                 $bug->id,
                 $bug->title,
+                $feedbackTypeLabel,
                 $bug->severity,
                 $bug->status,
                 $bug->category ?? 'N/A',
@@ -143,18 +160,18 @@ class ExportBugReport extends Command
         }
 
         $this->table(
-            ['ID', 'Title', 'Severity', 'Status', 'Category', 'Assigned To', 'Date'],
+            ['ID', 'Title', 'Type', 'Severity', 'Status', 'Category', 'Assigned To', 'Date'],
             $tableData
         );
 
         $this->line('');
-        $this->comment("Showing {$bugs->count()} bug report(s).");
+        $this->comment("Showing {$bugs->count()} feedback item(s).");
         $this->comment('To view details: php artisan bug:export {id}');
         $this->line('');
 
         $this->info('Available options:');
-        $this->line('  --open              Show only open/in-progress bugs');
-        $this->line('  --assigned=USER_ID  Show bugs assigned to specific user');
+        $this->line('  --open              Show only open/in-progress items');
+        $this->line('  --assigned=USER_ID  Show items assigned to specific user');
         $this->line('  --severity=LEVEL    Filter by severity (low, medium, high, critical)');
         $this->line('  --limit=N           Limit number of results (default: 20)');
 
