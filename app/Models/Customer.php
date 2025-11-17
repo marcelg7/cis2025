@@ -23,6 +23,7 @@ class Customer extends Model
         'first_name',
         'last_name',
         'email',
+        'contract_email',
         'phone',
         'address',
         'city',

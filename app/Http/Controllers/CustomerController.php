@@ -281,6 +281,28 @@ class CustomerController extends Controller
         return view('customers.show', compact('customer', 'deletableStatuses'));
     }
 
+    public function edit($customerId): View
+    {
+        $customer = Customer::findOrFail($customerId);
+        return view('customers.edit', compact('customer'));
+    }
+
+    public function update(Request $request, $customerId)
+    {
+        $customer = Customer::findOrFail($customerId);
+
+        $request->validate([
+            'contract_email' => 'nullable|email|max:255',
+        ]);
+
+        $customer->update([
+            'contract_email' => $request->contract_email,
+        ]);
+
+        return redirect()->route('customers.show', $customerId)
+            ->with('success', 'Contract email updated successfully.');
+    }
+
     public function addSubscriberForm($customerId): View
     {
         $customer = Customer::with('ivueAccounts.mobilityAccount')->findOrFail($customerId);

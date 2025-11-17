@@ -1050,7 +1050,9 @@ class ContractController extends Controller
         }
 
         // Email customer with merged PDF
-        $email = $contract->subscriber->mobilityAccount->ivueAccount->customer->email;
+        // Use contract_email if set, otherwise fall back to IVUE email
+        $customer = $contract->subscriber->mobilityAccount->ivueAccount->customer;
+        $email = $customer->contract_email ?: $customer->email;
         if ($email && filter_var($email, FILTER_VALIDATE_EMAIL)) {
             try {
                 // Check if we should simulate email (development/test mode for non-Hay emails)
@@ -1362,8 +1364,10 @@ class ContractController extends Controller
         if ($contract->status !== 'finalized') {
             return redirect()->back()->with('error', 'Contract must be finalized to email.');
         }
-      
-        $email = $contract->subscriber->mobilityAccount->ivueAccount->customer->email;
+
+        // Use contract_email if set, otherwise fall back to IVUE email
+        $customer = $contract->subscriber->mobilityAccount->ivueAccount->customer;
+        $email = $customer->contract_email ?: $customer->email;
         if (!$email || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
             // Log without exposing PII (email address removed)
             Log::error('Invalid or missing email for customer', ['contract_id' => $id, 'email_provided' => !empty($email)]);

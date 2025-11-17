@@ -74,8 +74,24 @@
             <div class="border-t border-gray-200">
                 <div class="px-4 py-4 sm:px-6 grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <h3 class="text-lg font-medium text-gray-900">Contact Information</h3>
-                        <p class="mt-1 text-sm text-gray-600"><strong>Email:</strong> {{ $customer->email ?? 'N/A' }}</p>
+                        <div class="flex justify-between items-start">
+                            <h3 class="text-lg font-medium text-gray-900">Contact Information</h3>
+                            <a href="{{ route('customers.edit', $customer->id) }}" class="text-sm text-indigo-600 hover:text-indigo-800">
+                                Edit Contract Email
+                            </a>
+                        </div>
+                        <p class="mt-1 text-sm text-gray-600"><strong>Email (IVUE):</strong> {{ $customer->email ?? 'N/A' }}</p>
+                        @if($customer->contract_email)
+                            <p class="text-sm text-gray-600">
+                                <strong>Contract Signing Email:</strong>
+                                <span class="text-green-700 font-medium">{{ $customer->contract_email }}</span>
+                                <span class="text-xs text-gray-500 ml-1">(Used for contracts)</span>
+                            </p>
+                        @else
+                            <p class="text-sm text-gray-500 italic">
+                                No contract email set - using IVUE email for contracts
+                            </p>
+                        @endif
                         <p class="text-sm text-gray-600"><strong>Address:</strong> {{ $customer->address }}, {{ $customer->city }}, {{ $customer->state }} {{ $customer->zip_code }}</p>
 
                         @if($customer->contact_methods && count($customer->contact_methods) > 0)

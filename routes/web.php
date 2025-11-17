@@ -89,6 +89,8 @@ Route::middleware(['auth', 'throttle:200,1', 'ensure.active.csr'])->group(functi
         Route::get('/', [CustomerController::class, 'index'])->name('index');
         Route::post('/fetch', [CustomerController::class, 'fetch'])->name('fetch');
         Route::get('/search', [CustomerController::class, 'search'])->name('search');
+        Route::get('/{customer}/edit', [CustomerController::class, 'edit'])->name('edit');
+        Route::put('/{customer}', [CustomerController::class, 'update'])->name('update');
         Route::get('/{customer}', [CustomerController::class, 'show'])->name('show');
         Route::get('/{customer}/add-mobility', [CustomerController::class, 'addMobilityForm'])->name('add-mobility');
         Route::post('/{customer}/add-mobility', [CustomerController::class, 'storeMobility'])->name('store-mobility');
