@@ -165,8 +165,8 @@ class BugReportController extends Controller
      */
     protected function sendSlackNotification(BugReport $bugReport)
     {
-        $webhookUrl = env('BUG_REPORT_SLACK_WEBHOOK');
-        $slackToken = env('SLACK_BOT_TOKEN'); // Optional: for getting thread link
+        $webhookUrl = config('services.slack.bug_report_webhook');
+        $slackToken = config('services.slack.bot_token'); // Optional: for getting thread link
 
         \Log::info('sendSlackNotification called', [
             'feedback_id' => $bugReport->id,
@@ -267,7 +267,7 @@ class BugReportController extends Controller
         try {
             // If we have a bot token, use the Web API to get thread info
             if ($slackToken) {
-                $channel = env('SLACK_CHANNEL_ID');
+                $channel = config('services.slack.channel_id');
                 \Log::info('Sending via Slack Web API', ['channel' => $channel, 'feedback_id' => $bugReport->id]);
                 $response = Http::withHeaders([
                     'Authorization' => "Bearer {$slackToken}",
