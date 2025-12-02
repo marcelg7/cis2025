@@ -21,14 +21,20 @@
                 <div class="mt-4 grid grid-cols-1 gap-y-6 sm:grid-cols-2 sm:gap-x-4">
                     <div>
                         <label for="start_date" class="block text-sm font-medium text-gray-700">Start Date</label>
-                        <input type="date" name="start_date" id="start_date" value="{{ old('start_date', now()->toDateString()) }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required>
+                        <div class="mt-1 flex gap-2">
+                            <input type="date" name="start_date" id="start_date" value="{{ old('start_date', now()->toDateString()) }}" class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required>
+                            <button type="button" onclick="document.getElementById('start_date').value = new Date().toISOString().split('T')[0]" class="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 whitespace-nowrap">Today</button>
+                        </div>
                         @error('start_date')
                             <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
                     <div>
                         <label for="end_date" class="block text-sm font-medium text-gray-700">End Date</label>
-                        <input type="date" name="end_date" id="end_date" value="{{ old('end_date', now()->addYears(2)->toDateString()) }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                        <div class="mt-1 flex gap-2">
+                            <input type="date" name="end_date" id="end_date" value="{{ old('end_date', now()->addYears(2)->toDateString()) }}" class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                            <button type="button" onclick="document.getElementById('end_date').value = new Date().toISOString().split('T')[0]" class="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 whitespace-nowrap">Today</button>
+                        </div>
                         @error('end_date')
                             <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
                         @enderror
@@ -46,7 +52,10 @@
                     </div>
                     <div>
                         <label for="contract_date" class="block text-sm font-medium text-gray-700">Contract Date</label>
-                        <input type="date" name="contract_date" id="contract_date" value="{{ old('contract_date', now()->toDateString()) }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required>
+                        <div class="mt-1 flex gap-2">
+                            <input type="date" name="contract_date" id="contract_date" value="{{ old('contract_date', now()->toDateString()) }}" class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required>
+                            <button type="button" onclick="document.getElementById('contract_date').value = new Date().toISOString().split('T')[0]" class="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 whitespace-nowrap">Today</button>
+                        </div>
                         @error('contract_date')
                             <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
                         @enderror
@@ -269,7 +278,10 @@
                     </div>
                     <div>
                         <label for="first_bill_date" class="block text-sm font-medium text-gray-700">First Bill Date</label>
-                        <input type="date" name="first_bill_date" id="first_bill_date" value="{{ old('first_bill_date', $defaultFirstBillDate->toDateString()) }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required>
+                        <div class="mt-1 flex gap-2">
+                            <input type="date" name="first_bill_date" id="first_bill_date" value="{{ old('first_bill_date', $defaultFirstBillDate->toDateString()) }}" class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required>
+                            <button type="button" onclick="document.getElementById('first_bill_date').value = new Date().toISOString().split('T')[0]" class="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 whitespace-nowrap">Today</button>
+                        </div>
                         @error('first_bill_date')
                             <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
                         @enderror
