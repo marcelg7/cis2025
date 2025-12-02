@@ -55,7 +55,9 @@ class BugReportController extends Controller
         ]);
 
         // Send Slack notification
+        \Log::info('About to send Slack notification for feedback', ['id' => $bugReport->id, 'title' => $bugReport->title]);
         $this->sendSlackNotification($bugReport);
+        \Log::info('Slack notification sent for feedback', ['id' => $bugReport->id]);
 
         return redirect()->route('bug-reports.create')
             ->with('success', 'Bug report submitted successfully! We\'ll look into it.');
@@ -166,7 +168,14 @@ class BugReportController extends Controller
         $webhookUrl = env('BUG_REPORT_SLACK_WEBHOOK');
         $slackToken = env('SLACK_BOT_TOKEN'); // Optional: for getting thread link
 
+        \Log::info('sendSlackNotification called', [
+            'feedback_id' => $bugReport->id,
+            'webhook_url' => $webhookUrl ? 'SET' : 'NOT SET',
+            'slack_token' => $slackToken ? 'SET' : 'NOT SET'
+        ]);
+
         if (!$webhookUrl) {
+            \Log::warning('Slack webhook URL not configured - skipping notification');
             return;
         }
 
@@ -259,6 +268,7 @@ class BugReportController extends Controller
             // If we have a bot token, use the Web API to get thread info
             if ($slackToken) {
                 $channel = env('SLACK_CHANNEL_ID');
+                \Log::info('Sending via Slack Web API', ['channel' => $channel, 'feedback_id' => $bugReport->id]);
                 $response = Http::withHeaders([
                     'Authorization' => "Bearer {$slackToken}",
                     'Content-Type' => 'application/json',
@@ -274,6 +284,7 @@ class BugReportController extends Controller
                         'slack_thread_ts' => $data['ts'] ?? null,
                         'slack_channel_id' => $data['channel'] ?? null,
                     ]);
+                    \Log::info('Slack Web API success', ['feedback_id' => $bugReport->id]);
                 } else {
                     \Log::warning('Slack Web API failed', [
                         'status' => $response->status(),
@@ -283,6 +294,7 @@ class BugReportController extends Controller
                 }
             } else {
                 // Fallback to webhook (no thread info captured)
+                \Log::info('Sending via webhook', ['webhook_url' => substr($webhookUrl, 0, 50) . '...', 'feedback_id' => $bugReport->id]);
                 $response = Http::post($webhookUrl, $message);
 
                 if (!$response->successful()) {
@@ -291,11 +303,14 @@ class BugReportController extends Controller
                         'response' => $response->body(),
                         'feedback_id' => $bugReport->id,
                     ]);
+                } else {
+                    \Log::info('Slack webhook success', ['feedback_id' => $bugReport->id]);
                 }
             }
         } catch (\Exception $e) {
             \Log::error('Slack notification failed', [
                 'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
                 'feedback_id' => $bugReport->id,
             ]);
         }
