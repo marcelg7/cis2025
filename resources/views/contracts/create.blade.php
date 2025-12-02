@@ -778,22 +778,23 @@ function addAddOn() {
         // Tier sync and device filtering
         function filterDevicesByTier(selectedTier) {
             const allOptions = Array.from(deviceSelect.options);
-            
+
             allOptions.forEach(option => {
                 if (option.value === '') {
                     option.style.display = '';
                     option.disabled = false;
                     return;
                 }
-                
+
                 const availableTiers = option.getAttribute('data-available-tiers');
-                
+
                 if (!selectedTier || !availableTiers) {
                     option.style.display = '';
                     option.disabled = false;
                 } else {
                     const tiersArray = availableTiers.split(',');
-                    if (tiersArray.includes(selectedTier)) {
+                    // Always show devices if they match the selected tier OR if they have Basic tier pricing
+                    if (tiersArray.includes(selectedTier) || tiersArray.includes('Basic')) {
                         option.style.display = '';
                         option.disabled = false;
                     } else {
@@ -802,7 +803,7 @@ function addAddOn() {
                     }
                 }
             });
-            
+
             const currentDeviceOption = deviceSelect.options[deviceSelect.selectedIndex];
             if (currentDeviceOption && currentDeviceOption.disabled) {
                 deviceSelect.value = '';
