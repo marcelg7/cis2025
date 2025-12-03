@@ -157,7 +157,11 @@ class CustomerController extends Controller
                 ['status']
             );
 
-            return view('customers.show', compact('customer'));
+            // Get deletable contract statuses from settings
+            $deletableStatusesStr = SettingsHelper::get('deletable_contract_statuses', 'draft');
+            $deletableStatuses = array_filter(explode(',', $deletableStatusesStr));
+
+            return view('customers.show', compact('customer', 'deletableStatuses'));
         } catch (RequestException $e) {
             Log::error('API fetch error: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
 
