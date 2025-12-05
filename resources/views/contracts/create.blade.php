@@ -1193,6 +1193,13 @@ function addAddOn() {
 						if (applyBtn && applyBtn.offsetParent !== null) { // Check if visible
 							applyBtn.click();
 						}
+
+						// After plan is applied, restore add-ons (like Hay Credit)
+						if (config.selected_add_ons && Array.isArray(config.selected_add_ons) && config.selected_add_ons.length > 0) {
+							setTimeout(() => {
+								restoreAddOns(config.selected_add_ons);
+							}, 200);
+						}
 					}, 500);
 				}
 			}
@@ -1212,7 +1219,59 @@ function addAddOn() {
 		// Success notification
 		setTimeout(() => {
 			alert('Template applied! Review the auto-filled fields. You may need to click "Load Pricing" and "Apply to Contract" for the device.');
-		}, 600);
+		}, 1200);
+	}
+
+	// Helper function to restore add-ons from template
+	function restoreAddOns(addOns) {
+		if (!addOns || addOns.length === 0) return;
+
+		addOns.forEach(addon => {
+			// Check if this is a credit (negative cost)
+			if (addon.name.toLowerCase().includes('credit') && addon.cost < 0) {
+				// Use the existing addCreditAsAddon function if available
+				if (typeof addCreditAsAddon === 'function') {
+					addCreditAsAddon(Math.abs(addon.cost), addon.name);
+				}
+			} else {
+				// Add regular add-on
+				const addOnsContainer = document.getElementById('add-ons');
+				if (!addOnsContainer) return;
+
+				const div = document.createElement('div');
+				div.className = 'add-on grid grid-cols-1 sm:grid-cols-3 gap-4 items-end';
+				div.innerHTML = `
+					<div class="sm:col-span-2">
+						<label class="block text-sm font-medium text-gray-700">Name</label>
+						<input type="text"
+							   name="add_ons[${addOnCount}][name]"
+							   value="${addon.name}"
+							   class="addon-name-input mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+						<input type="hidden"
+							   name="add_ons[${addOnCount}][code]"
+							   value=""
+							   class="addon-code-input">
+					</div>
+					<div>
+						<label class="block text-sm font-medium text-gray-700">Cost ($)</label>
+						<input type="number"
+							   name="add_ons[${addOnCount}][cost]"
+							   step="0.01"
+							   value="${addon.cost.toFixed(2)}"
+							   class="addon-cost-input mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm total-input">
+					</div>
+					<div>
+						<button type="button" onclick="removeAddOn(this)" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700">
+							Remove
+						</button>
+					</div>
+				`;
+				addOnsContainer.appendChild(div);
+				addOnCount++;
+
+				if (typeof calculateTotal === 'function') calculateTotal();
+			}
+		});
 	}
 
 	// ==========================================
@@ -1228,6 +1287,25 @@ function addAddOn() {
 			const templateName = prompt('Enter a name for this template:');
 			if (!templateName) return;
 
+			// Gather add-ons (including Hay Credit)
+			const addOns = [];
+			const addOnNames = document.querySelectorAll('input[name^="add_ons["][name$="[name]"]');
+			const addOnCosts = document.querySelectorAll('input[name^="add_ons["][name$="[cost]"]');
+
+			addOnNames.forEach((nameInput, index) => {
+				if (nameInput.value && addOnCosts[index]) {
+					addOns.push({
+						name: nameInput.value,
+						cost: parseFloat(addOnCosts[index].value) || 0
+					});
+				}
+			});
+
+			// Check if Hay Credit is applied
+			const hayCreditApplied = addOns.some(addon =>
+				addon.name.toLowerCase().includes('credit') && addon.cost < 0
+			);
+
 			// Gather current form values
 			const formData = {
 				name: templateName,
@@ -1238,6 +1316,8 @@ function addAddOn() {
 				bell_device_id: document.getElementById('hidden_bell_device_id')?.value || null,
 				rate_plan_id: document.querySelector('input[name="rate_plan_id"]')?.value || null,
 				mobile_internet_plan_id: document.querySelector('input[name="mobile_internet_plan_id"]')?.value || null,
+				selected_add_ons: addOns,
+				hay_credit_applied: hayCreditApplied,
 			};
 
 			// Show loading state
