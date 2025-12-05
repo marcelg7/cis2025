@@ -6,6 +6,7 @@ use App\Http\Controllers\UserSettingsController;
 use App\Http\Controllers\ActivityTypeController;
 use App\Http\Controllers\CommitmentPeriodController;
 use App\Http\Controllers\ContractController;
+use App\Http\Controllers\ContractTemplateController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
@@ -160,6 +161,13 @@ Route::middleware(['auth', 'throttle:200,1', 'ensure.active.csr'])->group(functi
             Route::post('/csr-initial', [ContractController::class, 'storeCsrDroInitials'])->name('store-csr-initial');
         });
     });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Contract Templates
+    |--------------------------------------------------------------------------
+    */
+    Route::resource('contract-templates', ContractTemplateController::class);
 
     /*
     |--------------------------------------------------------------------------
@@ -322,6 +330,12 @@ Route::middleware(['auth', 'throttle:200,1', 'ensure.active.csr'])->group(functi
         
         // Bell Device Compatibility
         Route::get('/bell-devices/compatible', [BellDeviceController::class, 'compatible']);
+
+        // Contract Templates API
+        Route::get('/templates', [ContractTemplateController::class, 'getTemplates']);
+        Route::get('/templates/frequently-used', [ContractTemplateController::class, 'getFrequentlyUsed']);
+        Route::get('/templates/{contractTemplate}/data', [ContractTemplateController::class, 'getTemplateData']);
+        Route::post('/templates/save-from-contract', [ContractTemplateController::class, 'saveFromContract']);
     });
 
     /*
