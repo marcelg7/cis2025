@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Contract;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
@@ -54,6 +55,12 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
 
-        return view('dashboard', compact('stats', 'recentContracts'));
+        // Get currently active users (logged in within last 15 minutes, excluding current user)
+        $activeUsers = User::where('id', '!=', $user->id)
+            ->where('last_activity_at', '>=', now()->subMinutes(15))
+            ->orderBy('name')
+            ->get();
+
+        return view('dashboard', compact('stats', 'recentContracts', 'activeUsers'));
     }
 }

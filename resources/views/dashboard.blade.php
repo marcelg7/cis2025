@@ -5,10 +5,30 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
             <!-- Welcome Header -->
-            <div class="mb-8 bg-white rounded-xl shadow-sm p-6">
+            <div class="mb-6 bg-white rounded-xl shadow-sm p-6">
                 <h1 class="text-3xl font-bold text-gray-900">Welcome back, {{ Auth::user()->name }}!</h1>
                 <p class="mt-2 text-gray-600">Here's what's happening with your contracts today.</p>
             </div>
+
+            <!-- Currently Online Users -->
+            @if($activeUsers->count() > 0)
+            <div class="mb-6 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl shadow-sm p-5 border border-green-100">
+                <h3 class="text-sm font-semibold text-green-800 inline-flex items-center mb-3">
+                    <svg class="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                    </svg>
+                    Currently Online ({{ $activeUsers->count() }})
+                </h3>
+                <div class="flex flex-wrap gap-2">
+                    @foreach($activeUsers as $activeUser)
+                        <span class="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium bg-white text-green-800 border border-green-200 shadow-sm">
+                            <span class="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></span>
+                            {{ $activeUser->name }}
+                        </span>
+                    @endforeach
+                </div>
+            </div>
+            @endif
 
             <!-- Stats Grid -->
             <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-8">
@@ -119,21 +139,46 @@
                 </div>
             </div>
 
-            <!-- Quick Actions -->
+            <!-- Quick Actions & Fetch Customer -->
             <div class="mb-8">
-                <div class="flex flex-wrap gap-3">
-                    <a href="{{ route('customers.index') }}" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-indigo-600 to-indigo-500 text-white font-semibold rounded-lg shadow-md hover:from-indigo-700 hover:to-indigo-600 transition-all duration-200 transform hover:scale-105">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                        </svg>
-                        New Contract
-                    </a>
-                    <a href="{{ route('contracts.index') }}" class="inline-flex items-center px-6 py-3 bg-white text-gray-700 font-semibold rounded-lg shadow-md hover:bg-gray-50 transition-all duration-200 border border-gray-200">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                        </svg>
-                        All Contracts
-                    </a>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <!-- Action Buttons -->
+                    <div class="flex flex-wrap gap-3">
+                        <a href="{{ route('customers.index') }}" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-indigo-600 to-indigo-500 text-white font-semibold rounded-lg shadow-md hover:from-indigo-700 hover:to-indigo-600 transition-all duration-200 transform hover:scale-105">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                            </svg>
+                            New Contract
+                        </a>
+                        <a href="{{ route('contracts.index') }}" class="inline-flex items-center px-6 py-3 bg-white text-gray-700 font-semibold rounded-lg shadow-md hover:bg-gray-50 transition-all duration-200 border border-gray-200">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                            All Contracts
+                        </a>
+                    </div>
+
+                    <!-- Fetch Customer Form -->
+                    <div class="bg-white rounded-lg shadow-md border border-gray-200 p-4">
+                        <form method="POST" action="{{ route('customers.fetch') }}" class="flex gap-2">
+                            @csrf
+                            <div class="flex-1">
+                                <input type="text"
+                                       name="customer_number"
+                                       id="dashboard_customer_number"
+                                       class="w-full px-4 py-2.5 border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                                       placeholder="Customer # or Name"
+                                       required>
+                            </div>
+                            <button type="submit" class="inline-flex items-center px-5 py-2.5 bg-gradient-to-r from-blue-600 to-blue-500 text-white font-semibold rounded-lg shadow-md hover:from-blue-700 hover:to-blue-600 transition-all duration-200 whitespace-nowrap">
+                                <svg class="w-5 h-5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                </svg>
+                                Fetch
+                            </button>
+                        </form>
+                        <p class="mt-1.5 text-xs text-gray-500">Enter 502xxxxx or customer name</p>
+                    </div>
                 </div>
             </div>
 
