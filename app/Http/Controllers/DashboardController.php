@@ -55,9 +55,15 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
 
-        // Get currently active users (logged in within last 15 minutes, excluding current user)
-        $activeUsers = User::where('id', '!=', $user->id)
-            ->where('last_activity_at', '>=', now()->subMinutes(15))
+        // Get currently active users from sessions (excluding current user)
+        $activeUserIds = \DB::table('sessions')
+            ->where('user_id', '!=', $user->id)
+            ->whereNotNull('user_id')
+            ->where('last_activity', '>=', now()->subMinutes(15)->timestamp)
+            ->pluck('user_id')
+            ->unique();
+
+        $activeUsers = User::whereIn('id', $activeUserIds)
             ->orderBy('name')
             ->get();
 
