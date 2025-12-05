@@ -111,6 +111,7 @@ Located in `app/Services/`:
 
 Main controllers in `app/Http/Controllers/`:
 
+- **DashboardController**: CSR dashboard with personalized stats, recent contracts, active users, and quick actions
 - **ContractController**: CRUD for contracts, PDF generation, signing workflows
 - **CellularPricingController**: Manage rate plans and add-ons
 - **BellPricingController**: Manage Bell device pricing
@@ -200,6 +201,34 @@ Rate plans can include "Hay Credit" - a promotional discount:
 Two pricing systems:
 1. **Bell Pricing**: Imported via `import:bell-pricing` command from Excel
 2. **Generic Cellular Pricing**: Managed via CellularPricingController
+
+### CSR Dashboard
+
+The dashboard (`/dashboard`) provides CSRs with a personalized overview of their work:
+
+**Features:**
+- **Personalized Stats**: CSR-specific metrics filtered by `created_by` field
+  - Drafts today / Total contracts today
+  - Pending signatures (draft + pending status)
+  - Ready to finalize (signed status)
+  - Contracts this week
+  - Contracts this month
+- **Modern UI**: Gradient hover effects, uniform card heights, color-coded status indicators
+- **Currently Online Users**: Shows other active CSRs (via sessions table, 15-minute activity window)
+- **Recent Contracts**: Last 5 contracts updated by the CSR with quick action links
+- **Quick Actions**:
+  - New Contract button
+  - All Contracts button
+  - Fetch Customer form (integrated inline)
+- **Contract Attribution**: Uses `contracts.created_by` to track which CSR created each contract
+- **Navigation**: Logo and nav links point to dashboard as the home page
+
+**Implementation:**
+- Route: `Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard')`
+- Controller: `app/Http/Controllers/DashboardController.php`
+- View: `resources/views/dashboard.blade.php`
+- Active user tracking uses `sessions` table with `last_activity` timestamp
+- All stats are scoped to `Auth::user()->id` for CSR-specific data
 
 ### Contract Status Flow
 
@@ -326,6 +355,8 @@ storage/
 - Use eager loading to avoid N+1 queries: `$contract->load(['subscriber.mobilityAccount.ivueAccount.customer', 'ratePlan', ...])`
 - Customer data from NISC is read-only (fetched via API)
 - Contracts have many add-ons (`contractAddOns`) and one-time fees (`contractOneTimeFees`)
+- Contracts track creator: `$contract->createdBy()` relationship to `User` model via `created_by` foreign key
+- Dashboard stats are filtered by `created_by` to show CSR-specific metrics
 
 ### Blade Components
 
@@ -432,6 +463,12 @@ When working on pricing:
 - `app/Console/Commands/ImportBellPricing.php`: Bell pricing import
 - `app/Console/Commands/ImportCellularPricePlans.php`: Plan import
 - `app/Http/Controllers/CellularPricingController.php`: Plan management
+
+When working on dashboard:
+- `app/Http/Controllers/DashboardController.php`: Dashboard logic (stats, active users, recent contracts)
+- `resources/views/dashboard.blade.php`: Dashboard view (modern UI with gradients)
+- `app/Models/Contract.php`: Ensure `created_by` is in `$fillable` array for contract attribution
+- `routes/web.php`: Dashboard route registration
 
 When working on permissions:
 - `config/permission.php`: Configuration
