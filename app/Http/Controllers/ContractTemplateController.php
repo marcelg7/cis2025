@@ -228,6 +228,21 @@ class ContractTemplateController extends Controller
                 : null;
         });
 
+        // Filter out configurations where rate plan or device no longer exists/is inactive
+        $frequentlyUsed = $frequentlyUsed->filter(function ($config) {
+            // Must have a valid rate plan
+            if (!$config->rate_plan || !$config->rate_plan->is_active) {
+                return false;
+            }
+
+            // If has device, device must be valid and active
+            if ($config->bell_device_id && (!$config->bell_device || !$config->bell_device->is_active)) {
+                return false;
+            }
+
+            return true;
+        })->values(); // Re-index array
+
         return response()->json($frequentlyUsed);
     }
 
