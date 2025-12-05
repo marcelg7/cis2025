@@ -5,7 +5,7 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
             <!-- Welcome Header -->
-            <div class="mb-8">
+            <div class="mb-8 bg-white rounded-xl shadow-sm p-6">
                 <h1 class="text-3xl font-bold text-gray-900">Welcome back, {{ Auth::user()->name }}!</h1>
                 <p class="mt-2 text-gray-600">Here's what's happening with your contracts today.</p>
             </div>
@@ -13,13 +13,13 @@
             <!-- Stats Grid -->
             <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-8">
                 <!-- Drafts Today Card -->
-                <div class="relative group">
+                <div class="relative group h-full">
                     <div class="absolute -inset-0.5 bg-gradient-to-r from-blue-600 to-blue-400 rounded-xl opacity-0 group-hover:opacity-100 transition duration-300 blur"></div>
-                    <div class="relative bg-white rounded-xl shadow-lg p-6 transition-all duration-300 hover:shadow-xl">
-                        <div class="flex items-center justify-between">
+                    <div class="relative bg-white rounded-xl shadow-lg p-6 transition-all duration-300 hover:shadow-xl h-full flex flex-col min-h-[160px]">
+                        <div class="flex items-start justify-between flex-1">
                             <div class="flex-1">
                                 <p class="text-sm font-medium text-gray-600 uppercase tracking-wide">Drafts Today</p>
-                                <div class="mt-2 flex items-baseline">
+                                <div class="mt-3 flex items-baseline">
                                     <p class="text-4xl font-bold text-gray-900">{{ $stats['drafts_today'] }}</p>
                                     <p class="ml-2 text-sm text-gray-500">of {{ $stats['contracts_today'] }}</p>
                                 </div>
@@ -36,18 +36,22 @@
                 </div>
 
                 <!-- Pending Signatures Card -->
-                <div class="relative group">
+                <div class="relative group h-full">
                     <div class="absolute -inset-0.5 bg-gradient-to-r from-yellow-600 to-yellow-400 rounded-xl opacity-0 group-hover:opacity-100 transition duration-300 blur"></div>
-                    <div class="relative bg-white rounded-xl shadow-lg p-6 transition-all duration-300 hover:shadow-xl">
-                        <div class="flex items-center justify-between">
-                            <div class="flex-1">
+                    <div class="relative bg-white rounded-xl shadow-lg p-6 transition-all duration-300 hover:shadow-xl h-full flex flex-col min-h-[160px]">
+                        <div class="flex items-start justify-between flex-1">
+                            <div class="flex-1 flex flex-col">
                                 <p class="text-sm font-medium text-gray-600 uppercase tracking-wide">Pending Signatures</p>
-                                <div class="mt-2">
+                                <div class="mt-3">
                                     <p class="text-4xl font-bold text-gray-900">{{ $stats['pending_signatures'] }}</p>
                                 </div>
-                                @if($stats['pending_signatures'] > 0)
-                                    <p class="mt-1 text-xs text-yellow-600 font-medium">Needs attention</p>
-                                @endif
+                                <div class="mt-auto pt-2">
+                                    @if($stats['pending_signatures'] > 0)
+                                        <p class="text-xs text-yellow-600 font-medium">Needs attention</p>
+                                    @else
+                                        <p class="text-xs text-gray-400">&nbsp;</p>
+                                    @endif
+                                </div>
                             </div>
                             <div class="flex-shrink-0">
                                 <div class="p-3 bg-yellow-100 rounded-lg">
@@ -61,18 +65,22 @@
                 </div>
 
                 <!-- Ready to Finalize Card -->
-                <div class="relative group">
+                <div class="relative group h-full">
                     <div class="absolute -inset-0.5 bg-gradient-to-r from-green-600 to-green-400 rounded-xl opacity-0 group-hover:opacity-100 transition duration-300 blur"></div>
-                    <div class="relative bg-white rounded-xl shadow-lg p-6 transition-all duration-300 hover:shadow-xl">
-                        <div class="flex items-center justify-between">
-                            <div class="flex-1">
+                    <div class="relative bg-white rounded-xl shadow-lg p-6 transition-all duration-300 hover:shadow-xl h-full flex flex-col min-h-[160px]">
+                        <div class="flex items-start justify-between flex-1">
+                            <div class="flex-1 flex flex-col">
                                 <p class="text-sm font-medium text-gray-600 uppercase tracking-wide">Ready to Finalize</p>
-                                <div class="mt-2">
+                                <div class="mt-3">
                                     <p class="text-4xl font-bold text-gray-900">{{ $stats['ready_to_finalize'] }}</p>
                                 </div>
-                                @if($stats['ready_to_finalize'] > 0)
-                                    <p class="mt-1 text-xs text-green-600 font-medium">Ready to complete</p>
-                                @endif
+                                <div class="mt-auto pt-2">
+                                    @if($stats['ready_to_finalize'] > 0)
+                                        <p class="text-xs text-green-600 font-medium">Ready to complete</p>
+                                    @else
+                                        <p class="text-xs text-gray-400">&nbsp;</p>
+                                    @endif
+                                </div>
                             </div>
                             <div class="flex-shrink-0">
                                 <div class="p-3 bg-green-100 rounded-lg">
@@ -86,15 +94,17 @@
                 </div>
 
                 <!-- This Week Card -->
-                <div class="relative group">
+                <div class="relative group h-full">
                     <div class="absolute -inset-0.5 bg-gradient-to-r from-indigo-600 to-indigo-400 rounded-xl opacity-0 group-hover:opacity-100 transition duration-300 blur"></div>
-                    <div class="relative bg-white rounded-xl shadow-lg p-6 transition-all duration-300 hover:shadow-xl">
-                        <div class="flex items-center justify-between">
-                            <div class="flex-1">
+                    <div class="relative bg-white rounded-xl shadow-lg p-6 transition-all duration-300 hover:shadow-xl h-full flex flex-col min-h-[160px]">
+                        <div class="flex items-start justify-between flex-1">
+                            <div class="flex-1 flex flex-col">
                                 <p class="text-sm font-medium text-gray-600 uppercase tracking-wide">This Week</p>
-                                <div class="mt-2">
+                                <div class="mt-3">
                                     <p class="text-4xl font-bold text-gray-900">{{ $stats['contracts_this_week'] }}</p>
-                                    <p class="mt-1 text-sm text-gray-500">{{ $stats['contracts_this_month'] }} this month</p>
+                                </div>
+                                <div class="mt-auto pt-2">
+                                    <p class="text-sm text-gray-500">{{ $stats['contracts_this_month'] }} this month</p>
                                 </div>
                             </div>
                             <div class="flex-shrink-0">
