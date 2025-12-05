@@ -3,6 +3,28 @@
 @section('content')
     <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 py-6 px-2 page-container">
         <h1 class="text-2xl font-semibold text-gray-900">Create Contract for {{ $subscriber->mobile_number }}</h1>
+
+        <!-- Contract Templates Section -->
+        <div class="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4" id="template-section">
+            <div class="flex items-start">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                </div>
+                <div class="ml-3 flex-1">
+                    <h3 class="text-sm font-medium text-blue-800">Quick Start with Template</h3>
+                    <div class="mt-2 text-sm text-blue-700">
+                        <p class="mb-2">Load a saved configuration or frequently used setup:</p>
+                        <select id="template-selector" class="w-full border-blue-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            <option value="">-- Select a template --</option>
+                        </select>
+                        <p class="mt-2 text-xs text-blue-600" id="template-loading" style="display:none;">Loading templates...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <form method="POST" action="{{ route('contracts.store', $subscriber->id) }}" class="mt-6 space-y-8" id="contract-form">
             @csrf
            
@@ -998,6 +1020,166 @@ function addAddOn() {
 			})
 			.catch(error => console.warn('Failed to refresh CSRF token:', error));
 	}, 3600000); // Every 60 minutes
+
+	// ==========================================
+	// Contract Templates System
+	// ==========================================
+
+	// Load templates on page load
+	document.addEventListener('DOMContentLoaded', function() {
+		loadContractTemplates();
+	});
+
+	function loadContractTemplates() {
+		const selector = document.getElementById('template-selector');
+		const loading = document.getElementById('template-loading');
+
+		if (!selector) return;
+
+		loading.style.display = 'block';
+
+		// Fetch both templates and frequently used
+		Promise.all([
+			fetch('/api/templates').then(r => r.json()),
+			fetch('/api/templates/frequently-used').then(r => r.json())
+		])
+		.then(([templates, frequentlyUsed]) => {
+			loading.style.display = 'none';
+
+			// Clear existing options except first
+			selector.innerHTML = '<option value="">-- Select a template --</option>';
+
+			// Add Frequently Used section
+			if (frequentlyUsed && frequentlyUsed.length > 0) {
+				const freqGroup = document.createElement('optgroup');
+				freqGroup.label = '⚡ Frequently Used (Last 90 Days)';
+				frequentlyUsed.forEach(config => {
+					const option = document.createElement('option');
+					option.value = `freq-${config.bell_device_id}-${config.rate_plan_id}`;
+					option.dataset.type = 'frequently-used';
+					option.dataset.config = JSON.stringify(config);
+					const deviceName = config.bell_device?.name || 'Unknown Device';
+					const planName = config.rate_plan?.name || 'Unknown Plan';
+					option.textContent = `${deviceName} + ${planName} (used ${config.usage_count}x)`;
+					freqGroup.appendChild(option);
+				});
+				selector.appendChild(freqGroup);
+			}
+
+			// Add Personal Templates section
+			if (templates.personal && templates.personal.length > 0) {
+				const personalGroup = document.createElement('optgroup');
+				personalGroup.label = '👤 My Templates';
+				templates.personal.forEach(template => {
+					const option = document.createElement('option');
+					option.value = `template-${template.id}`;
+					option.dataset.type = 'template';
+					option.dataset.templateId = template.id;
+					option.textContent = `${template.name} (used ${template.use_count}x)`;
+					personalGroup.appendChild(option);
+				});
+				selector.appendChild(personalGroup);
+			}
+
+			// Add Team Templates section
+			if (templates.team && templates.team.length > 0) {
+				const teamGroup = document.createElement('optgroup');
+				teamGroup.label = '👥 Team Templates';
+				templates.team.forEach(template => {
+					const option = document.createElement('option');
+					option.value = `template-${template.id}`;
+					option.dataset.type = 'template';
+					option.dataset.templateId = template.id;
+					option.textContent = `${template.name} (used ${template.use_count}x)`;
+					teamGroup.appendChild(option);
+				});
+				selector.appendChild(teamGroup);
+			}
+		})
+		.catch(error => {
+			loading.style.display = 'none';
+			console.error('Failed to load templates:', error);
+		});
+	}
+
+	// Handle template selection
+	document.addEventListener('DOMContentLoaded', function() {
+		const selector = document.getElementById('template-selector');
+		if (!selector) return;
+
+		selector.addEventListener('change', function() {
+			const selectedOption = this.options[this.selectedIndex];
+			const type = selectedOption.dataset.type;
+
+			if (!type) return; // No selection
+
+			if (type === 'frequently-used') {
+				// Apply frequently used configuration directly
+				const config = JSON.parse(selectedOption.dataset.config);
+				applyTemplateConfig(config);
+			} else if (type === 'template') {
+				// Fetch full template data and apply
+				const templateId = selectedOption.dataset.templateId;
+				fetch(`/api/templates/${templateId}/data`)
+					.then(r => r.json())
+					.then(template => applyTemplateConfig(template))
+					.catch(error => console.error('Failed to load template:', error));
+			}
+		});
+	});
+
+	function applyTemplateConfig(config) {
+		console.log('Applying template config:', config);
+
+		// Apply activity type
+		if (config.activity_type_id) {
+			const activitySelect = document.getElementById('activity_type_id');
+			if (activitySelect) activitySelect.value = config.activity_type_id;
+		}
+
+		// Apply location
+		if (config.location_id) {
+			const locationSelect = document.getElementById('location_id');
+			if (locationSelect) locationSelect.value = config.location_id;
+		}
+
+		// Apply commitment period
+		if (config.commitment_period_id) {
+			const commitmentSelect = document.getElementById('commitment_period_id');
+			if (commitmentSelect) commitmentSelect.value = config.commitment_period_id;
+		}
+
+		// Apply Bell device
+		if (config.bell_device_id && config.bell_device) {
+			const deviceSelect = document.getElementById('bell_device_selector');
+			if (deviceSelect) {
+				deviceSelect.value = config.bell_device_id;
+				// Trigger change event to update pricing
+				deviceSelect.dispatchEvent(new Event('change', { bubbles: true }));
+			}
+		}
+
+		// Apply rate plan
+		if (config.rate_plan_id) {
+			// This is more complex as it involves the plan selector modal
+			// For now, just log it
+			console.log('Rate plan to apply:', config.rate_plan_id);
+			// TODO: Programmatically set rate plan through the modal system
+		}
+
+		// Show success message
+		const templateSection = document.getElementById('template-section');
+		if (templateSection) {
+			templateSection.style.borderColor = '#10b981';
+			templateSection.style.backgroundColor = '#d1fae5';
+			setTimeout(() => {
+				templateSection.style.borderColor = '#bfdbfe';
+				templateSection.style.backgroundColor = '#dbeafe';
+			}, 2000);
+		}
+
+		alert('Template applied! Review the auto-filled fields before saving.');
+	}
 
 </script>
 @endsection
