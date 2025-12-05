@@ -1144,37 +1144,58 @@ function addAddOn() {
 		// Apply activity type
 		if (config.activity_type_id) {
 			const activitySelect = document.getElementById('activity_type_id');
-			if (activitySelect) activitySelect.value = config.activity_type_id;
+			if (activitySelect) {
+				activitySelect.value = config.activity_type_id;
+			}
 		}
 
 		// Apply location
 		if (config.location_id) {
 			const locationSelect = document.getElementById('location_id');
-			if (locationSelect) locationSelect.value = config.location_id;
+			if (locationSelect) {
+				locationSelect.value = config.location_id;
+			}
 		}
 
 		// Apply commitment period
 		if (config.commitment_period_id) {
 			const commitmentSelect = document.getElementById('commitment_period_id');
-			if (commitmentSelect) commitmentSelect.value = config.commitment_period_id;
+			if (commitmentSelect) {
+				commitmentSelect.value = config.commitment_period_id;
+			}
 		}
 
-		// Apply Bell device
-		if (config.bell_device_id && config.bell_device) {
-			const deviceSelect = document.getElementById('bell_device_selector');
+		// Apply Bell device (if present)
+		if (config.bell_device_id) {
+			const deviceSelect = document.getElementById('bell_device_id');
 			if (deviceSelect) {
 				deviceSelect.value = config.bell_device_id;
-				// Trigger change event to update pricing
+				// Trigger change event
 				deviceSelect.dispatchEvent(new Event('change', { bubbles: true }));
 			}
 		}
 
-		// Apply rate plan
+		// Apply rate plan (using the cellular plan selector workflow)
 		if (config.rate_plan_id) {
-			// This is more complex as it involves the plan selector modal
-			// For now, just log it
-			console.log('Rate plan to apply:', config.rate_plan_id);
-			// TODO: Programmatically set rate plan through the modal system
+			const planSelector = document.getElementById('cellular_plan_selector');
+			if (planSelector) {
+				// Find the option with matching rate_plan_id
+				const planOption = planSelector.querySelector(`option[data-id="${config.rate_plan_id}"][data-type="rate_plan"]`);
+				if (planOption) {
+					// Select the plan
+					planSelector.value = planOption.value;
+					// Trigger change event to show plan details
+					planSelector.dispatchEvent(new Event('change', { bubbles: true }));
+
+					// Wait a moment for the plan details to render, then click Apply
+					setTimeout(() => {
+						const applyBtn = document.getElementById('apply_plan_btn');
+						if (applyBtn && applyBtn.offsetParent !== null) { // Check if visible
+							applyBtn.click();
+						}
+					}, 500);
+				}
+			}
 		}
 
 		// Show success message
@@ -1188,7 +1209,10 @@ function addAddOn() {
 			}, 2000);
 		}
 
-		alert('Template applied! Review the auto-filled fields before saving.');
+		// Success notification
+		setTimeout(() => {
+			alert('Template applied! Review the auto-filled fields. You may need to click "Load Pricing" and "Apply to Contract" for the device.');
+		}, 600);
 	}
 
 	// ==========================================
