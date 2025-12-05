@@ -101,6 +101,7 @@ class BugReportController extends Controller
             'severity' => 'required|in:low,medium,high,critical',
             'assigned_to' => 'nullable|exists:users,id',
             'admin_notes' => 'nullable|string',
+            'comment' => 'nullable|string',
         ]);
 
         // Check if status is changing to resolved (before update)
@@ -111,15 +112,32 @@ class BugReportController extends Controller
             $validated['resolved_at'] = now();
         }
 
+        // Remove comment from validated data before updating bug report
+        $comment = $validated['comment'] ?? null;
+        unset($validated['comment']);
+
         $bugReport->update($validated);
+
+        // Add comment if provided
+        if (!empty($comment)) {
+            $bugReport->comments()->create([
+                'user_id' => Auth::id(),
+                'comment' => $comment,
+            ]);
+        }
 
         // Notify the user who reported the bug when it's resolved
         if ($statusChangedToResolved) {
             $bugReport->user->notify(new BugReportResolvedNotification($bugReport));
         }
 
+        $message = 'Feedback updated successfully!';
+        if (!empty($comment)) {
+            $message = 'Feedback updated and comment added successfully!';
+        }
+
         return redirect()->route('bug-reports.show', $bugReport)
-            ->with('success', 'Bug report updated successfully!');
+            ->with('success', $message);
     }
 
     /**

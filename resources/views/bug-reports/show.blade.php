@@ -110,31 +110,8 @@
                                 </div>
                             </div>
                         @empty
-                            <p class="text-gray-500 italic text-sm">No comments yet. Add one below.</p>
+                            <p class="text-gray-500 italic text-sm">No comments yet.</p>
                         @endforelse
-                    </div>
-
-                    <!-- Add New Comment Form -->
-                    <div class="p-6 border-t border-gray-200 bg-gray-50">
-                        <form action="{{ route('bug-reports.comments.store', $bugReport) }}" method="POST">
-                            @csrf
-                            <label for="comment" class="block text-sm font-medium text-gray-700 mb-2">Add Comment</label>
-                            <textarea
-                                id="comment"
-                                name="comment"
-                                rows="4"
-                                class="tinymce w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm"
-                                placeholder="Add notes about investigation, fixes, updates, etc."
-                            ></textarea>
-                            @error('comment')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
-                            <div class="mt-3 flex justify-end">
-                                <button type="submit" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 transition-colors">
-                                    Add Comment
-                                </button>
-                            </div>
-                        </form>
                     </div>
                 </div>
             @endif
@@ -274,8 +251,24 @@
                             </select>
                         </div>
 
+                        <!-- Add Comment (Optional) -->
+                        <div>
+                            <label for="comment" class="block text-sm font-medium text-gray-700 mb-1">Add Comment (Optional)</label>
+                            <textarea
+                                id="comment"
+                                name="comment"
+                                rows="4"
+                                class="tinymce w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                                placeholder="Add notes about investigation, fixes, updates, etc."
+                            ></textarea>
+                            @error('comment')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                            <p class="mt-1 text-xs text-gray-500">Leave blank if you only want to update status/severity/assignment.</p>
+                        </div>
+
                         <button type="submit" class="w-full px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 transition-colors">
-                            Update Feedback
+                            Save Changes
                         </button>
                     </form>
                 </div>
