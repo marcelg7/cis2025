@@ -12,9 +12,9 @@ This document contains suggestions for improving the Contract Information System
 - [x] Would save CSRs from re-selecting the same iPhone + Plan combo repeatedly
 - [x] Hybrid system: Personal + Team + Auto-generated from recent contracts
 
-### 2. Customer Search Improvements
+### 2. Customer Search Improvements ✅
 - [x] Recently Viewed Customers quick access (already implemented)
-- [ ] Add phone number search (currently only customer number?)
+- [x] Add phone number search (v4.2025.171)
 - [ ] Add name/address search across customers
 
 ### 3. Bulk Operations
@@ -22,15 +22,15 @@ This document contains suggestions for improving the Contract Information System
 - [ ] Bulk export contracts for a date range
 - [ ] Bulk status updates
 
-### 4. Better Contract Validation
-- [ ] Real-time validation as they fill out the form (not just on submit)
-- [ ] Highlight missing required fields before they try to save
-- [ ] Warning if device pricing doesn't match selected plan tier
+### 4. Better Contract Validation ✅
+- [x] Real-time validation as they fill out the form (v4.2025.171)
+- [x] Highlight missing required fields before they try to save (v4.2025.171)
+- [x] Warning if device pricing doesn't match selected plan tier (v4.2025.171)
 
-### 5. Smart Defaults
-- [ ] Remember CSR's last location selection
+### 5. Smart Defaults ✅
+- [x] Remember CSR's last location selection (v4.2025.171)
 - [ ] Auto-suggest most common plan for a device type
-- [ ] Pre-fill dates intelligently (start date = today, end date = +2 years)
+- [x] Pre-fill dates intelligently (start date = today, end date = +2 years) (v4.2025.171)
 
 ---
 
@@ -166,6 +166,11 @@ Based on analysis of CSR workflows and potential time savings:
 
 ## Recently Completed
 
+- [x] Smart Defaults (location, dates) - v4.2025.171
+- [x] Phone number search for customers - v4.2025.171
+- [x] Real-time validation and required field highlighting - v4.2025.171
+- [x] Device/Plan tier mismatch warnings - v4.2025.171
+- [x] Fixed frequently used templates to filter non-current rate plans - v4.2025.170
 - [x] Implemented Contract Templates system - v4.2025.160-161
 - [x] Merged feedback Add Comment and Update buttons - v4.2025.158
 - [x] Loosened authentication throttle limits - v4.2025.159
