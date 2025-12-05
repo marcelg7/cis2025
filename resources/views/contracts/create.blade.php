@@ -1178,11 +1178,17 @@ function addAddOn() {
 
 		// Apply rate plan (using the cellular plan selector workflow)
 		if (config.rate_plan_id) {
+			console.log('Attempting to select rate plan ID:', config.rate_plan_id);
 			const planSelector = document.getElementById('cellular_plan_selector');
+			console.log('Plan selector found:', planSelector);
 			if (planSelector) {
 				// Find the option with matching rate_plan_id
-				const planOption = planSelector.querySelector(`option[data-id="${config.rate_plan_id}"][data-type="rate_plan"]`);
+				const selector = `option[data-id="${config.rate_plan_id}"][data-type="rate_plan"]`;
+				console.log('Looking for option with selector:', selector);
+				const planOption = planSelector.querySelector(selector);
+				console.log('Plan option found:', planOption);
 				if (planOption) {
+					console.log('Setting plan selector value to:', planOption.value);
 					// Select the plan
 					planSelector.value = planOption.value;
 					// Trigger change event to show plan details
