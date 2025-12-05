@@ -123,6 +123,11 @@ class ContractController extends Controller
 		$defaultFirstBillDate = Carbon::now()->addMonth()->startOfMonth();
 		$defaultConnectionFee = \App\Helpers\SettingsHelper::get('default_connection_fee', 80);
 
+		// Smart Defaults
+		$defaultLocationId = session('last_location_id', auth()->user()->location_id);
+		$defaultStartDate = Carbon::now()->format('Y-m-d');
+		$defaultEndDate = Carbon::now()->addYears(2)->format('Y-m-d');
+
 		return view('contracts.create', compact(
 			'customers',
 			'users',
@@ -137,7 +142,10 @@ class ContractController extends Controller
 			'defaultFirstBillDate',
 			'deviceTiers',
 			'defaultConnectionFee',
-			'locations'
+			'locations',
+			'defaultLocationId',
+			'defaultStartDate',
+			'defaultEndDate'
 		))->withErrors(session()->get('errors', new \Illuminate\Support\ViewErrorBag));
 	}
 	
@@ -349,6 +357,9 @@ class ContractController extends Controller
 			'benchmarks_ms' => array_map(fn($time) => round($time * 1000, 2), $benchmarks),
 			'total_seconds' => round($benchmarks['total'], 2)
 		]);
+
+		// Smart Defaults: Remember last location for next time
+		session(['last_location_id' => $request->location_id]);
 
         // Redirect to contract view to start signing flow
         return redirect()->route('contracts.view', $contract->id)->with('success', 'Contract created successfully. Please proceed with signing.');

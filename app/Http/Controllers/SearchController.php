@@ -60,7 +60,7 @@ class SearchController extends Controller
             // Search Customers (skip if category filter is set and not 'customers')
             if (!$category || $category === 'customers')
             {
-                $customersQuery = Customer::where(function($q) use ($query) {
+                $customersQuery = Customer::where(function($q) use ($query, $normalizedPhone, $isPhoneSearch) {
                     $q->where('ivue_customer_number', 'LIKE', "%{$query}%")
                       ->orWhere('display_name', 'LIKE', "%{$query}%")
                       ->orWhere('first_name', 'LIKE', "%{$query}%")
@@ -68,7 +68,14 @@ class SearchController extends Controller
                       ->orWhere('email', 'LIKE', "%{$query}%")
                       ->orWhere('address', 'LIKE', "%{$query}%")
                       ->orWhere('city', 'LIKE', "%{$query}%")
-                      ->orWhere('zip_code', 'LIKE', "%{$query}%");
+                      ->orWhere('zip_code', 'LIKE', "%{$query}%")
+                      ->orWhere('phone', 'LIKE', "%{$query}%");
+
+                    // If it looks like a phone number, search by digits only
+                    if ($isPhoneSearch) {
+                        // Strip all formatting from phone field - use parameter binding to prevent SQL injection
+                        $q->orWhereRaw("REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(phone, '-', ''), ' ', ''), '(', ''), ')', ''), '.', '') LIKE ?", ["%{$normalizedPhone}%"]);
+                    }
                 });
 
                 if (!$includeTest) {

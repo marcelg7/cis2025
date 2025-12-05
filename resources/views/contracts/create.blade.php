@@ -54,7 +54,7 @@
                     <div>
                         <label for="start_date" class="block text-sm font-medium text-gray-700">Start Date</label>
                         <div class="mt-1 flex gap-2">
-                            <input type="date" name="start_date" id="start_date" value="{{ old('start_date', now()->toDateString()) }}" class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required>
+                            <input type="date" name="start_date" id="start_date" value="{{ old('start_date', $defaultStartDate) }}" class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required>
                             <button type="button" onclick="document.getElementById('start_date').value = new Date().toISOString().split('T')[0]" class="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 whitespace-nowrap">Today</button>
                         </div>
                         @error('start_date')
@@ -64,7 +64,7 @@
                     <div>
                         <label for="end_date" class="block text-sm font-medium text-gray-700">End Date</label>
                         <div class="mt-1 flex gap-2">
-                            <input type="date" name="end_date" id="end_date" value="{{ old('end_date', now()->addYears(2)->toDateString()) }}" class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                            <input type="date" name="end_date" id="end_date" value="{{ old('end_date', $defaultEndDate) }}" class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
                             <button type="button" onclick="document.getElementById('end_date').value = new Date().toISOString().split('T')[0]" class="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 whitespace-nowrap">Today</button>
                         </div>
                         @error('end_date')
@@ -97,7 +97,7 @@
                         <select name="location_id" id="location_id" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required>
                             <option value="">Select a location</option>
                             @foreach($locations as $location)
-                                <option value="{{ $location->id }}" {{ old('location_id', auth()->user()->location_id) == $location->id ? 'selected' : '' }}>
+                                <option value="{{ $location->id }}" {{ old('location_id', $defaultLocationId) == $location->id ? 'selected' : '' }}>
                                     {{ $location->name }}
                                 </option>
                             @endforeach
@@ -1439,6 +1439,163 @@ function addAddOn() {
 				saveBtn.innerHTML = '<svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg> Save as Template';
 			});
 		});
+	});
+
+	// Real-time Validation and Required Field Highlighting
+	document.addEventListener('DOMContentLoaded', function() {
+		const requiredFields = [
+			{ id: 'start_date', label: 'Start Date' },
+			{ id: 'activity_type_id', label: 'Activity Type' },
+			{ id: 'contract_date', label: 'Contract Date' },
+			{ id: 'location_id', label: 'Location' },
+			{ id: 'agreement_credit_amount', label: 'Agreement Credit Amount' },
+			{ id: 'required_upfront_payment', label: 'Required Up-front Payment' },
+			{ id: 'commitment_period_id', label: 'Commitment Period' },
+			{ id: 'first_bill_date', label: 'First Bill Date' }
+		];
+
+		// Function to validate a single field
+		function validateField(fieldId) {
+			const field = document.getElementById(fieldId);
+			if (!field) return true;
+
+			const isValid = field.value && field.value.trim() !== '';
+
+			// Update field styling
+			if (isValid) {
+				field.classList.remove('border-red-300', 'bg-red-50');
+				field.classList.add('border-gray-300');
+			} else {
+				field.classList.remove('border-gray-300');
+				field.classList.add('border-red-300', 'bg-red-50');
+			}
+
+			return isValid;
+		}
+
+		// Validate all fields and return list of missing ones
+		function validateAllFields() {
+			const missingFields = [];
+
+			requiredFields.forEach(field => {
+				if (!validateField(field.id)) {
+					missingFields.push(field.label);
+				}
+			});
+
+			return missingFields;
+		}
+
+		// Add real-time validation to each field
+		requiredFields.forEach(field => {
+			const element = document.getElementById(field.id);
+			if (element) {
+				element.addEventListener('blur', () => validateField(field.id));
+				element.addEventListener('change', () => validateField(field.id));
+			}
+		});
+
+		// Validate on form submit
+		const form = document.querySelector('form');
+		if (form) {
+			form.addEventListener('submit', function(e) {
+				const missingFields = validateAllFields();
+
+				if (missingFields.length > 0) {
+					e.preventDefault();
+
+					// Scroll to first missing field
+					const firstMissingFieldId = requiredFields.find(f => !validateField(f.id))?.id;
+					if (firstMissingFieldId) {
+						const firstField = document.getElementById(firstMissingFieldId);
+						if (firstField) {
+							firstField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+							firstField.focus();
+						}
+					}
+
+					// Show alert with missing fields
+					alert('Please fill in the following required fields:\n\n' + missingFields.map(f => '• ' + f).join('\n'));
+				}
+			});
+		}
+
+		// Show visual indicator for required fields on page load
+		requiredFields.forEach(field => {
+			const element = document.getElementById(field.id);
+			if (element && element.tagName !== 'SELECT') {
+				const label = element.previousElementSibling?.querySelector('label') ||
+							  document.querySelector(`label[for="${field.id}"]`);
+				if (label && !label.querySelector('.text-red-600')) {
+					const asterisk = document.createElement('span');
+					asterisk.className = 'text-red-600 ml-1';
+					asterisk.textContent = '*';
+					label.appendChild(asterisk);
+				}
+			}
+		});
+
+		// Device/Plan Tier Mismatch Warning
+		function checkTierMismatch() {
+			const selectedTierField = document.getElementById('selected_tier');
+			const bellTierField = document.getElementById('hidden_bell_tier');
+
+			if (!selectedTierField || !bellTierField) return;
+
+			const planTier = selectedTierField.value;
+			const deviceTier = bellTierField.value;
+
+			// Remove existing warning
+			const existingWarning = document.getElementById('tier-mismatch-warning');
+			if (existingWarning) existingWarning.remove();
+
+			// Only check if both tiers are set and not BYOD
+			if (planTier && deviceTier && planTier !== deviceTier && deviceTier !== 'BYOD') {
+				// Create warning element
+				const warning = document.createElement('div');
+				warning.id = 'tier-mismatch-warning';
+				warning.className = 'mt-4 p-4 bg-yellow-50 border border-yellow-400 rounded-lg';
+				warning.innerHTML = `
+					<div class="flex items-start">
+						<svg class="h-5 w-5 text-yellow-600 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+						</svg>
+						<div>
+							<h3 class="text-sm font-medium text-yellow-800">Plan/Device Tier Mismatch</h3>
+							<p class="mt-1 text-sm text-yellow-700">
+								The selected device requires <strong>${deviceTier}</strong> tier pricing, but you've selected a <strong>${planTier}</strong> tier plan.
+								Please verify this is correct or select a different device/plan combination.
+							</p>
+						</div>
+					</div>
+				`;
+
+				// Insert warning after cellular pricing section
+				const cellularSection = document.querySelector('.bg-white.shadow.rounded-lg.p-6.mb-6');
+				if (cellularSection) {
+					cellularSection.after(warning);
+				}
+			}
+		}
+
+		// Monitor tier changes
+		const selectedTierField = document.getElementById('selected_tier');
+		const bellTierField = document.getElementById('hidden_bell_tier');
+
+		if (selectedTierField) {
+			const observer = new MutationObserver(checkTierMismatch);
+			observer.observe(selectedTierField, { attributes: true, attributeFilter: ['value'] });
+			selectedTierField.addEventListener('change', checkTierMismatch);
+		}
+
+		if (bellTierField) {
+			const observer = new MutationObserver(checkTierMismatch);
+			observer.observe(bellTierField, { attributes: true, attributeFilter: ['value'] });
+			bellTierField.addEventListener('change', checkTierMismatch);
+		}
+
+		// Initial check
+		setTimeout(checkTierMismatch, 500);
 	});
 
 </script>
