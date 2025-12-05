@@ -1140,6 +1140,7 @@ function addAddOn() {
 
 	function applyTemplateConfig(config) {
 		console.log('Applying template config:', config);
+		console.log('One-time fees in template:', config.selected_one_time_fees);
 
 		// Apply activity type
 		if (config.activity_type_id) {
@@ -1200,6 +1201,13 @@ function addAddOn() {
 								restoreAddOns(config.selected_add_ons);
 							}, 200);
 						}
+
+						// Restore one-time fees
+						if (config.selected_one_time_fees && Array.isArray(config.selected_one_time_fees) && config.selected_one_time_fees.length > 0) {
+							setTimeout(() => {
+								restoreOneTimeFees(config.selected_one_time_fees);
+							}, 200);
+						}
 					}, 500);
 				}
 			}
@@ -1226,6 +1234,15 @@ function addAddOn() {
 	function restoreAddOns(addOns) {
 		if (!addOns || addOns.length === 0) return;
 
+		// Clear existing add-ons first to avoid duplicates
+		const addOnsContainer = document.getElementById('add-ons');
+		if (addOnsContainer) {
+			addOnsContainer.innerHTML = '';
+		}
+
+		// Reset counter
+		addOnCount = 0;
+
 		addOns.forEach(addon => {
 			// Check if this is a credit (negative cost)
 			if (addon.name.toLowerCase().includes('credit') && addon.cost < 0) {
@@ -1249,7 +1266,7 @@ function addAddOn() {
 							   class="addon-name-input mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
 						<input type="hidden"
 							   name="add_ons[${addOnCount}][code]"
-							   value=""
+							   value="ADDON"
 							   class="addon-code-input">
 					</div>
 					<div>
@@ -1272,6 +1289,51 @@ function addAddOn() {
 				if (typeof calculateTotal === 'function') calculateTotal();
 			}
 		});
+	}
+
+	// Helper function to restore one-time fees from template
+	function restoreOneTimeFees(fees) {
+		if (!fees || fees.length === 0) return;
+
+		const feesContainer = document.getElementById('one-time-fees');
+		if (!feesContainer) return;
+
+		// Clear existing fees first to avoid duplicates
+		feesContainer.innerHTML = '';
+
+		// Reset counter
+		feeCount = 0;
+
+		fees.forEach(fee => {
+			const div = document.createElement('div');
+			div.className = 'one-time-fee grid grid-cols-1 sm:grid-cols-3 gap-4 items-end';
+			div.innerHTML = `
+				<div>
+					<label class="block text-sm font-medium text-gray-700">Name</label>
+					<input type="text"
+						   name="one_time_fees[${feeCount}][name]"
+						   value="${fee.name}"
+						   class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+				</div>
+				<div>
+					<label class="block text-sm font-medium text-gray-700">Cost ($)</label>
+					<input type="number"
+						   name="one_time_fees[${feeCount}][cost]"
+						   step="0.01"
+						   value="${fee.cost.toFixed(2)}"
+						   class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm total-input">
+				</div>
+				<div>
+					<button type="button" onclick="removeFee(this)" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+						Remove
+					</button>
+				</div>
+			`;
+			feesContainer.appendChild(div);
+			feeCount++;
+		});
+
+		if (typeof calculateTotal === 'function') calculateTotal();
 	}
 
 	// ==========================================
@@ -1301,6 +1363,20 @@ function addAddOn() {
 				}
 			});
 
+			// Gather one-time fees
+			const oneTimeFees = [];
+			const feeNames = document.querySelectorAll('input[name^="one_time_fees["][name$="[name]"]');
+			const feeCosts = document.querySelectorAll('input[name^="one_time_fees["][name$="[cost]"]');
+
+			feeNames.forEach((nameInput, index) => {
+				if (nameInput.value && feeCosts[index]) {
+					oneTimeFees.push({
+						name: nameInput.value,
+						cost: parseFloat(feeCosts[index].value) || 0
+					});
+				}
+			});
+
 			// Check if Hay Credit is applied
 			const hayCreditApplied = addOns.some(addon =>
 				addon.name.toLowerCase().includes('credit') && addon.cost < 0
@@ -1317,8 +1393,12 @@ function addAddOn() {
 				rate_plan_id: document.querySelector('input[name="rate_plan_id"]')?.value || null,
 				mobile_internet_plan_id: document.querySelector('input[name="mobile_internet_plan_id"]')?.value || null,
 				selected_add_ons: addOns,
+				selected_one_time_fees: oneTimeFees,
 				hay_credit_applied: hayCreditApplied,
 			};
+
+			console.log('Saving template with data:', formData);
+			console.log('One-time fees being saved:', oneTimeFees);
 
 			// Show loading state
 			saveBtn.disabled = true;
