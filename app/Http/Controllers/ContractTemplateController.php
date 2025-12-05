@@ -228,10 +228,10 @@ class ContractTemplateController extends Controller
                 : null;
         });
 
-        // Filter out configurations where rate plan or device no longer exists/is inactive
+        // Filter out configurations where rate plan or device no longer exists/is inactive/not current
         $frequentlyUsed = $frequentlyUsed->filter(function ($config) {
-            // Must have a valid rate plan
-            if (!$config->rate_plan || !$config->rate_plan->is_active) {
+            // Must have a valid rate plan that is both active AND current
+            if (!$config->rate_plan || !$config->rate_plan->is_active || !$config->rate_plan->is_current) {
                 return false;
             }
 
