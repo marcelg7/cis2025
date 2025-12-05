@@ -985,5 +985,19 @@ function addAddOn() {
 		console.log('==========================================');
 	});
 
+	// Auto-refresh CSRF token every hour to prevent expiration
+	setInterval(function() {
+		fetch('{{ route("csrf-token") }}')
+			.then(response => response.json())
+			.then(data => {
+				const csrfInput = document.querySelector('input[name="_token"]');
+				if (csrfInput && data.token) {
+					csrfInput.value = data.token;
+					console.log('✅ CSRF token refreshed');
+				}
+			})
+			.catch(error => console.warn('Failed to refresh CSRF token:', error));
+	}, 3600000); // Every 60 minutes
+
 </script>
 @endsection

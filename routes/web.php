@@ -74,6 +74,15 @@ Route::middleware(['auth', 'throttle:200,1', 'ensure.active.csr'])->group(functi
     | CSR Selector (for shared iPad devices)
     |--------------------------------------------------------------------------
     */
+    /*
+    |--------------------------------------------------------------------------
+    | CSRF Token Refresh Endpoint
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/csrf-token', function () {
+        return response()->json(['token' => csrf_token()]);
+    })->name('csrf-token');
+
     Route::prefix('csr-selector')->name('csr-selector.')->group(function () {
         Route::get('/', [App\Http\Controllers\CsrSelectorController::class, 'index'])->name('index');
         Route::post('/select', [App\Http\Controllers\CsrSelectorController::class, 'select'])->name('select');
