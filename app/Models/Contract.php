@@ -70,6 +70,7 @@ class Contract extends Model
         'ftp_at',
         'vault_path',
         'ftp_error',
+        'created_by',
     ];
 
     // Add date casting
@@ -133,6 +134,11 @@ class Contract extends Model
     public function notes()
     {
         return $this->hasMany(ContractNote::class)->orderBy('created_at', 'desc');
+    }
+
+    public function createdBy()
+    {
+        return $this->belongsTo(User::class, 'created_by');
     }
 
     public function updatedBy()

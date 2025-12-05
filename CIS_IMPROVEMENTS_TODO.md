@@ -42,10 +42,12 @@ This document contains suggestions for improving the Contract Information System
 - [x] Useful for family members getting same plan
 
 ### 7. Dashboard Improvements ✅
-- [x] CSR-specific dashboard showing their contracts in progress (v4.2025.173)
-- [x] Quick stats: "Your drafts today", "Pending signatures", "Ready to finalize" (v4.2025.173)
-- [x] Color-coded status indicators (v4.2025.173)
-- [x] Recent contracts table with quick links (v4.2025.173)
+- [x] CSR-specific dashboard showing their contracts in progress (v4.2025.176)
+- [x] Quick stats: "Your drafts today", "Pending signatures", "Ready to finalize" (v4.2025.176)
+- [x] Color-coded status indicators (v4.2025.176)
+- [x] Recent contracts table with quick links (v4.2025.176)
+- [x] Logo and navigation links to dashboard (v4.2025.176)
+- [x] Created_by tracking for contract attribution (v4.2025.176)
 
 ### 8. Keyboard Shortcuts
 - [ ] Tab through form fields smoothly
@@ -173,9 +175,9 @@ Based on analysis of CSR workflows and potential time savings:
 
 ## Recently Completed
 
+- [x] Dashboard improvements with created_by tracking - v4.2025.176
 - [x] Mobile/tablet signature optimizations - v4.2025.175
 - [x] Contract Notes for CSR handoffs - v4.2025.174
-- [x] Dashboard with CSR-specific stats - v4.2025.173
 - [x] Smart Defaults (location, dates) - v4.2025.171
 - [x] Phone number search for customers - v4.2025.171
 - [x] Real-time validation and required field highlighting - v4.2025.171

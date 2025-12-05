@@ -262,6 +262,7 @@ class ContractController extends Controller
             'first_bill_date' => $request->first_bill_date,
 			'imei' => $request->imei,
             'status' => 'draft',
+            'created_by' => $this->getEffectiveUserId(),
             'updated_by' => $this->getEffectiveUserId(),
             'rate_plan_id' => $request->rate_plan_id,
             'mobile_internet_plan_id' => $request->mobile_internet_plan_id,
@@ -1110,6 +1111,10 @@ class ContractController extends Controller
         $revision->vault_path = null;
         $revision->ftp_error = null;
         $revision->pdf_path = null;
+
+        // Set created_by to current user (revisions can be created by any authenticated user)
+        $revision->created_by = $this->getEffectiveUserId();
+        $revision->updated_by = $this->getEffectiveUserId();
 
         $revision->save();
       

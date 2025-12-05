@@ -212,7 +212,7 @@
                     <!-- Logo and Main Navigation -->
                     <div class="flex">
                         <div class="shrink-0 flex items-center">
-                            <a href="{{ route('customers.index') }}" class="flex items-center">
+                            <a href="{{ route('dashboard') }}" class="flex items-center">
                                 <img src="/images/hayLogo.png" alt="Hay Logo" class="h-8 w-auto mr-2">
                                 <span class="text-lg font-bold">Hay CIS</span>
                             </a>
@@ -220,6 +220,9 @@
                         
                         <!-- Desktop Navigation Links -->
                         <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
+                            <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
+                                Dashboard
+                            </x-nav-link>
                             <x-nav-link :href="route('customers.index')" :active="request()->routeIs('customers.*')">
                                 Customers
                             </x-nav-link>
@@ -540,6 +543,9 @@
             <div id="mobile-menu" class="hidden sm:hidden">
                 <div class="pt-2 pb-3 space-y-1">
                     <!-- Main Navigation -->
+                    <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
+                        Dashboard
+                    </x-responsive-nav-link>
                     <x-responsive-nav-link :href="route('customers.index')" :active="request()->routeIs('customers.*')">
                         Customers
                     </x-responsive-nav-link>
