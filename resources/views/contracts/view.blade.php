@@ -900,6 +900,79 @@
                 @endif
             @endif
         </div>
+
+        <!-- Contract Notes Section -->
+        <div class="mt-6 bg-white overflow-hidden shadow-sm sm:rounded-lg">
+            <div class="p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Internal Notes (CSR Handoffs)</h3>
+
+                <!-- Add Note Form -->
+                <form action="{{ route('contracts.notes.store', $contract->id) }}" method="POST" class="mb-6">
+                    @csrf
+                    <div class="space-y-3">
+                        <div>
+                            <label for="note" class="block text-sm font-medium text-gray-700">Add Note</label>
+                            <textarea name="note" id="note" rows="3" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="Customer requested call back..."></textarea>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <input type="checkbox" name="is_important" id="is_important" value="1" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                                <label for="is_important" class="ml-2 block text-sm text-gray-700">
+                                    Mark as important
+                                </label>
+                            </div>
+                            <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                                </svg>
+                                Add Note
+                            </button>
+                        </div>
+                    </div>
+                </form>
+
+                <!-- Notes List -->
+                @if($contract->notes->count() > 0)
+                    <div class="space-y-3">
+                        @foreach($contract->notes as $note)
+                            <div class="border rounded-lg p-4 {{ $note->is_important ? 'border-yellow-300 bg-yellow-50' : 'border-gray-200 bg-gray-50' }}">
+                                <div class="flex items-start justify-between">
+                                    <div class="flex-1">
+                                        <div class="flex items-center mb-2">
+                                            <span class="text-sm font-semibold text-gray-900">{{ $note->user->name }}</span>
+                                            <span class="mx-2 text-gray-400">•</span>
+                                            <span class="text-sm text-gray-500">{{ $note->created_at->diffForHumans() }}</span>
+                                            @if($note->is_important)
+                                                <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-200 text-yellow-800">
+                                                    <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                                                    </svg>
+                                                    Important
+                                                </span>
+                                            @endif
+                                        </div>
+                                        <p class="text-sm text-gray-700 whitespace-pre-wrap">{{ $note->note }}</p>
+                                    </div>
+                                    @if($note->user_id === auth()->id() || auth()->user()->hasRole('admin'))
+                                        <form action="{{ route('contracts.notes.destroy', [$contract->id, $note->id]) }}" method="POST" class="ml-4">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" onclick="return confirm('Are you sure you want to delete this note?')" class="text-red-600 hover:text-red-800">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                                </svg>
+                                            </button>
+                                        </form>
+                                    @endif
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                @else
+                    <p class="text-sm text-gray-500 text-center py-4">No notes yet. Add a note to help other CSRs with this contract.</p>
+                @endif
+            </div>
+        </div>
     </div>
 </div>
 @endsection

@@ -1226,7 +1226,8 @@ class ContractController extends Controller
 			'commitmentPeriod',
 			'bellDevice',
 			'locationModel',
-			'updatedBy'
+			'updatedBy',
+			'notes.user'
 		])->findOrFail($id);
 
 		// Authorization check - prevent IDOR vulnerability
@@ -1882,7 +1883,43 @@ class ContractController extends Controller
 		$pdfPath = "contracts/dro_contract_{$contract->id}.pdf";
 		Storage::disk('public')->put($pdfPath, $dompdf->output());
 		$contract->update(['dro_pdf_path' => $pdfPath]);
-		
+
 		Log::info('DRO PDF generated', ['contract_id' => $contract->id, 'path' => $pdfPath]);
+	}
+
+	/**
+	 * Store a new contract note
+	 */
+	public function storeNote(Request $request, Contract $contract)
+	{
+		$validated = $request->validate([
+			'note' => 'required|string|max:2000',
+			'is_important' => 'boolean',
+		]);
+
+		$note = $contract->notes()->create([
+			'user_id' => Auth::id(),
+			'note' => $validated['note'],
+			'is_important' => $request->boolean('is_important'),
+		]);
+
+		return redirect()->back()->with('success', 'Note added successfully.');
+	}
+
+	/**
+	 * Delete a contract note
+	 */
+	public function destroyNote(Contract $contract, $noteId)
+	{
+		$note = $contract->notes()->findOrFail($noteId);
+
+		// Only allow the note creator or admins to delete
+		if ($note->user_id !== Auth::id() && !Auth::user()->hasRole('admin')) {
+			abort(403, 'Unauthorized to delete this note.');
+		}
+
+		$note->delete();
+
+		return redirect()->back()->with('success', 'Note deleted successfully.');
 	}
 }

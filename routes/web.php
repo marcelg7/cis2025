@@ -168,6 +168,10 @@ Route::middleware(['auth', 'throttle:200,1', 'ensure.active.csr'])->group(functi
             Route::get('/csr-initial', [ContractController::class, 'signCsrDro'])->name('csr-initial');
             Route::post('/csr-initial', [ContractController::class, 'storeCsrDroInitials'])->name('store-csr-initial');
         });
+
+        // Contract Notes
+        Route::post('{contract}/notes', [ContractController::class, 'storeNote'])->name('notes.store');
+        Route::delete('{contract}/notes/{note}', [ContractController::class, 'destroyNote'])->name('notes.destroy');
     });
 
     /*
