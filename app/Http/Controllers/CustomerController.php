@@ -84,7 +84,12 @@ class CustomerController extends Controller
                     ->latest('last_fetched_at')
                     ->take(6)
                     ->get();
-                return view('customers.index', compact('latestContracts', 'activeUsers', 'recentCustomers'))
+
+                // Get deletable contract statuses from settings
+                $deletableStatusesStr = SettingsHelper::get('deletable_contract_statuses', 'draft');
+                $deletableStatuses = array_filter(explode(',', $deletableStatusesStr));
+
+                return view('customers.index', compact('latestContracts', 'activeUsers', 'recentCustomers', 'deletableStatuses'))
                     ->withErrors(['customer_number' => 'Customer not found. Please check the customer number and try again.']);
             }
             // Merge zipCode and zip4 for full postal code
@@ -190,7 +195,12 @@ class CustomerController extends Controller
                 ->latest('last_fetched_at')
                 ->take(6)
                 ->get();
-            return view('customers.index', compact('latestContracts', 'activeUsers', 'recentCustomers'))
+
+            // Get deletable contract statuses from settings
+            $deletableStatusesStr = SettingsHelper::get('deletable_contract_statuses', 'draft');
+            $deletableStatuses = array_filter(explode(',', $deletableStatusesStr));
+
+            return view('customers.index', compact('latestContracts', 'activeUsers', 'recentCustomers', 'deletableStatuses'))
                 ->withErrors(['customer_number' => $errorMessage]);
         } catch (\Exception $e) {
             Log::error('Fetch error: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
@@ -207,7 +217,12 @@ class CustomerController extends Controller
                 ->latest('last_fetched_at')
                 ->take(6)
                 ->get();
-            return view('customers.index', compact('latestContracts', 'activeUsers', 'recentCustomers'))
+
+            // Get deletable contract statuses from settings
+            $deletableStatusesStr = SettingsHelper::get('deletable_contract_statuses', 'draft');
+            $deletableStatuses = array_filter(explode(',', $deletableStatusesStr));
+
+            return view('customers.index', compact('latestContracts', 'activeUsers', 'recentCustomers', 'deletableStatuses'))
                 ->withErrors(['customer_number' => 'An error occurred while fetching the customer. Please try again.']);
         }
     }
