@@ -6,21 +6,31 @@
 
         <!-- Contract Templates Section -->
         <div class="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4" id="template-section">
-            <div class="flex items-start">
-                <div class="flex-shrink-0">
-                    <svg class="h-5 w-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                    </svg>
-                </div>
-                <div class="ml-3 flex-1">
-                    <h3 class="text-sm font-medium text-blue-800">Quick Start with Template</h3>
-                    <div class="mt-2 text-sm text-blue-700">
-                        <p class="mb-2">Load a saved configuration or frequently used setup:</p>
-                        <select id="template-selector" class="w-full border-blue-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                            <option value="">-- Select a template --</option>
-                        </select>
-                        <p class="mt-2 text-xs text-blue-600" id="template-loading" style="display:none;">Loading templates...</p>
+            <div class="flex items-start justify-between">
+                <div class="flex items-start flex-1">
+                    <div class="flex-shrink-0">
+                        <svg class="h-5 w-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                        </svg>
                     </div>
+                    <div class="ml-3 flex-1">
+                        <h3 class="text-sm font-medium text-blue-800">Quick Start with Template</h3>
+                        <div class="mt-2 text-sm text-blue-700">
+                            <p class="mb-2">Load a saved configuration or frequently used setup:</p>
+                            <select id="template-selector" class="w-full border-blue-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                <option value="">-- Select a template --</option>
+                            </select>
+                            <p class="mt-2 text-xs text-blue-600" id="template-loading" style="display:none;">Loading templates...</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="ml-4">
+                    <button type="button" id="save-as-template-btn" class="inline-flex items-center px-3 py-2 border border-blue-300 rounded-md shadow-sm text-sm font-medium text-blue-700 bg-white hover:bg-blue-50 transition-colors">
+                        <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path>
+                        </svg>
+                        Save as Template
+                    </button>
                 </div>
             </div>
         </div>
@@ -1180,6 +1190,66 @@ function addAddOn() {
 
 		alert('Template applied! Review the auto-filled fields before saving.');
 	}
+
+	// ==========================================
+	// Save as Template Functionality
+	// ==========================================
+
+	document.addEventListener('DOMContentLoaded', function() {
+		const saveBtn = document.getElementById('save-as-template-btn');
+		if (!saveBtn) return;
+
+		saveBtn.addEventListener('click', function() {
+			// Prompt for template name
+			const templateName = prompt('Enter a name for this template:');
+			if (!templateName) return;
+
+			// Gather current form values
+			const formData = {
+				name: templateName,
+				description: '',
+				activity_type_id: document.getElementById('activity_type_id')?.value || null,
+				location_id: document.getElementById('location_id')?.value || null,
+				commitment_period_id: document.getElementById('commitment_period_id')?.value || null,
+				bell_device_id: document.getElementById('hidden_bell_device_id')?.value || null,
+				rate_plan_id: document.querySelector('input[name="rate_plan_id"]')?.value || null,
+				mobile_internet_plan_id: document.querySelector('input[name="mobile_internet_plan_id"]')?.value || null,
+			};
+
+			// Show loading state
+			saveBtn.disabled = true;
+			saveBtn.innerHTML = '<svg class="animate-spin h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Saving...';
+
+			// Send to API
+			fetch('/api/templates/save-from-contract', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value
+				},
+				body: JSON.stringify(formData)
+			})
+			.then(response => response.json())
+			.then(data => {
+				if (data.success) {
+					alert('Template saved successfully! You can now use it when creating future contracts.');
+					// Reload templates dropdown
+					loadContractTemplates();
+				} else {
+					alert('Failed to save template: ' + (data.message || 'Unknown error'));
+				}
+			})
+			.catch(error => {
+				console.error('Error saving template:', error);
+				alert('Failed to save template. Please try again.');
+			})
+			.finally(() => {
+				// Restore button state
+				saveBtn.disabled = false;
+				saveBtn.innerHTML = '<svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg> Save as Template';
+			});
+		});
+	});
 
 </script>
 @endsection
