@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\MobileController;
 use App\Http\Controllers\UserSettingsController;
 use App\Http\Controllers\ActivityTypeController;
@@ -69,6 +70,13 @@ Route::middleware(['guest', 'throttle:100,1'])->group(function () {
 // Apply rate limiting to authenticated routes (200 requests per minute)
 // Also apply ensure.active.csr middleware to redirect shared devices to CSR selector
 Route::middleware(['auth', 'throttle:200,1', 'ensure.active.csr'])->group(function () {
+
+    /*
+    |--------------------------------------------------------------------------
+    | Dashboard
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     /*
     |--------------------------------------------------------------------------

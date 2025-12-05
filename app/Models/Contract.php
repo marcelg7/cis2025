@@ -130,6 +130,11 @@ class Contract extends Model
         return $this->hasMany(ContractOneTimeFee::class);
     }
 
+    public function notes()
+    {
+        return $this->hasMany(ContractNote::class)->orderBy('created_at', 'desc');
+    }
+
     public function updatedBy()
     {
         return $this->belongsTo(User::class, 'updated_by');
