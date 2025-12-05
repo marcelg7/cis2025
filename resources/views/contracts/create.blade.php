@@ -1069,7 +1069,7 @@ function addAddOn() {
 					option.dataset.type = 'frequently-used';
 					option.dataset.config = JSON.stringify(config);
 					const deviceName = config.bell_device?.name || 'Unknown Device';
-					const planName = config.rate_plan?.name || 'Unknown Plan';
+					const planName = config.rate_plan?.plan_name || 'Unknown Plan';
 					option.textContent = `${deviceName} + ${planName} (used ${config.usage_count}x)`;
 					freqGroup.appendChild(option);
 				});

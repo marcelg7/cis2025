@@ -211,8 +211,22 @@ class ContractTemplateController extends Controller
             ->having('usage_count', '>=', 2) // Only show if used at least twice
             ->orderBy('usage_count', 'desc')
             ->limit(10)
-            ->with(['bellDevice', 'ratePlan', 'mobileInternetPlan', 'activityType', 'commitmentPeriod'])
             ->get();
+
+        // Manually load relationships for aggregated data
+        $frequentlyUsed->each(function ($config) {
+            $config->bell_device = \App\Models\BellDevice::find($config->bell_device_id);
+            $config->rate_plan = \App\Models\RatePlan::find($config->rate_plan_id);
+            $config->mobile_internet_plan = $config->mobile_internet_plan_id
+                ? \App\Models\MobileInternetPlan::find($config->mobile_internet_plan_id)
+                : null;
+            $config->activity_type = $config->activity_type_id
+                ? \App\Models\ActivityType::find($config->activity_type_id)
+                : null;
+            $config->commitment_period = $config->commitment_period_id
+                ? \App\Models\CommitmentPeriod::find($config->commitment_period_id)
+                : null;
+        });
 
         return response()->json($frequentlyUsed);
     }
