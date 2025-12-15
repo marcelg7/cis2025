@@ -4,6 +4,26 @@
     <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 py-6 px-2 page-container">
         <h1 class="text-2xl font-semibold text-gray-900">Create Contract for {{ $subscriber->mobile_number }}</h1>
 
+        @if($errors->any())
+            <div class="mt-4 bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <svg class="h-5 w-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <h3 class="text-sm font-medium text-red-800">Please correct the following errors:</h3>
+                        <ul class="mt-2 text-sm text-red-700 list-disc list-inside">
+                            @foreach($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        @endif
+
         <!-- Contract Templates Section -->
         <div class="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4" id="template-section">
             <div class="flex items-start justify-between">
