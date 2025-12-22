@@ -74,8 +74,9 @@ class ImportCellularPricePlans extends Command
             ->where('effective_date', '!=', $effectiveDate)
             ->update(['is_current' => false]);
 
-        // Start from row 8
-        for ($rowIndex = 8; $rowIndex < count($rows); $rowIndex++) {
+        // Start from row 3 (index 2) to capture promo plans in early rows
+        // Data validation will skip header rows automatically
+        for ($rowIndex = 2; $rowIndex < count($rows); $rowIndex++) {
             $row = $rows[$rowIndex];
             
             // BYOD plans (columns B-F: indices 1-5)
